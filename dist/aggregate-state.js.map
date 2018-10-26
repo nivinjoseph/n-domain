@@ -1,0 +1,1 @@
+{"version":3,"file":"aggregate-state.js","sourceRoot":"","sources":["../src/aggregate-state.ts"],"names":[],"mappings":"","sourcesContent":["// public\nexport interface AggregateState\n{\n    id: string;\n    version: number;\n}"]}
