@@ -30,7 +30,10 @@ class AggregateRoot {
             $version: "number",
             $createdAt: "number",
             $updatedAt: "number",
-            $state: "object",
+            $state: {
+                id: "string",
+                version: "number"
+            },
             $events: [{
                     $name: "string",
                     $occurredAt: "number",
