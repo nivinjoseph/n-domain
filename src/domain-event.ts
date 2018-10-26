@@ -1,6 +1,7 @@
 import { AggregateState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
 import { SerializedDomainEvent } from "./serialized-domain-event";
+import "@nivinjoseph/n-ext";
 
 // public
 export abstract class DomainEvent<T extends AggregateState>
