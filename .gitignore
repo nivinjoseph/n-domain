@@ -59,3 +59,12 @@ typings/
 
 # next.js build output
 .next
+
+# Ignore Mac .DS_Store files
+.DS_Store
+
+# Ignores compiled TypeScript files
+src/**/*.js
+src/**/*.map
+test/**/*.js
+test/**/*.map

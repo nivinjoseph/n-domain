@@ -1,0 +1,47 @@
+{
+  "name": "@nivinjoseph/n-domain",
+  "version": "1.0.0",
+  "description": "Domain Driven Design and Event Sourcing based framework for business layer implementation",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "ts-compile": "tsc -p .",
+    "ts-lint": "tslint -p . -c tslint.json",
+    "ts-build": "npm run ts-compile && npm run ts-lint",
+    "ts-build-dist": "npm run ts-build && tsc -p ./dist",
+    "clean-src": "find ./src -name '*.js' -delete -o -name '*.map' -delete",
+    "clean-test": "find ./test -name '*.js' -delete -o -name '*.map' -delete",
+    "pretest": "npm run ts-build",
+    "test": "mocha --reporter spec --ui tdd --require ts-node/register './test/**/*.test.js' || true",
+    "pretest-ci": "npm run pretest",
+    "test-ci": "mocha --reporter spec --ui tdd --require ts-node/register './test/**/*.test.js'",
+    "publish-package": "npm run ts-build-dist && git add . && git commit -m 'preparing to publish new version' && npm version patch && git push && npm publish --access=public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nivinjoseph/n-domain.git"
+  },
+  "keywords": [
+    "DDD",
+    "Event",
+    "Sourcing"
+  ],
+  "author": "NiviN",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nivinjoseph/n-domain/issues"
+  },
+  "homepage": "https://github.com/nivinjoseph/n-domain#readme",
+  "devDependencies": {},
+  "dependencies": {
+    "@nivinjoseph/n-defensive": "^1.0.17",
+    "@nivinjoseph/n-exception": "^1.0.13",
+    "@nivinjoseph/n-ext": "^1.0.24",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^8.9.5",
+    "mocha": "^5.2.0",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "typescript": "^3.1.1"
+  }
+}
