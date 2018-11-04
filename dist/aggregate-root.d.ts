@@ -18,7 +18,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     readonly updatedAt: number;
     protected readonly state: T;
     constructor(events: ReadonlyArray<DomainEvent<AggregateState>>);
-    static deserialize(aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: SerializedAggregateRoot<AggregateState>): AggregateRoot<AggregateState>;
-    serialize(): SerializedAggregateRoot<T>;
+    static deserialize(aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: SerializedAggregateRoot): AggregateRoot<AggregateState>;
+    serialize(): SerializedAggregateRoot;
     protected applyEvent(event: DomainEvent<AggregateState>): void;
 }

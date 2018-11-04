@@ -30,10 +30,6 @@ class AggregateRoot {
             $version: "number",
             $createdAt: "number",
             $updatedAt: "number",
-            $state: {
-                id: "string",
-                version: "number"
-            },
             $events: [{
                     $name: "string",
                     $occurredAt: "number",
@@ -57,7 +53,6 @@ class AggregateRoot {
             $version: this.version,
             $createdAt: this.createdAt,
             $updatedAt: this.updatedAt,
-            $state: this.state,
             $events: this.events.map(t => t.serialize())
         };
     }
