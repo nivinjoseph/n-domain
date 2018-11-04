@@ -4,10 +4,11 @@ const n_defensive_1 = require("@nivinjoseph/n-defensive");
 const n_exception_1 = require("@nivinjoseph/n-exception");
 require("@nivinjoseph/n-ext");
 class AggregateRoot {
-    constructor(events) {
-        this._state = {};
+    constructor(events, initialState) {
         this._currentEvents = new Array();
         n_defensive_1.given(events, "events").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+        n_defensive_1.given(initialState, "initialState").ensureIsObject();
+        this._state = initialState || {};
         this._retroEvents = events;
         this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this._state));
         this._retroVersion = this.currentVersion;
