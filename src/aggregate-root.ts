@@ -41,7 +41,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         this._retroVersion = this.currentVersion;
     }
 
-    public static deserialize(aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: SerializedAggregateRoot<AggregateState>): AggregateRoot<AggregateState>
+    public static deserialize(aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: SerializedAggregateRoot): AggregateRoot<AggregateState>
     {
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
         given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
@@ -51,10 +51,6 @@ export abstract class AggregateRoot<T extends AggregateState>
                 $version: "number",
                 $createdAt: "number",
                 $updatedAt: "number",
-                $state: {
-                    id: "string",
-                    version: "number"
-                },
                 $events: [{
                     $name: "string",
                     $occurredAt: "number",
@@ -77,14 +73,13 @@ export abstract class AggregateRoot<T extends AggregateState>
     }
 
 
-    public serialize(): SerializedAggregateRoot<T>
+    public serialize(): SerializedAggregateRoot
     {
         return {
             $id: this.id,
             $version: this.version,
             $createdAt: this.createdAt,
             $updatedAt: this.updatedAt,
-            $state: this.state,
             $events: this.events.map(t => t.serialize())
         };
     }

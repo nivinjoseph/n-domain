@@ -28,7 +28,7 @@ export abstract class DomainEvent<T extends AggregateState>
     }
 
 
-    public apply(state: AggregateState): void
+    public apply(state: T): void
     {
         given(state, "state").ensureHasValue().ensureIsObject();
 
