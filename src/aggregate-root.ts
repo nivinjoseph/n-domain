@@ -8,7 +8,7 @@ import "@nivinjoseph/n-ext";
 // public
 export abstract class AggregateRoot<T extends AggregateState>
 {
-    private readonly _state: T = {} as any;
+    private readonly _state: T;
     private readonly _retroEvents: ReadonlyArray<DomainEvent<T>>;
     private readonly _retroVersion: number;
     private readonly _currentEvents = new Array<DomainEvent<T>>(); // track unit of work stuff
@@ -32,9 +32,12 @@ export abstract class AggregateRoot<T extends AggregateState>
     protected get state(): T { return this._state; }
 
 
-    public constructor(events: ReadonlyArray<DomainEvent<AggregateState>>)
+    public constructor(events: ReadonlyArray<DomainEvent<AggregateState>>, initialState?: T | object)
     {
         given(events, "events").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+        given(initialState, "initialState").ensureIsObject();
+
+        this._state = initialState || {} as any;
 
         this._retroEvents = events;
         this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this._state));
