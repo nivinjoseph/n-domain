@@ -47,7 +47,9 @@ export abstract class AggregateRoot<T extends AggregateState>
     public static deserialize(aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: SerializedAggregateRoot): AggregateRoot<AggregateState>
     {
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
-        given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+        given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray()
+            .ensure(t => t.length > 0, "no eventTypes provided")
+            .ensure(t => t.map(u => (<Object>u).getTypeName()).distinct().length === t.length, "duplicate event types detected");
         given(data, "data").ensureHasValue().ensureIsObject()
             .ensureHasStructure({
                 $id: "string",
