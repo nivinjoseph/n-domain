@@ -24,7 +24,9 @@ class AggregateRoot {
     get state() { return this._state; }
     static deserialize(aggregateType, eventTypes, data) {
         n_defensive_1.given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
-        n_defensive_1.given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+        n_defensive_1.given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray()
+            .ensure(t => t.length > 0, "no eventTypes provided")
+            .ensure(t => t.map(u => u.getTypeName()).distinct().length === t.length, "duplicate event types detected");
         n_defensive_1.given(data, "data").ensureHasValue().ensureIsObject()
             .ensureHasStructure({
             $id: "string",
