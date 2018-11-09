@@ -37,6 +37,7 @@
     "@nivinjoseph/n-defensive": "^1.0.17",
     "@nivinjoseph/n-exception": "^1.0.13",
     "@nivinjoseph/n-ext": "^1.0.24",
+    "@nivinjoseph/n-sec": "^2.0.23",
     "@types/mocha": "^5.2.5",
     "@types/node": "^8.9.5",
     "mocha": "^5.2.0",
