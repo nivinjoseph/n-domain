@@ -1,6 +1,6 @@
 import { AggregateState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
-import { SerializedDomainEvent } from "./serialized-domain-event";
+import { DomainEventData } from "./domain-event-data";
 import "@nivinjoseph/n-ext";
 import { DomainHelper } from ".";
 
@@ -19,18 +19,21 @@ export abstract class DomainEvent<T extends AggregateState>
     public get version(): number { return this._version; }
 
     // occurredAt is epoch milliseconds
-    public constructor(user: string, occurredAt: number = DomainHelper.now, version: number = 0)
+    // public constructor(user: string, occurredAt: number = DomainHelper.now, version: number = 0)
+    public constructor(data: DomainEventData)
     {
-        given(user, "user").ensureHasValue().ensureIsString();
-        this._user = user;
-        
+        given(data, "data").ensureHasValue()
+            .ensureHasStructure({
+                $user: "string",
+                "$name?": "string",
+                "$occurredAt?": "number",
+                "$version?": "number"
+            });
+
+        this._user = data.$user;
         this._name = (<Object>this).getTypeName();
-
-        given(occurredAt, "occurredAt").ensureHasValue().ensureIsNumber().ensure(t => t > 0);
-        this._occurredAt = occurredAt;
-
-        given(version, "version").ensureIsNumber().ensure(t => t >= 0);
-        this._version = version;
+        this._occurredAt = data.$occurredAt || DomainHelper.now;
+        this._version = data.$version || 0;
     }
 
 
@@ -45,7 +48,7 @@ export abstract class DomainEvent<T extends AggregateState>
         state.version = this._version + 1;
     }
 
-    public serialize(): SerializedDomainEvent
+    public serialize(): DomainEventData
     {
         return Object.assign(this.serializeEvent(), {
             $user: this._user,

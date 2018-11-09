@@ -2,7 +2,7 @@ import { DomainEvent } from "./domain-event";
 import { AggregateState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
-import { SerializedAggregateRoot } from "./serialized-aggregate-root";
+import { AggregateRootData } from "./aggregate-root-data";
 import "@nivinjoseph/n-ext";
 
 // public
@@ -44,7 +44,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         this._retroVersion = this.currentVersion;
     }
 
-    public static deserialize(aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: SerializedAggregateRoot): AggregateRoot<AggregateState>
+    public static deserialize(aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: AggregateRootData): AggregateRoot<AggregateState>
     {
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
         given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray()
@@ -78,7 +78,7 @@ export abstract class AggregateRoot<T extends AggregateState>
     }
 
 
-    public serialize(): SerializedAggregateRoot
+    public serialize(): AggregateRootData
     {
         return {
             $id: this.id,
