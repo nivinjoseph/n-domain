@@ -10,7 +10,7 @@ export declare abstract class DomainEvent<T extends AggregateState> {
     readonly name: string;
     readonly occurredAt: number;
     readonly version: number;
-    constructor(user: string, occurredAt: number, version: number);
+    constructor(user: string, occurredAt?: number, version?: number);
     apply(state: T): void;
     serialize(): SerializedDomainEvent;
     protected abstract serializeEvent(): object;

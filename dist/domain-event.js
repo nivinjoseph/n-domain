@@ -2,8 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const n_defensive_1 = require("@nivinjoseph/n-defensive");
 require("@nivinjoseph/n-ext");
+const _1 = require(".");
 class DomainEvent {
-    constructor(user, occurredAt, version) {
+    constructor(user, occurredAt = _1.DomainHelper.now, version = 0) {
         n_defensive_1.given(user, "user").ensureHasValue().ensureIsString();
         this._user = user;
         this._name = this.getTypeName();
