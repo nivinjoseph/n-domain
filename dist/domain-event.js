@@ -4,14 +4,18 @@ const n_defensive_1 = require("@nivinjoseph/n-defensive");
 require("@nivinjoseph/n-ext");
 const _1 = require(".");
 class DomainEvent {
-    constructor(user, occurredAt = _1.DomainHelper.now, version = 0) {
-        n_defensive_1.given(user, "user").ensureHasValue().ensureIsString();
-        this._user = user;
+    constructor(data) {
+        n_defensive_1.given(data, "data").ensureHasValue()
+            .ensureHasStructure({
+            $user: "string",
+            "$name?": "string",
+            "$occurredAt?": "number",
+            "$version?": "number"
+        });
+        this._user = data.$user;
         this._name = this.getTypeName();
-        n_defensive_1.given(occurredAt, "occurredAt").ensureHasValue().ensureIsNumber().ensure(t => t > 0);
-        this._occurredAt = occurredAt;
-        n_defensive_1.given(version, "version").ensureIsNumber().ensure(t => t >= 0);
-        this._version = version;
+        this._occurredAt = data.$occurredAt || _1.DomainHelper.now;
+        this._version = data.$version || 0;
     }
     get user() { return this._user; }
     get name() { return this._name; }

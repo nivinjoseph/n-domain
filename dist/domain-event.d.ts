@@ -1,5 +1,5 @@
 import { AggregateState } from "./aggregate-state";
-import { SerializedDomainEvent } from "./serialized-domain-event";
+import { DomainEventData } from "./domain-event-data";
 import "@nivinjoseph/n-ext";
 export declare abstract class DomainEvent<T extends AggregateState> {
     private readonly _user;
@@ -10,9 +10,9 @@ export declare abstract class DomainEvent<T extends AggregateState> {
     readonly name: string;
     readonly occurredAt: number;
     readonly version: number;
-    constructor(user: string, occurredAt?: number, version?: number);
+    constructor(data: DomainEventData);
     apply(state: T): void;
-    serialize(): SerializedDomainEvent;
+    serialize(): DomainEventData;
     protected abstract serializeEvent(): object;
     protected abstract applyEvent(state: T): void;
 }

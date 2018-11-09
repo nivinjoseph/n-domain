@@ -1,6 +1,6 @@
 import { DomainEvent } from "./domain-event";
 import { AggregateState } from "./aggregate-state";
-import { SerializedAggregateRoot } from "./serialized-aggregate-root";
+import { AggregateRootData } from "./aggregate-root-data";
 import "@nivinjoseph/n-ext";
 export declare abstract class AggregateRoot<T extends AggregateState> {
     private readonly _state;
@@ -18,7 +18,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     readonly updatedAt: number;
     protected readonly state: T;
     constructor(events: ReadonlyArray<DomainEvent<AggregateState>>, initialState?: T | object);
-    static deserialize(aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: SerializedAggregateRoot): AggregateRoot<AggregateState>;
-    serialize(): SerializedAggregateRoot;
+    static deserialize(aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: AggregateRootData): AggregateRoot<AggregateState>;
+    serialize(): AggregateRootData;
     protected applyEvent(event: DomainEvent<AggregateState>): void;
 }
