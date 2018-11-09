@@ -2,6 +2,7 @@ import { AggregateState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
 import { SerializedDomainEvent } from "./serialized-domain-event";
 import "@nivinjoseph/n-ext";
+import { DomainHelper } from ".";
 
 // public
 export abstract class DomainEvent<T extends AggregateState>
@@ -18,7 +19,7 @@ export abstract class DomainEvent<T extends AggregateState>
     public get version(): number { return this._version; }
 
     // occurredAt is epoch milliseconds
-    public constructor(user: string, occurredAt: number, version: number)
+    public constructor(user: string, occurredAt: number = DomainHelper.now, version: number = 0)
     {
         given(user, "user").ensureHasValue().ensureIsString();
         this._user = user;
