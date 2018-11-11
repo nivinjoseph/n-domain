@@ -28,6 +28,8 @@ export abstract class AggregateRoot<T extends AggregateState>
     public abstract get createdAt(): number;
     public get updatedAt(): number { return this.events.orderByDesc(t => t.version)[0].occurredAt; }
 
+    public get hasChanges(): boolean { return this.currentVersion !== this.retroVersion; }
+
 
     protected get state(): T { return this._state; }
 
