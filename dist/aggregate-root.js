@@ -21,6 +21,7 @@ class AggregateRoot {
     get events() { return [...this._retroEvents, ...this._currentEvents].orderBy(t => t.version); }
     get version() { return this.currentVersion; }
     get updatedAt() { return this.events.orderByDesc(t => t.version)[0].occurredAt; }
+    get hasChanges() { return this.currentVersion !== this.retroVersion; }
     get state() { return this._state; }
     static deserialize(aggregateType, eventTypes, data) {
         n_defensive_1.given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
