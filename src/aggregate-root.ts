@@ -75,7 +75,7 @@ export abstract class AggregateRoot<T extends AggregateState>
                 throw new ApplicationException(`Event type '${name}' does not have a static deserializeEvent method defined.`);
             return (<any>event).deserializeEvent(eventData);
         });
-
+        
         return new (<any>aggregateType)(events);
     }
 
@@ -89,6 +89,15 @@ export abstract class AggregateRoot<T extends AggregateState>
             $updatedAt: this.updatedAt,
             $events: this.events.map(t => t.serialize())
         };
+    }
+
+    public constructVersion(version: number): this
+    {
+        given(version, "version").ensureHasValue().ensureIsNumber()
+            .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
+
+        const ctor = (<Object>this).constructor;
+        return new (<any>ctor)(this.events.filter(t => t.version < version));
     }
 
 
