@@ -60,6 +60,12 @@ class AggregateRoot {
             $events: this.events.map(t => t.serialize())
         };
     }
+    constructVersion(version) {
+        n_defensive_1.given(version, "version").ensureHasValue().ensureIsNumber()
+            .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
+        const ctor = this.constructor;
+        return new ctor(this.events.filter(t => t.version < version));
+    }
     applyEvent(event) {
         event.apply(this._state);
         this._currentEvents.push(event);
