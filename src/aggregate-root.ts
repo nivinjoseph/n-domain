@@ -4,10 +4,12 @@ import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
 import { AggregateRootData } from "./aggregate-root-data";
 import "@nivinjoseph/n-ext";
+import { DomainContext } from "./domain-context";
 
 // public
 export abstract class AggregateRoot<T extends AggregateState>
 {
+    private readonly _domainContext: DomainContext;
     private readonly _state: T;
     private readonly _retroEvents: ReadonlyArray<DomainEvent<T>>;
     private readonly _retroVersion: number;
@@ -34,20 +36,23 @@ export abstract class AggregateRoot<T extends AggregateState>
     protected get state(): T { return this._state; }
 
 
-    public constructor(events: ReadonlyArray<DomainEvent<AggregateState>>, initialState?: T | object)
+    public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<AggregateState>>, initialState?: T | object)
     {
+        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
         given(events, "events").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
         given(initialState, "initialState").ensureIsObject();
 
+        this._domainContext = domainContext;
         this._state = initialState || {} as any;
 
         this._retroEvents = events;
-        this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this._state));
+        this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this._domainContext, this._state));
         this._retroVersion = this.currentVersion;
     }
 
-    public static deserialize(aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: AggregateRootData): AggregateRoot<AggregateState>
+    public static deserialize(domainContext: DomainContext, aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: AggregateRootData): AggregateRoot<AggregateState>
     {
+        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
         given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray()
             .ensure(t => t.length > 0, "no eventTypes provided")
@@ -76,7 +81,7 @@ export abstract class AggregateRoot<T extends AggregateState>
             return (<any>event).deserializeEvent(eventData);
         });
         
-        return new (<any>aggregateType)(events);
+        return new (<any>aggregateType)(domainContext, events);
     }
 
 
@@ -97,13 +102,13 @@ export abstract class AggregateRoot<T extends AggregateState>
             .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
 
         const ctor = (<Object>this).constructor;
-        return new (<any>ctor)(this.events.filter(t => t.version < version));
+        return new (<any>ctor)(this._domainContext, this.events.filter(t => t.version < version));
     }
 
 
     protected applyEvent(event: DomainEvent<AggregateState>): void
     {
-        event.apply(this._state);
+        event.apply(this._domainContext, this._state);
 
         this._currentEvents.push(event);
     }

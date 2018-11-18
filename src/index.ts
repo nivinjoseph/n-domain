@@ -4,6 +4,7 @@ import { DomainEvent } from "./domain-event";
 import { AggregateRootData } from "./aggregate-root-data";
 import { DomainEventData } from "./domain-event-data";
 import { DomainHelper } from "./domain-helper";
+import { DomainContext, DevDomainContext, SystemDomainContext } from "./domain-context";
 
 
 export
@@ -13,5 +14,8 @@ export
     DomainEvent,
     AggregateRootData,
     DomainEventData,
-    DomainHelper
+    DomainHelper,
+    DomainContext,
+    DevDomainContext,
+    SystemDomainContext
 };

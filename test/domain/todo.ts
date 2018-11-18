@@ -1,4 +1,4 @@
-import { AggregateRoot, AggregateRootData, DomainHelper } from "../../src";
+import { AggregateRoot, AggregateRootData, DomainHelper, DomainContext } from "../../src";
 import { TodoState } from "./todo-state";
 import { TodoCreatedEvent } from "./events/todo-created-event";
 import { TodoTitleUpdatedEvent } from "./events/todo-title-updated-event";
@@ -17,16 +17,20 @@ export class Todo extends AggregateRoot<TodoState>
 
 
 
-    public static create(title: string, description: string | null): Todo
+    public static create(domainContext: DomainContext, title: string, description: string | null): Todo
     {
+        given(domainContext, "domainContext").ensureHasValue().ensureIsObject();
         given(title, "title").ensureHasValue().ensureIsString();
         given(description, "description").ensureIsString();
 
-        return new Todo([new TodoCreatedEvent({ $user: "dev" }, DomainHelper.generateId(), title, description)]);
+        return new Todo(domainContext, [new TodoCreatedEvent({}, DomainHelper.generateId(), title, description)]);
     }
 
-    public static deserialize(data: object): Todo
+    public static deserialize(domainContext: DomainContext, data: object): Todo
     {
+        given(domainContext, "domainContext").ensureHasValue().ensureIsObject();
+        given(data, "data").ensureHasValue().ensureIsObject();
+
         const eventTypes = [
             TodoCreatedEvent,
             TodoTitleUpdatedEvent,
@@ -34,7 +38,7 @@ export class Todo extends AggregateRoot<TodoState>
             TodoMarkedAsCompletedEvent
         ];
 
-        return AggregateRoot.deserialize(Todo, eventTypes, data as AggregateRootData) as Todo;
+        return AggregateRoot.deserialize(domainContext, Todo, eventTypes, data as AggregateRootData) as Todo;
     }
 
 
@@ -44,7 +48,7 @@ export class Todo extends AggregateRoot<TodoState>
 
         title = title.trim();
 
-        this.applyEvent(new TodoTitleUpdatedEvent({ $user: "dev" }, title));
+        this.applyEvent(new TodoTitleUpdatedEvent({}, title));
     }
 
     public updateDescription(description: string | null): void
@@ -53,11 +57,11 @@ export class Todo extends AggregateRoot<TodoState>
 
         description = description && !description.isEmptyOrWhiteSpace() ? description.trim() : null;
 
-        this.applyEvent(new TodoDescriptionUpdatedEvent({$user: "dev"}, description));
+        this.applyEvent(new TodoDescriptionUpdatedEvent({}, description));
     }
 
     public markAsCompleted(): void
     {
-        this.applyEvent(new TodoMarkedAsCompletedEvent({$user: "dev"}));
+        this.applyEvent(new TodoMarkedAsCompletedEvent({}));
     }
 }

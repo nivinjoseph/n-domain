@@ -1,13 +1,16 @@
 import "@nivinjoseph/n-ext";
 import * as Assert from "assert";
 import { Todo } from "./domain/todo";
+import { DevDomainContext } from "../src";
 
 
 suite("Domain tests", () =>
 {
     test("AggregateRoot", () =>
     {
-        const original = Todo.create("First", "This is the first.");
+        const domainContext = new DevDomainContext();
+
+        const original = Todo.create(domainContext, "First", "This is the first.");
         original.updateTitle("First 1");
 
         Assert.strictEqual(original.hasChanges, true);
@@ -18,7 +21,7 @@ suite("Domain tests", () =>
 
 
         const serialized = original.serialize();
-        const deserialized = Todo.deserialize(serialized);
+        const deserialized = Todo.deserialize(domainContext, serialized);
 
         Assert.ok(deserialized instanceof Todo);
         Assert.strictEqual((<Object>deserialized).getTypeName(), "Todo");

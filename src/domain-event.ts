@@ -3,11 +3,12 @@ import { given } from "@nivinjoseph/n-defensive";
 import { DomainEventData } from "./domain-event-data";
 import "@nivinjoseph/n-ext";
 import { DomainHelper } from ".";
+import { DomainContext } from "./domain-context";
 
 // public
 export abstract class DomainEvent<T extends AggregateState>
 {
-    private readonly _user: string; // who
+    private _user: string; // who
     private readonly _name: string; // what
     private readonly _occurredAt: number; // when
     private _version: number;
@@ -24,23 +25,27 @@ export abstract class DomainEvent<T extends AggregateState>
     {
         given(data, "data").ensureHasValue()
             .ensureHasStructure({
-                $user: "string",
+                "$user?": "string",
                 "$name?": "string",
                 "$occurredAt?": "number",
                 "$version?": "number"
             });
 
-        this._user = data.$user;
+        this._user = data.$user && !data.$user.isEmptyOrWhiteSpace() ? data.$user.trim() : null as any;
         this._name = (<Object>this).getTypeName();
         this._occurredAt = data.$occurredAt || DomainHelper.now;
         this._version = data.$version || 0;
     }
 
 
-    public apply(state: T): void
+    public apply(domainContext: DomainContext, state: T): void
     {
+        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
         given(state, "state").ensureHasValue().ensureIsObject();
 
+        if (this._user == null)
+            this._user = domainContext.user;
+        
         this._version = state.version || 0; // the version of the state before the application of the event => becomes the version of the event
 
         this.applyEvent(state as T);
