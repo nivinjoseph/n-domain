@@ -7,12 +7,12 @@ class DomainEvent {
     constructor(data) {
         n_defensive_1.given(data, "data").ensureHasValue()
             .ensureHasStructure({
-            $user: "string",
+            "$user?": "string",
             "$name?": "string",
             "$occurredAt?": "number",
             "$version?": "number"
         });
-        this._user = data.$user;
+        this._user = data.$user && !data.$user.isEmptyOrWhiteSpace() ? data.$user.trim() : null;
         this._name = this.getTypeName();
         this._occurredAt = data.$occurredAt || _1.DomainHelper.now;
         this._version = data.$version || 0;
@@ -21,8 +21,11 @@ class DomainEvent {
     get name() { return this._name; }
     get occurredAt() { return this._occurredAt; }
     get version() { return this._version; }
-    apply(state) {
+    apply(domainContext, state) {
+        n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
         n_defensive_1.given(state, "state").ensureHasValue().ensureIsObject();
+        if (this._user == null)
+            this._user = domainContext.user;
         this._version = state.version || 0;
         this.applyEvent(state);
         state.version = this._version + 1;

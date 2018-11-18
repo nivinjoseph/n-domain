@@ -4,13 +4,15 @@ const n_defensive_1 = require("@nivinjoseph/n-defensive");
 const n_exception_1 = require("@nivinjoseph/n-exception");
 require("@nivinjoseph/n-ext");
 class AggregateRoot {
-    constructor(events, initialState) {
+    constructor(domainContext, events, initialState) {
         this._currentEvents = new Array();
+        n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
         n_defensive_1.given(events, "events").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
         n_defensive_1.given(initialState, "initialState").ensureIsObject();
+        this._domainContext = domainContext;
         this._state = initialState || {};
         this._retroEvents = events;
-        this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this._state));
+        this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this._domainContext, this._state));
         this._retroVersion = this.currentVersion;
     }
     get id() { return this._state.id; }
@@ -23,7 +25,8 @@ class AggregateRoot {
     get updatedAt() { return this.events.orderByDesc(t => t.version)[0].occurredAt; }
     get hasChanges() { return this.currentVersion !== this.retroVersion; }
     get state() { return this._state; }
-    static deserialize(aggregateType, eventTypes, data) {
+    static deserialize(domainContext, aggregateType, eventTypes, data) {
+        n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
         n_defensive_1.given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
         n_defensive_1.given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray()
             .ensure(t => t.length > 0, "no eventTypes provided")
@@ -49,7 +52,7 @@ class AggregateRoot {
                 throw new n_exception_1.ApplicationException(`Event type '${name}' does not have a static deserializeEvent method defined.`);
             return event.deserializeEvent(eventData);
         });
-        return new aggregateType(events);
+        return new aggregateType(domainContext, events);
     }
     serialize() {
         return {
@@ -64,10 +67,10 @@ class AggregateRoot {
         n_defensive_1.given(version, "version").ensureHasValue().ensureIsNumber()
             .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
         const ctor = this.constructor;
-        return new ctor(this.events.filter(t => t.version < version));
+        return new ctor(this._domainContext, this.events.filter(t => t.version < version));
     }
     applyEvent(event) {
-        event.apply(this._state);
+        event.apply(this._domainContext, this._state);
         this._currentEvents.push(event);
     }
 }
