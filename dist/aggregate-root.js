@@ -24,6 +24,7 @@ class AggregateRoot {
     get version() { return this.currentVersion; }
     get updatedAt() { return this.events.orderByDesc(t => t.version)[0].occurredAt; }
     get hasChanges() { return this.currentVersion !== this.retroVersion; }
+    get context() { return this._domainContext; }
     get state() { return this._state; }
     static deserialize(domainContext, aggregateType, eventTypes, data) {
         n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
