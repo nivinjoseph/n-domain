@@ -33,6 +33,7 @@ export abstract class AggregateRoot<T extends AggregateState>
     public get hasChanges(): boolean { return this.currentVersion !== this.retroVersion; }
 
 
+    protected get context(): DomainContext { return this._domainContext; }
     protected get state(): T { return this._state; }
 
 
