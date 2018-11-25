@@ -3,13 +3,13 @@ import { given } from "@nivinjoseph/n-defensive";
 import { DomainEvent, DomainEventData } from "../../../src";
 
 
-export class TodoMarkedAsCompletedEvent extends DomainEvent<TodoState>
+export class TodoMarkedAsCompleted extends DomainEvent<TodoState>
 {
-    public static deserializeEvent(data: DomainEventData): TodoMarkedAsCompletedEvent
+    public static deserializeEvent(data: DomainEventData): TodoMarkedAsCompleted
     {
         given(data, "data").ensureHasValue().ensureIsObject();
 
-        return new TodoMarkedAsCompletedEvent(data);
+        return new TodoMarkedAsCompleted(data);
     }
 
 

@@ -21,6 +21,7 @@ suite("Domain tests", () =>
 
 
         const serialized = original.serialize();
+        // console.log(serialized);
         const deserialized = Todo.deserialize(domainContext, serialized);
 
         Assert.ok(deserialized instanceof Todo);

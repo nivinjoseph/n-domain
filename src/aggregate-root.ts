@@ -47,7 +47,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         this._state = initialState || {} as any;
 
         this._retroEvents = events;
-        this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this._domainContext, this._state));
+        this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         this._retroVersion = this.currentVersion;
     }
 
@@ -109,7 +109,7 @@ export abstract class AggregateRoot<T extends AggregateState>
 
     protected applyEvent(event: DomainEvent<AggregateState>): void
     {
-        event.apply(this._domainContext, this._state);
+        event.apply(this, this._domainContext, this._state);
 
         this._currentEvents.push(event);
     }

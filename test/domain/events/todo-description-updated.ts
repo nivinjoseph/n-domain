@@ -3,7 +3,7 @@ import { given } from "@nivinjoseph/n-defensive";
 import { DomainEvent, DomainEventData } from "../../../src";
 
 
-export class TodoDescriptionUpdatedEvent extends DomainEvent<TodoState>
+export class TodoDescriptionUpdated extends DomainEvent<TodoState>
 {
     private readonly _description: string | null;
 
@@ -17,11 +17,11 @@ export class TodoDescriptionUpdatedEvent extends DomainEvent<TodoState>
     }
 
 
-    public static deserializeEvent(data: DomainEventData & Serialized): TodoDescriptionUpdatedEvent
+    public static deserializeEvent(data: DomainEventData & Serialized): TodoDescriptionUpdated
     {
         given(data, "data").ensureHasValue().ensureIsObject();
 
-        return new TodoDescriptionUpdatedEvent(data, data.description);
+        return new TodoDescriptionUpdated(data, data.description);
     }
 
 

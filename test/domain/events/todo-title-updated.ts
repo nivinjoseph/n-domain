@@ -3,7 +3,7 @@ import { TodoState } from "../todo-state";
 import { DomainEvent, DomainEventData } from "../../../src";
 
 
-export class TodoTitleUpdatedEvent extends DomainEvent<TodoState>
+export class TodoTitleUpdated extends DomainEvent<TodoState>
 {
     private readonly _title: string;
 
@@ -17,11 +17,11 @@ export class TodoTitleUpdatedEvent extends DomainEvent<TodoState>
     }
 
     
-    public static deserializeEvent(data: DomainEventData & Serialized): TodoTitleUpdatedEvent
+    public static deserializeEvent(data: DomainEventData & Serialized): TodoTitleUpdated
     {
         given(data, "data").ensureHasValue().ensureIsObject();
 
-        return new TodoTitleUpdatedEvent(data, data.title);
+        return new TodoTitleUpdated(data, data.title);
     }
 
     

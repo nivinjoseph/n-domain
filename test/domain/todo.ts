@@ -1,16 +1,16 @@
 import { AggregateRoot, AggregateRootData, DomainHelper, DomainContext } from "../../src";
 import { TodoState } from "./todo-state";
-import { TodoCreatedEvent } from "./events/todo-created-event";
-import { TodoTitleUpdatedEvent } from "./events/todo-title-updated-event";
-import { TodoDescriptionUpdatedEvent } from "./events/todo-description-updated-event";
-import { TodoMarkedAsCompletedEvent } from "./events/todo-marked-as-completed-event";
+import { TodoCreated } from "./events/todo-created";
+import { TodoTitleUpdated } from "./events/todo-title-updated";
+import { TodoDescriptionUpdated } from "./events/todo-description-updated";
+import { TodoMarkedAsCompleted } from "./events/todo-marked-as-completed";
 import { given } from "@nivinjoseph/n-defensive";
 
 
 export class Todo extends AggregateRoot<TodoState>
 {
     // @ts-ignore: strictNullChecks
-    public get createdAt(): number { return this.events.find(t => t.name === (<Object>TodoCreatedEvent).getTypeName()).occurredAt; }
+    public get createdAt(): number { return this.events.find(t => t.name === (<Object>TodoCreated).getTypeName()).occurredAt; }
     public get title(): string { return this.state.title; }
     public get description(): string | null { return this.state.description; }
     public get isCompleted(): boolean { return this.state.isCompleted; }
@@ -23,7 +23,7 @@ export class Todo extends AggregateRoot<TodoState>
         given(title, "title").ensureHasValue().ensureIsString();
         given(description, "description").ensureIsString();
 
-        return new Todo(domainContext, [new TodoCreatedEvent({}, DomainHelper.generateId(), title, description)]);
+        return new Todo(domainContext, [new TodoCreated({}, DomainHelper.generateId(), title, description)]);
     }
 
     public static deserialize(domainContext: DomainContext, data: object): Todo
@@ -32,10 +32,10 @@ export class Todo extends AggregateRoot<TodoState>
         given(data, "data").ensureHasValue().ensureIsObject();
 
         const eventTypes = [
-            TodoCreatedEvent,
-            TodoTitleUpdatedEvent,
-            TodoDescriptionUpdatedEvent,
-            TodoMarkedAsCompletedEvent
+            TodoCreated,
+            TodoTitleUpdated,
+            TodoDescriptionUpdated,
+            TodoMarkedAsCompleted
         ];
 
         return AggregateRoot.deserialize(domainContext, Todo, eventTypes, data as AggregateRootData) as Todo;
@@ -48,7 +48,7 @@ export class Todo extends AggregateRoot<TodoState>
 
         title = title.trim();
 
-        this.applyEvent(new TodoTitleUpdatedEvent({}, title));
+        this.applyEvent(new TodoTitleUpdated({}, title));
     }
 
     public updateDescription(description: string | null): void
@@ -57,11 +57,11 @@ export class Todo extends AggregateRoot<TodoState>
 
         description = description && !description.isEmptyOrWhiteSpace() ? description.trim() : null;
 
-        this.applyEvent(new TodoDescriptionUpdatedEvent({}, description));
+        this.applyEvent(new TodoDescriptionUpdated({}, description));
     }
 
     public markAsCompleted(): void
     {
-        this.applyEvent(new TodoMarkedAsCompletedEvent({}));
+        this.applyEvent(new TodoMarkedAsCompleted({}));
     }
 }
