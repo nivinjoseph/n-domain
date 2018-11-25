@@ -12,7 +12,7 @@ class AggregateRoot {
         this._domainContext = domainContext;
         this._state = initialState || {};
         this._retroEvents = events;
-        this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this._domainContext, this._state));
+        this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         this._retroVersion = this.currentVersion;
     }
     get id() { return this._state.id; }
@@ -71,7 +71,7 @@ class AggregateRoot {
         return new ctor(this._domainContext, this.events.filter(t => t.version < version));
     }
     applyEvent(event) {
-        event.apply(this._domainContext, this._state);
+        event.apply(this, this._domainContext, this._state);
         this._currentEvents.push(event);
     }
 }
