@@ -26,4 +26,6 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     serialize(): AggregateRootData;
     constructVersion(version: number): this;
     protected applyEvent(event: DomainEvent<AggregateState>): void;
+    protected hasEventOfType(eventType: Function): boolean;
+    protected getEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
 }

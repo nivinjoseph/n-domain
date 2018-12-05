@@ -74,6 +74,16 @@ class AggregateRoot {
         event.apply(this, this._domainContext, this._state);
         this._currentEvents.push(event);
     }
+    hasEventOfType(eventType) {
+        n_defensive_1.given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        const eventTypeName = eventType.getTypeName();
+        return this.events.some(t => t.name === eventTypeName);
+    }
+    getEventsOfType(eventType) {
+        n_defensive_1.given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        const eventTypeName = eventType.getTypeName();
+        return this.events.filter(t => t.name === eventTypeName);
+    }
 }
 exports.AggregateRoot = AggregateRoot;
 //# sourceMappingURL=aggregate-root.js.map
