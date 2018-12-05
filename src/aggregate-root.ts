@@ -113,4 +113,20 @@ export abstract class AggregateRoot<T extends AggregateState>
 
         this._currentEvents.push(event);
     }
+    
+    protected hasEventOfType(eventType: Function): boolean
+    {
+        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        
+        const eventTypeName = (<Object>eventType).getTypeName();
+        return this.events.some(t => t.name === eventTypeName);
+    }
+    
+    protected getEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
+    {
+        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        
+        const eventTypeName = (<Object>eventType).getTypeName();
+        return this.events.filter(t => t.name === eventTypeName) as any;
+    }
 }
