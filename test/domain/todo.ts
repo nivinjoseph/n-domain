@@ -9,12 +9,9 @@ import { given } from "@nivinjoseph/n-defensive";
 
 export class Todo extends AggregateRoot<TodoState>
 {
-    // @ts-ignore: strictNullChecks
-    public get createdAt(): number { return this.events.find(t => t.name === (<Object>TodoCreated).getTypeName()).occurredAt; }
     public get title(): string { return this.state.title; }
     public get description(): string | null { return this.state.description; }
     public get isCompleted(): boolean { return this.state.isCompleted; }
-
 
 
     public static create(domainContext: DomainContext, title: string, description: string | null): Todo
@@ -23,7 +20,7 @@ export class Todo extends AggregateRoot<TodoState>
         given(title, "title").ensureHasValue().ensureIsString();
         given(description, "description").ensureIsString();
 
-        return new Todo(domainContext, [new TodoCreated({}, DomainHelper.generateId(), title, description)]);
+        return new Todo(domainContext, [new TodoCreated({$isCreatedEvent: true}, DomainHelper.generateId(), title, description)]);
     }
 
     public static deserialize(domainContext: DomainContext, data: object): Todo

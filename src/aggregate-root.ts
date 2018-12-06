@@ -26,8 +26,8 @@ export abstract class AggregateRoot<T extends AggregateState>
     
     public get events(): ReadonlyArray<DomainEvent<T>> { return [...this._retroEvents, ...this._currentEvents].orderBy(t => t.version); }
     public get version(): number { return this.currentVersion; }
-
-    public abstract get createdAt(): number;
+    // @ts-ignore: strictNullChecks
+    public get createdAt(): number { return this.events.find(t => t.isCreatedEvent).occurredAt; }
     public get updatedAt(): number { return this.events.orderByDesc(t => t.version)[0].occurredAt; }
 
     public get hasChanges(): boolean { return this.currentVersion !== this.retroVersion; }
@@ -39,8 +39,12 @@ export abstract class AggregateRoot<T extends AggregateState>
 
     public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<AggregateState>>, initialState?: T | object)
     {
-        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
-        given(events, "events").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+        given(domainContext, "domainContext").ensureHasValue()
+            .ensureHasStructure({ user: "string" });
+        given(events, "events").ensureHasValue().ensureIsArray()
+            .ensure(t => t.length > 0, "no events passed")
+            .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
+            .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
         given(initialState, "initialState").ensureIsObject();
 
         this._domainContext = domainContext;
@@ -65,9 +69,13 @@ export abstract class AggregateRoot<T extends AggregateState>
                 $createdAt: "number",
                 $updatedAt: "number",
                 $events: [{
+                    $aggregateId: "string",
+                    $id: "string",
+                    $user: "string",
                     $name: "string",
                     $occurredAt: "number",
-                    $version: "number"
+                    $version: "number",
+                    $isCreatedEvent: "boolean"
                 }]
             });
         

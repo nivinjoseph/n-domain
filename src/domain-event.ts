@@ -15,6 +15,7 @@ export abstract class DomainEvent<T extends AggregateState>
     private readonly _name: string; // what
     private readonly _occurredAt: number; // when
     private _version: number;
+    private readonly _isCreatedEvent: boolean;
 
 
     public get aggregateId(): string | null { return this._aggregateId; }
@@ -23,6 +24,7 @@ export abstract class DomainEvent<T extends AggregateState>
     public get name(): string { return this._name; }
     public get occurredAt(): number { return this._occurredAt; }
     public get version(): number { return this._version; }
+    public get isCreatedEvent(): boolean { return this._isCreatedEvent; }
 
     // occurredAt is epoch milliseconds
     // public constructor(user: string, occurredAt: number = DomainHelper.now, version: number = 0)
@@ -35,7 +37,8 @@ export abstract class DomainEvent<T extends AggregateState>
                 "$user?": "string",
                 "$name?": "string",
                 "$occurredAt?": "number",
-                "$version?": "number"
+                "$version?": "number",
+                "$isCreatedEvent?": "boolean"
             });
 
         this._aggregateId = data.$aggregateId || null;
@@ -44,6 +47,7 @@ export abstract class DomainEvent<T extends AggregateState>
         this._name = (<Object>this).getTypeName();
         this._occurredAt = data.$occurredAt || DomainHelper.now;
         this._version = data.$version || 0;
+        this._isCreatedEvent = !!data.$isCreatedEvent;
     }
 
 
@@ -75,7 +79,8 @@ export abstract class DomainEvent<T extends AggregateState>
             $user: this._user,
             $name: this._name,
             $occurredAt: this._occurredAt,
-            $version: this._version
+            $version: this._version,
+            $isCreatedEvent: this._isCreatedEvent
         });
     }
 

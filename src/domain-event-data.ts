@@ -7,4 +7,5 @@ export interface DomainEventData
     $name?: string;
     $occurredAt?: number;
     $version?: number;
+    $isCreatedEvent?: boolean;
 }
