@@ -13,7 +13,8 @@ class DomainEvent {
             "$user?": "string",
             "$name?": "string",
             "$occurredAt?": "number",
-            "$version?": "number"
+            "$version?": "number",
+            "$isCreatedEvent?": "boolean"
         });
         this._aggregateId = data.$aggregateId || null;
         this._id = data.$id || _1.DomainHelper.generateId();
@@ -21,6 +22,7 @@ class DomainEvent {
         this._name = this.getTypeName();
         this._occurredAt = data.$occurredAt || _1.DomainHelper.now;
         this._version = data.$version || 0;
+        this._isCreatedEvent = !!data.$isCreatedEvent;
     }
     get aggregateId() { return this._aggregateId; }
     get id() { return this._id; }
@@ -28,6 +30,7 @@ class DomainEvent {
     get name() { return this._name; }
     get occurredAt() { return this._occurredAt; }
     get version() { return this._version; }
+    get isCreatedEvent() { return this._isCreatedEvent; }
     apply(aggregate, domainContext, state) {
         n_defensive_1.given(aggregate, "aggregate").ensureHasValue().ensureIsObject().ensure(t => t instanceof _1.AggregateRoot);
         n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
@@ -48,7 +51,8 @@ class DomainEvent {
             $user: this._user,
             $name: this._name,
             $occurredAt: this._occurredAt,
-            $version: this._version
+            $version: this._version,
+            $isCreatedEvent: this._isCreatedEvent
         });
     }
 }

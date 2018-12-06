@@ -10,12 +10,14 @@ export declare abstract class DomainEvent<T extends AggregateState> {
     private readonly _name;
     private readonly _occurredAt;
     private _version;
+    private readonly _isCreatedEvent;
     readonly aggregateId: string | null;
     readonly id: string;
     readonly user: string | null;
     readonly name: string;
     readonly occurredAt: number;
     readonly version: number;
+    readonly isCreatedEvent: boolean;
     constructor(data: DomainEventData);
     apply(aggregate: AggregateRoot<T>, domainContext: DomainContext, state: T): void;
     serialize(): DomainEventData;

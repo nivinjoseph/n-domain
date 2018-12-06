@@ -16,7 +16,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     readonly currentVersion: number;
     readonly events: ReadonlyArray<DomainEvent<T>>;
     readonly version: number;
-    abstract readonly createdAt: number;
+    readonly createdAt: number;
     readonly updatedAt: number;
     readonly hasChanges: boolean;
     protected readonly context: DomainContext;

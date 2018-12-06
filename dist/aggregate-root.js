@@ -6,8 +6,12 @@ require("@nivinjoseph/n-ext");
 class AggregateRoot {
     constructor(domainContext, events, initialState) {
         this._currentEvents = new Array();
-        n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
-        n_defensive_1.given(events, "events").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+        n_defensive_1.given(domainContext, "domainContext").ensureHasValue()
+            .ensureHasStructure({ user: "string" });
+        n_defensive_1.given(events, "events").ensureHasValue().ensureIsArray()
+            .ensure(t => t.length > 0, "no events passed")
+            .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
+            .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
         n_defensive_1.given(initialState, "initialState").ensureIsObject();
         this._domainContext = domainContext;
         this._state = initialState || {};
@@ -22,6 +26,7 @@ class AggregateRoot {
     get currentVersion() { return this._state.version; }
     get events() { return [...this._retroEvents, ...this._currentEvents].orderBy(t => t.version); }
     get version() { return this.currentVersion; }
+    get createdAt() { return this.events.find(t => t.isCreatedEvent).occurredAt; }
     get updatedAt() { return this.events.orderByDesc(t => t.version)[0].occurredAt; }
     get hasChanges() { return this.currentVersion !== this.retroVersion; }
     get context() { return this._domainContext; }
@@ -39,9 +44,13 @@ class AggregateRoot {
             $createdAt: "number",
             $updatedAt: "number",
             $events: [{
+                    $aggregateId: "string",
+                    $id: "string",
+                    $user: "string",
                     $name: "string",
                     $occurredAt: "number",
-                    $version: "number"
+                    $version: "number",
+                    $isCreatedEvent: "boolean"
                 }]
         });
         const events = data.$events.map((eventData) => {
