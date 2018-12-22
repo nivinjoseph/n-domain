@@ -1,17 +1,17 @@
 // public
 export interface DomainContext
 {
-    user: string;
+    userId: string;
 }
 
 // public
 export class DevDomainContext implements DomainContext
 {
-    public get user(): string { return "dev"; }
+    public get userId(): string { return "dev"; }
 }
 
 // public
 export class SystemDomainContext implements DomainContext
 {
-    public get user(): string { return "system"; }
+    public get userId(): string { return "system"; }
 }

@@ -11,7 +11,7 @@ export abstract class DomainEvent<T extends AggregateState>
 {
     private _aggregateId: string | null;
     private readonly _id: string;
-    private _user: string | null; // who
+    private _userId: string | null; // who
     private readonly _name: string; // what
     private readonly _occurredAt: number; // when
     private _version: number;
@@ -20,7 +20,7 @@ export abstract class DomainEvent<T extends AggregateState>
 
     public get aggregateId(): string | null { return this._aggregateId; }
     public get id(): string { return this._id; }
-    public get user(): string | null { return this._user; }
+    public get userId(): string | null { return this._userId; }
     public get name(): string { return this._name; }
     public get occurredAt(): number { return this._occurredAt; }
     public get version(): number { return this._version; }
@@ -34,7 +34,7 @@ export abstract class DomainEvent<T extends AggregateState>
             .ensureHasStructure({
                 "$aggregateId?": "string",
                 "$id?": "string",
-                "$user?": "string",
+                "$userId?": "string",
                 "$name?": "string",
                 "$occurredAt?": "number",
                 "$version?": "number",
@@ -43,7 +43,7 @@ export abstract class DomainEvent<T extends AggregateState>
 
         this._aggregateId = data.$aggregateId || null;
         this._id = data.$id || DomainHelper.generateId();
-        this._user = data.$user && !data.$user.isEmptyOrWhiteSpace() ? data.$user.trim() : null;
+        this._userId = data.$userId && !data.$userId.isEmptyOrWhiteSpace() ? data.$userId.trim() : null;
         this._name = (<Object>this).getTypeName();
         this._occurredAt = data.$occurredAt || DomainHelper.now;
         this._version = data.$version || 0;
@@ -54,11 +54,11 @@ export abstract class DomainEvent<T extends AggregateState>
     public apply(aggregate: AggregateRoot<T>, domainContext: DomainContext, state: T): void
     {
         given(aggregate, "aggregate").ensureHasValue().ensureIsObject().ensure(t => t instanceof AggregateRoot);
-        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
+        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(state, "state").ensureHasValue().ensureIsObject();
 
-        if (this._user == null)
-            this._user = domainContext.user;
+        if (this._userId == null)
+            this._userId = domainContext.userId;
         
         this._version = state.version || 0; // the version of the state before the application of the event => becomes the version of the event
 
@@ -76,7 +76,7 @@ export abstract class DomainEvent<T extends AggregateState>
         return Object.assign(this.serializeEvent(), {
             $aggregateId: this._aggregateId,
             $id: this._id,
-            $user: this._user,
+            $userId: this._userId,
             $name: this._name,
             $occurredAt: this._occurredAt,
             $version: this._version,

@@ -3,7 +3,7 @@ export interface DomainEventData
 {
     $aggregateId?: string;
     $id?: string;
-    $user?: string;
+    $userId?: string;
     $name?: string;
     $occurredAt?: number;
     $version?: number;

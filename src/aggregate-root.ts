@@ -40,7 +40,7 @@ export abstract class AggregateRoot<T extends AggregateState>
     public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<AggregateState>>, initialState?: T | object)
     {
         given(domainContext, "domainContext").ensureHasValue()
-            .ensureHasStructure({ user: "string" });
+            .ensureHasStructure({ userId: "string" });
         given(events, "events").ensureHasValue().ensureIsArray()
             .ensure(t => t.length > 0, "no events passed")
             .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
@@ -57,7 +57,7 @@ export abstract class AggregateRoot<T extends AggregateState>
 
     public static deserialize(domainContext: DomainContext, aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: AggregateRootData): AggregateRoot<AggregateState>
     {
-        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
+        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
         given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray()
             .ensure(t => t.length > 0, "no eventTypes provided")
@@ -71,7 +71,7 @@ export abstract class AggregateRoot<T extends AggregateState>
                 $events: [{
                     $aggregateId: "string",
                     $id: "string",
-                    $user: "string",
+                    $userId: "string",
                     $name: "string",
                     $occurredAt: "number",
                     $version: "number",
