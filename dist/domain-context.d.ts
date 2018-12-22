@@ -1,9 +1,9 @@
 export interface DomainContext {
-    user: string;
+    userId: string;
 }
 export declare class DevDomainContext implements DomainContext {
-    readonly user: string;
+    readonly userId: string;
 }
 export declare class SystemDomainContext implements DomainContext {
-    readonly user: string;
+    readonly userId: string;
 }

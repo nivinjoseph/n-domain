@@ -6,14 +6,14 @@ import { DomainContext } from "./domain-context";
 export declare abstract class DomainEvent<T extends AggregateState> {
     private _aggregateId;
     private readonly _id;
-    private _user;
+    private _userId;
     private readonly _name;
     private readonly _occurredAt;
     private _version;
     private readonly _isCreatedEvent;
     readonly aggregateId: string | null;
     readonly id: string;
-    readonly user: string | null;
+    readonly userId: string | null;
     readonly name: string;
     readonly occurredAt: number;
     readonly version: number;

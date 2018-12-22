@@ -7,7 +7,7 @@ class AggregateRoot {
     constructor(domainContext, events, initialState) {
         this._currentEvents = new Array();
         n_defensive_1.given(domainContext, "domainContext").ensureHasValue()
-            .ensureHasStructure({ user: "string" });
+            .ensureHasStructure({ userId: "string" });
         n_defensive_1.given(events, "events").ensureHasValue().ensureIsArray()
             .ensure(t => t.length > 0, "no events passed")
             .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
@@ -32,7 +32,7 @@ class AggregateRoot {
     get context() { return this._domainContext; }
     get state() { return this._state; }
     static deserialize(domainContext, aggregateType, eventTypes, data) {
-        n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
+        n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         n_defensive_1.given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
         n_defensive_1.given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray()
             .ensure(t => t.length > 0, "no eventTypes provided")
@@ -46,7 +46,7 @@ class AggregateRoot {
             $events: [{
                     $aggregateId: "string",
                     $id: "string",
-                    $user: "string",
+                    $userId: "string",
                     $name: "string",
                     $occurredAt: "number",
                     $version: "number",

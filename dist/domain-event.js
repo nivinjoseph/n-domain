@@ -10,7 +10,7 @@ class DomainEvent {
             .ensureHasStructure({
             "$aggregateId?": "string",
             "$id?": "string",
-            "$user?": "string",
+            "$userId?": "string",
             "$name?": "string",
             "$occurredAt?": "number",
             "$version?": "number",
@@ -18,7 +18,7 @@ class DomainEvent {
         });
         this._aggregateId = data.$aggregateId || null;
         this._id = data.$id || _1.DomainHelper.generateId();
-        this._user = data.$user && !data.$user.isEmptyOrWhiteSpace() ? data.$user.trim() : null;
+        this._userId = data.$userId && !data.$userId.isEmptyOrWhiteSpace() ? data.$userId.trim() : null;
         this._name = this.getTypeName();
         this._occurredAt = data.$occurredAt || _1.DomainHelper.now;
         this._version = data.$version || 0;
@@ -26,17 +26,17 @@ class DomainEvent {
     }
     get aggregateId() { return this._aggregateId; }
     get id() { return this._id; }
-    get user() { return this._user; }
+    get userId() { return this._userId; }
     get name() { return this._name; }
     get occurredAt() { return this._occurredAt; }
     get version() { return this._version; }
     get isCreatedEvent() { return this._isCreatedEvent; }
     apply(aggregate, domainContext, state) {
         n_defensive_1.given(aggregate, "aggregate").ensureHasValue().ensureIsObject().ensure(t => t instanceof _1.AggregateRoot);
-        n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ user: "string" });
+        n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         n_defensive_1.given(state, "state").ensureHasValue().ensureIsObject();
-        if (this._user == null)
-            this._user = domainContext.user;
+        if (this._userId == null)
+            this._userId = domainContext.userId;
         this._version = state.version || 0;
         this.applyEvent(state);
         if (this._aggregateId != null && this._aggregateId !== aggregate.id)
@@ -48,7 +48,7 @@ class DomainEvent {
         return Object.assign(this.serializeEvent(), {
             $aggregateId: this._aggregateId,
             $id: this._id,
-            $user: this._user,
+            $userId: this._userId,
             $name: this._name,
             $occurredAt: this._occurredAt,
             $version: this._version,
