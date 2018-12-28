@@ -60,8 +60,8 @@ export abstract class DomainEvent<T extends AggregateState>
         if (this._userId == null)
             this._userId = domainContext.userId;
         
-        this._version = state.version || 0; // the version of the state before the application of the event => becomes the version of the event
-
+        this._version = this._version || state.version || 0; // the version of the state before the application of the event => becomes the version of the event
+        
         this.applyEvent(state as T);
 
         if (this._aggregateId != null && this._aggregateId !== aggregate.id)

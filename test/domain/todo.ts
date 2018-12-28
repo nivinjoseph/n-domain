@@ -1,4 +1,4 @@
-import { AggregateRoot, AggregateRootData, DomainHelper, DomainContext } from "../../src";
+import { AggregateRoot, AggregateRootData, DomainHelper, DomainContext, DomainEvent} from "../../src";
 import { TodoState } from "./todo-state";
 import { TodoCreated } from "./events/todo-created";
 import { TodoTitleUpdated } from "./events/todo-title-updated";
@@ -13,7 +13,7 @@ export class Todo extends AggregateRoot<TodoState>
     public get description(): string | null { return this.state.description; }
     public get isCompleted(): boolean { return this.state.isCompleted; }
 
-
+    
     public static create(domainContext: DomainContext, title: string, description: string | null): Todo
     {
         given(domainContext, "domainContext").ensureHasValue().ensureIsObject();
@@ -60,5 +60,16 @@ export class Todo extends AggregateRoot<TodoState>
     public markAsCompleted(): void
     {
         this.applyEvent(new TodoMarkedAsCompleted({}));
+    }
+    
+    
+    protected trim(retroEvents: ReadonlyArray<DomainEvent<TodoState>>): ReadonlyArray<DomainEvent<TodoState>>
+    {
+        const result = [...super.trim(retroEvents)];
+        
+        if (this.hasCurrentEventOfType(TodoTitleUpdated))
+            this.getRetroEventsOfType(TodoTitleUpdated).forEach(t => result.remove(t));
+        
+        return result;
     }
 }
