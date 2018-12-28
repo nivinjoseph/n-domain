@@ -6,7 +6,7 @@ import { DomainContext } from "./domain-context";
 export declare abstract class AggregateRoot<T extends AggregateState> {
     private readonly _domainContext;
     private readonly _state;
-    private readonly _retroEvents;
+    private _retroEvents;
     private readonly _retroVersion;
     private readonly _currentEvents;
     readonly id: string;
@@ -21,11 +21,16 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     readonly hasChanges: boolean;
     protected readonly context: DomainContext;
     protected readonly state: T;
-    constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<AggregateState>>, initialState?: T | object);
+    constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, initialState?: T | object);
     static deserialize(domainContext: DomainContext, aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: AggregateRootData): AggregateRoot<AggregateState>;
     serialize(): AggregateRootData;
     constructVersion(version: number): this;
     protected applyEvent(event: DomainEvent<AggregateState>): void;
     protected hasEventOfType(eventType: Function): boolean;
+    protected hasRetroEventOfType(eventType: Function): boolean;
+    protected hasCurrentEventOfType(eventType: Function): boolean;
     protected getEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
+    protected getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
+    protected getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
+    protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>;
 }

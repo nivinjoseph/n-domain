@@ -8,13 +8,13 @@ class AggregateRoot {
         this._currentEvents = new Array();
         n_defensive_1.given(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
+        this._domainContext = domainContext;
+        n_defensive_1.given(initialState, "initialState").ensureIsObject();
+        this._state = initialState || {};
         n_defensive_1.given(events, "events").ensureHasValue().ensureIsArray()
             .ensure(t => t.length > 0, "no events passed")
             .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
             .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
-        n_defensive_1.given(initialState, "initialState").ensureIsObject();
-        this._domainContext = domainContext;
-        this._state = initialState || {};
         this._retroEvents = events;
         this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         this._retroVersion = this.currentVersion;
@@ -82,16 +82,47 @@ class AggregateRoot {
     applyEvent(event) {
         event.apply(this, this._domainContext, this._state);
         this._currentEvents.push(event);
+        const trimmed = this.trim(this._retroEvents.orderBy(t => t.version)).orderBy(t => t.version);
+        n_defensive_1.given(trimmed, "trimmed").ensureHasValue().ensureIsArray()
+            .ensure(t => t.length > 0, "cannot trim all retro events")
+            .ensure(t => t.some(u => u.isCreatedEvent), "cannot trim created event")
+            .ensure(t => t.count(u => u.isCreatedEvent) === 1, "cannot add new created events")
+            .ensure(t => t.every(u => this._retroEvents.contains(u)), "cannot add new events");
+        this._retroEvents = trimmed;
     }
     hasEventOfType(eventType) {
         n_defensive_1.given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         const eventTypeName = eventType.getTypeName();
         return this.events.some(t => t.name === eventTypeName);
     }
+    hasRetroEventOfType(eventType) {
+        n_defensive_1.given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        const eventTypeName = eventType.getTypeName();
+        return this._retroEvents.some(t => t.name === eventTypeName);
+    }
+    hasCurrentEventOfType(eventType) {
+        n_defensive_1.given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        const eventTypeName = eventType.getTypeName();
+        return this._currentEvents.some(t => t.name === eventTypeName);
+    }
     getEventsOfType(eventType) {
         n_defensive_1.given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         const eventTypeName = eventType.getTypeName();
         return this.events.filter(t => t.name === eventTypeName);
+    }
+    getRetroEventsOfType(eventType) {
+        n_defensive_1.given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        const eventTypeName = eventType.getTypeName();
+        return this._retroEvents.filter(t => t.name === eventTypeName);
+    }
+    getCurrentEventsOfType(eventType) {
+        n_defensive_1.given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        const eventTypeName = eventType.getTypeName();
+        return this._currentEvents.filter(t => t.name === eventTypeName);
+    }
+    trim(retroEvents) {
+        n_defensive_1.given(retroEvents, "retroEvents").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+        return retroEvents;
     }
 }
 exports.AggregateRoot = AggregateRoot;
