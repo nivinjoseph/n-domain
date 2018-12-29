@@ -37,12 +37,12 @@ class DomainEvent {
         n_defensive_1.given(state, "state").ensureHasValue().ensureIsObject();
         if (this._userId == null)
             this._userId = domainContext.userId;
-        this._version = this._version || state.version || 0;
+        const version = this._version || (state.version + 1) || 1;
         this.applyEvent(state);
         if (this._aggregateId != null && this._aggregateId !== aggregate.id)
             throw new n_exception_1.ApplicationException(`Event of type '${this._name}' with id ${this._id} and aggregateId '${this._aggregateId}' is being applied on Aggregate of type '${aggregate.getTypeName()}' with id '${aggregate.id}'`);
         this._aggregateId = aggregate.id;
-        state.version = this._version + 1;
+        state.version = this._version = version;
     }
     serialize() {
         return Object.assign(this.serializeEvent(), {

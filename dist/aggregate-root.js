@@ -77,7 +77,7 @@ class AggregateRoot {
         n_defensive_1.given(version, "version").ensureHasValue().ensureIsNumber()
             .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
         const ctor = this.constructor;
-        return new ctor(this._domainContext, this.events.filter(t => t.version < version));
+        return new ctor(this._domainContext, this.events.filter(t => t.version <= version));
     }
     applyEvent(event) {
         event.apply(this, this._domainContext, this._state);
@@ -85,6 +85,7 @@ class AggregateRoot {
         const trimmed = this.trim(this._retroEvents.orderBy(t => t.version)).orderBy(t => t.version);
         n_defensive_1.given(trimmed, "trimmed").ensureHasValue().ensureIsArray()
             .ensure(t => t.length > 0, "cannot trim all retro events")
+            .ensure(t => t.length <= this._retroEvents.length, "only contraction is allowed")
             .ensure(t => t.some(u => u.isCreatedEvent), "cannot trim created event")
             .ensure(t => t.count(u => u.isCreatedEvent) === 1, "cannot add new created events")
             .ensure(t => t.every(u => this._retroEvents.contains(u)), "cannot add new events");
