@@ -60,7 +60,7 @@ export abstract class DomainEvent<T extends AggregateState>
         if (this._userId == null)
             this._userId = domainContext.userId;
         
-        this._version = this._version || state.version || 0; // the version of the state before the application of the event => becomes the version of the event
+        const version = this._version || (state.version + 1) || 1; // the version of the state before the application of the event => becomes the version of the event
         
         this.applyEvent(state as T);
 
@@ -68,7 +68,7 @@ export abstract class DomainEvent<T extends AggregateState>
             throw new ApplicationException(`Event of type '${this._name}' with id ${this._id} and aggregateId '${this._aggregateId}' is being applied on Aggregate of type '${(<Object>aggregate).getTypeName()}' with id '${aggregate.id}'`);
 
         this._aggregateId = aggregate.id;
-        state.version = this._version + 1;
+        state.version = this._version = version;
     }
 
     public serialize(): DomainEventData

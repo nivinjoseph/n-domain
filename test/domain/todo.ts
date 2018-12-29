@@ -67,8 +67,8 @@ export class Todo extends AggregateRoot<TodoState>
     {
         const result = [...super.trim(retroEvents)];
         
-        if (this.hasCurrentEventOfType(TodoTitleUpdated))
-            this.getRetroEventsOfType(TodoTitleUpdated).forEach(t => result.remove(t));
+        if (this.hasCurrentEventOfType(TodoDescriptionUpdated))
+            this.getRetroEventsOfType(TodoDescriptionUpdated).forEach(t => result.remove(t));
         
         return result;
     }
