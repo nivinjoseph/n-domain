@@ -10,7 +10,7 @@ import { ApplicationException } from "@nivinjoseph/n-exception";
 export abstract class DomainEvent<T extends AggregateState>
 {
     private _aggregateId: string | null;
-    private readonly _id: string;
+    private _id: string | null; // _aggregateId-_version
     private _userId: string | null; // who
     private readonly _name: string; // what
     private readonly _occurredAt: number; // when
@@ -19,7 +19,7 @@ export abstract class DomainEvent<T extends AggregateState>
 
 
     public get aggregateId(): string | null { return this._aggregateId; }
-    public get id(): string { return this._id; }
+    public get id(): string | null { return this._id; }
     public get userId(): string | null { return this._userId; }
     public get name(): string { return this._name; }
     public get occurredAt(): number { return this._occurredAt; }
@@ -42,9 +42,11 @@ export abstract class DomainEvent<T extends AggregateState>
             });
 
         this._aggregateId = data.$aggregateId || null;
-        this._id = data.$id || DomainHelper.generateId();
+        this._id = data.$id || null;
         this._userId = data.$userId && !data.$userId.isEmptyOrWhiteSpace() ? data.$userId.trim() : null;
         this._name = (<Object>this).getTypeName();
+        if (data.$name && data.$name !== this._name)
+            throw new ApplicationException(`Deserialized event name '${data.$name}' does not match target type name '${this._name}'.`);
         this._occurredAt = data.$occurredAt || DomainHelper.now;
         this._version = data.$version || 0;
         this._isCreatedEvent = !!data.$isCreatedEvent;
@@ -63,12 +65,25 @@ export abstract class DomainEvent<T extends AggregateState>
         const version = this._version || (state.version + 1) || 1;
         
         this.applyEvent(state as T);
+        
+        if (this._isCreatedEvent)
+            state.createdAt = this._occurredAt;
+        
+        state.updatedAt = this._occurredAt;
+        
+        if (aggregate.id == null)
+            throw new ApplicationException("Created event is not setting the id of the aggregate");
 
         if (this._aggregateId != null && this._aggregateId !== aggregate.id)
             throw new ApplicationException(`Event of type '${this._name}' with id ${this._id} and aggregateId '${this._aggregateId}' is being applied on Aggregate of type '${(<Object>aggregate).getTypeName()}' with id '${aggregate.id}'`);
-
         this._aggregateId = aggregate.id;
+        
         state.version = this._version = version;
+        
+        const id = `${this._aggregateId}-${this._version}`;
+        if (this._id != null && this._id !== id)
+            throw new ApplicationException(`Deserialized id '${this._id}' does not match computed id ${id}`);
+        this._id = id;
     }
 
     public serialize(): DomainEventData

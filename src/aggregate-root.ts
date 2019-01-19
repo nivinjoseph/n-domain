@@ -26,9 +26,9 @@ export abstract class AggregateRoot<T extends AggregateState>
     
     public get events(): ReadonlyArray<DomainEvent<T>> { return [...this._retroEvents, ...this._currentEvents].orderBy(t => t.version); }
     public get version(): number { return this.currentVersion; }
-    // @ts-ignore: strictNullChecks
-    public get createdAt(): number { return this.events.find(t => t.isCreatedEvent).occurredAt; }
-    public get updatedAt(): number { return this.events.orderByDesc(t => t.version)[0].occurredAt; }
+    
+    public get createdAt(): number { return this._state.createdAt; }
+    public get updatedAt(): number { return this._state.updatedAt; }
 
     public get hasChanges(): boolean { return this.currentVersion !== this.retroVersion; }
 
@@ -45,12 +45,22 @@ export abstract class AggregateRoot<T extends AggregateState>
         given(initialState, "initialState").ensureIsObject();
         this._state = initialState || {} as any;
         
-        given(events, "events").ensureHasValue().ensureIsArray()
-            .ensure(t => t.length > 0, "no events passed")
-            .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
-            .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
-        this._retroEvents = events;
-        this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
+        if (this._state.version)
+        {
+            given(events, "events").ensureHasValue().ensureIsArray()
+                .ensure(t => t.length === 0, "no events should be passed when constructing from snapshot");
+            this._retroEvents = [];
+        }
+        else
+        {
+            given(events, "events").ensureHasValue().ensureIsArray()
+                .ensure(t => t.length > 0, "no events passed")
+                .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
+                .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
+            this._retroEvents = events;
+            this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
+        }
+        
         this._retroVersion = this.currentVersion;
     }
 
@@ -91,6 +101,23 @@ export abstract class AggregateRoot<T extends AggregateState>
         
         return new (<any>aggregateType)(domainContext, events);
     }
+    
+    
+    public static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateSnapshot: AggregateState & object): AggregateRoot<AggregateState>
+    {
+        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
+        given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
+        
+        given(stateSnapshot, "stateSnapshot").ensureHasValue().ensureIsObject()
+            .ensureHasStructure({
+                id: "string",
+                version: "number",
+                createdAt: "number",
+                updatedAt: "number"
+            });
+        
+        return new (<any>aggregateType)(domainContext, [], stateSnapshot);
+    }
 
 
     public serialize(): AggregateRootData
@@ -103,11 +130,15 @@ export abstract class AggregateRoot<T extends AggregateState>
             $events: this.events.map(t => t.serialize())
         };
     }
+    
+    public abstract snapshot(): AggregateState & object;
 
     public constructVersion(version: number): this
     {
         given(version, "version").ensureHasValue().ensureIsNumber()
             .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
+        
+        given(this, "this").ensure(t => t.retroEvents.length > 0, "constructing version without retro events");
 
         const ctor = (<Object>this).constructor;
         return new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version));
@@ -120,16 +151,19 @@ export abstract class AggregateRoot<T extends AggregateState>
 
         this._currentEvents.push(event);
  
-        const trimmed = this.trim(this._retroEvents.orderBy(t => t.version)).orderBy(t => t.version);
-        given(trimmed, "trimmed").ensureHasValue().ensureIsArray()
-            .ensure(t => t.length > 0, "cannot trim all retro events")
-            .ensure(t => t.length <= this._retroEvents.length, "only contraction is allowed")
-            .ensure(t => t.some(u => u.isCreatedEvent), "cannot trim created event")
-            .ensure(t => t.count(u => u.isCreatedEvent) === 1, "cannot add new created events")
-            .ensure(t => t.every(u => this._retroEvents.contains(u)), "cannot add new events")
-            ;
-            
-        this._retroEvents = trimmed;
+        if (this._retroEvents.length > 0)
+        {
+            const trimmed = this.trim(this._retroEvents.orderBy(t => t.version)).orderBy(t => t.version);
+            given(trimmed, "trimmed").ensureHasValue().ensureIsArray()
+                .ensure(t => t.length > 0, "cannot trim all retro events")
+                .ensure(t => t.length <= this._retroEvents.length, "only contraction is allowed")
+                .ensure(t => t.some(u => u.isCreatedEvent), "cannot trim created event")
+                .ensure(t => t.count(u => u.isCreatedEvent) === 1, "cannot add new created events")
+                .ensure(t => t.every(u => this._retroEvents.contains(u)), "cannot add new events")
+                ;
+
+            this._retroEvents = trimmed;
+        }
     }
     
     protected hasEventOfType(eventType: Function): boolean

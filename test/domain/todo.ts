@@ -1,4 +1,4 @@
-import { AggregateRoot, AggregateRootData, DomainHelper, DomainContext, DomainEvent} from "../../src";
+import { AggregateRoot, AggregateRootData, DomainHelper, DomainContext, DomainEvent, AggregateState} from "../../src";
 import { TodoState } from "./todo-state";
 import { TodoCreated } from "./events/todo-created";
 import { TodoTitleUpdated } from "./events/todo-title-updated";
@@ -36,6 +36,11 @@ export class Todo extends AggregateRoot<TodoState>
         ];
 
         return AggregateRoot.deserialize(domainContext, Todo, eventTypes, data as AggregateRootData) as Todo;
+    }
+    
+    public snapshot(): AggregateState & object
+    {
+        throw new Error("Method not implemented.");
     }
 
 
