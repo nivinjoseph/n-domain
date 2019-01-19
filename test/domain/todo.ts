@@ -1,4 +1,4 @@
-import { AggregateRoot, AggregateRootData, DomainHelper, DomainContext, DomainEvent, AggregateState} from "../../src";
+import { AggregateRoot, DomainHelper, DomainContext, DomainEvent, AggregateState, DomainEventData} from "../../src";
 import { TodoState } from "./todo-state";
 import { TodoCreated } from "./events/todo-created";
 import { TodoTitleUpdated } from "./events/todo-title-updated";
@@ -23,11 +23,8 @@ export class Todo extends AggregateRoot<TodoState>
         return new Todo(domainContext, [new TodoCreated({$isCreatedEvent: true}, DomainHelper.generateId(), title, description)]);
     }
 
-    public static deserialize(domainContext: DomainContext, data: object): Todo
+    public static deserialize(domainContext: DomainContext, eventData: ReadonlyArray<DomainEventData>): Todo
     {
-        given(domainContext, "domainContext").ensureHasValue().ensureIsObject();
-        given(data, "data").ensureHasValue().ensureIsObject();
-
         const eventTypes = [
             TodoCreated,
             TodoTitleUpdated,
@@ -35,7 +32,7 @@ export class Todo extends AggregateRoot<TodoState>
             TodoMarkedAsCompleted
         ];
 
-        return AggregateRoot.deserialize(domainContext, Todo, eventTypes, data as AggregateRootData) as Todo;
+        return AggregateRoot.deserializeFromEvents(domainContext, Todo, eventTypes, eventData) as Todo;
     }
     
     public snapshot(): AggregateState & object

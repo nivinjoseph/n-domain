@@ -249,7 +249,7 @@ suite("Domain tests", () =>
                 original.updateTitle("title update 2");
 
                 const serialized = original.serialize();
-                const deserialized = Todo.deserialize(domainContext, serialized);
+                const deserialized = Todo.deserialize(domainContext, serialized.$events);
 
                 Assert.strictEqual(deserialized.id, original.id);
                 Assert.strictEqual(deserialized.retroEvents.length, 3);
@@ -287,7 +287,7 @@ suite("Domain tests", () =>
                 original.updateTitle("title update 1");
                 original.updateTitle("title update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserialize(domainContext, serialized);
+                const deserialized = Todo.deserialize(domainContext, serialized.$events);
 
                 deserialized.updateTitle("title update 3");
 
@@ -373,7 +373,7 @@ suite("Domain tests", () =>
                 original.updateTitle("title update 1");
                 original.updateTitle("title update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserialize(domainContext, serialized);
+                const deserialized = Todo.deserialize(domainContext, serialized.$events);
 
                 const reconstructed = deserialized.constructVersion(2);
 
@@ -457,7 +457,7 @@ suite("Domain tests", () =>
                 const original = Todo.create(domainContext, "title", "description");
                 original.updateDescription("description update 1");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserialize(domainContext, serialized);
+                const deserialized = Todo.deserialize(domainContext, serialized.$events);
 
                 deserialized.updateDescription("description update 2");
 
@@ -501,7 +501,7 @@ suite("Domain tests", () =>
                 original.updateDescription("description update 1");
                 original.updateDescription("description update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserialize(domainContext, serialized);
+                const deserialized = Todo.deserialize(domainContext, serialized.$events);
 
                 deserialized.updateDescription("description update 3");
 
@@ -545,7 +545,7 @@ suite("Domain tests", () =>
                 original.updateDescription("description update 1");
                 original.updateDescription("description update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserialize(domainContext, serialized);
+                const deserialized = Todo.deserialize(domainContext, serialized.$events);
 
                 deserialized.updateDescription("description update 3");
                 deserialized.updateDescription("description update 4");
@@ -594,7 +594,7 @@ suite("Domain tests", () =>
                 original.updateDescription("description update 1");
                 original.updateDescription("description update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserialize(domainContext, serialized);
+                const deserialized = Todo.deserialize(domainContext, serialized.$events);
                 deserialized.updateDescription("description update 3");
                 deserialized.updateDescription("description update 4");
 
@@ -642,11 +642,11 @@ suite("Domain tests", () =>
                 original.updateDescription("description update 1");
                 original.updateDescription("description update 2");
                 let serialized = original.serialize();
-                let deserialized = Todo.deserialize(domainContext, serialized);
+                let deserialized = Todo.deserialize(domainContext, serialized.$events);
                 deserialized.updateDescription("description update 3");
                 deserialized.updateDescription("description update 4");
                 serialized = deserialized.serialize();
-                deserialized = Todo.deserialize(domainContext, serialized);
+                deserialized = Todo.deserialize(domainContext, serialized.$events);
 
                 const reconstructed = deserialized.constructVersion(3);
 

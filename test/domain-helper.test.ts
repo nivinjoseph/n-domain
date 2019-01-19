@@ -24,5 +24,6 @@ suite("DomainHelper tests", () =>
         Assert.ok(!id.contains("-"));
         Assert.strictEqual(id.length, 32);
         console.log("id", id);
+        console.log("max number length", Number.MAX_SAFE_INTEGER.toString().length);
     });
 });

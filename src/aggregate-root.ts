@@ -5,6 +5,7 @@ import { ApplicationException } from "@nivinjoseph/n-exception";
 import { AggregateRootData } from "./aggregate-root-data";
 import "@nivinjoseph/n-ext";
 import { DomainContext } from "./domain-context";
+import { DomainEventData } from "./domain-event-data";
 
 // public
 export abstract class AggregateRoot<T extends AggregateState>
@@ -64,31 +65,34 @@ export abstract class AggregateRoot<T extends AggregateState>
         this._retroVersion = this.currentVersion;
     }
 
-    public static deserialize(domainContext: DomainContext, aggregateType: Function, eventTypes: ReadonlyArray<Function>, data: AggregateRootData): AggregateRoot<AggregateState>
+    public static deserializeFromEvents(domainContext: DomainContext, aggregateType: Function, eventTypes: ReadonlyArray<Function>, eventData: ReadonlyArray<DomainEventData>): AggregateRoot<AggregateState>
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
         given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray()
             .ensure(t => t.length > 0, "no eventTypes provided")
             .ensure(t => t.map(u => (<Object>u).getTypeName()).distinct().length === t.length, "duplicate event types detected");
-        given(data, "data").ensureHasValue().ensureIsObject()
-            .ensureHasStructure({
-                $id: "string",
-                $version: "number",
-                $createdAt: "number",
-                $updatedAt: "number",
-                $events: [{
-                    $aggregateId: "string",
-                    $id: "string",
-                    $userId: "string",
-                    $name: "string",
-                    $occurredAt: "number",
-                    $version: "number",
-                    $isCreatedEvent: "boolean"
-                }]
-            });
+        given(eventData, "eventData").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
         
-        const events = data.$events.map((eventData: any) =>
+        
+        // given(data, "data").ensureHasValue().ensureIsObject()
+        //     .ensureHasStructure({
+        //         $id: "string",
+        //         $version: "number",
+        //         $createdAt: "number",
+        //         $updatedAt: "number",
+        //         $events: [{
+        //             $aggregateId: "string",
+        //             $id: "string",
+        //             $userId: "string",
+        //             $name: "string",
+        //             $occurredAt: "number",
+        //             $version: "number",
+        //             $isCreatedEvent: "boolean"
+        //         }]
+        //     });
+        
+        const deserializedEvents = eventData.map((eventData) =>
         {
             const name = eventData.$name;
             const event = eventTypes.find(t => (<Object>t).getTypeName() === name);
@@ -99,7 +103,7 @@ export abstract class AggregateRoot<T extends AggregateState>
             return (<any>event).deserializeEvent(eventData);
         });
         
-        return new (<any>aggregateType)(domainContext, events);
+        return new (<any>aggregateType)(domainContext, deserializedEvents);
     }
     
     
