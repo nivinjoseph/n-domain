@@ -38,29 +38,14 @@ class AggregateRoot {
     get hasChanges() { return this.currentVersion !== this.retroVersion; }
     get context() { return this._domainContext; }
     get state() { return this._state; }
-    static deserialize(domainContext, aggregateType, eventTypes, data) {
+    static deserializeFromEvents(domainContext, aggregateType, eventTypes, eventData) {
         n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         n_defensive_1.given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
         n_defensive_1.given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray()
             .ensure(t => t.length > 0, "no eventTypes provided")
             .ensure(t => t.map(u => u.getTypeName()).distinct().length === t.length, "duplicate event types detected");
-        n_defensive_1.given(data, "data").ensureHasValue().ensureIsObject()
-            .ensureHasStructure({
-            $id: "string",
-            $version: "number",
-            $createdAt: "number",
-            $updatedAt: "number",
-            $events: [{
-                    $aggregateId: "string",
-                    $id: "string",
-                    $userId: "string",
-                    $name: "string",
-                    $occurredAt: "number",
-                    $version: "number",
-                    $isCreatedEvent: "boolean"
-                }]
-        });
-        const events = data.$events.map((eventData) => {
+        n_defensive_1.given(eventData, "eventData").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+        const deserializedEvents = eventData.map((eventData) => {
             const name = eventData.$name;
             const event = eventTypes.find(t => t.getTypeName() === name);
             if (!event)
@@ -69,7 +54,7 @@ class AggregateRoot {
                 throw new n_exception_1.ApplicationException(`Event type '${name}' does not have a static deserializeEvent method defined.`);
             return event.deserializeEvent(eventData);
         });
-        return new aggregateType(domainContext, events);
+        return new aggregateType(domainContext, deserializedEvents);
     }
     static deserializeFromSnapshot(domainContext, aggregateType, stateSnapshot) {
         n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
