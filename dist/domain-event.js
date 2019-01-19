@@ -17,9 +17,11 @@ class DomainEvent {
             "$isCreatedEvent?": "boolean"
         });
         this._aggregateId = data.$aggregateId || null;
-        this._id = data.$id || _1.DomainHelper.generateId();
+        this._id = data.$id || null;
         this._userId = data.$userId && !data.$userId.isEmptyOrWhiteSpace() ? data.$userId.trim() : null;
         this._name = this.getTypeName();
+        if (data.$name && data.$name !== this._name)
+            throw new n_exception_1.ApplicationException(`Deserialized event name '${data.$name}' does not match target type name '${this._name}'.`);
         this._occurredAt = data.$occurredAt || _1.DomainHelper.now;
         this._version = data.$version || 0;
         this._isCreatedEvent = !!data.$isCreatedEvent;
@@ -39,10 +41,19 @@ class DomainEvent {
             this._userId = domainContext.userId;
         const version = this._version || (state.version + 1) || 1;
         this.applyEvent(state);
+        if (this._isCreatedEvent)
+            state.createdAt = this._occurredAt;
+        state.updatedAt = this._occurredAt;
+        if (aggregate.id == null)
+            throw new n_exception_1.ApplicationException("Created event is not setting the id of the aggregate");
         if (this._aggregateId != null && this._aggregateId !== aggregate.id)
             throw new n_exception_1.ApplicationException(`Event of type '${this._name}' with id ${this._id} and aggregateId '${this._aggregateId}' is being applied on Aggregate of type '${aggregate.getTypeName()}' with id '${aggregate.id}'`);
         this._aggregateId = aggregate.id;
         state.version = this._version = version;
+        const id = `${this._aggregateId}-${this._version}`;
+        if (this._id != null && this._id !== id)
+            throw new n_exception_1.ApplicationException(`Deserialized id '${this._id}' does not match computed id ${id}`);
+        this._id = id;
     }
     serialize() {
         return Object.assign(this.serializeEvent(), {
