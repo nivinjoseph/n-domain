@@ -107,7 +107,7 @@ export abstract class AggregateRoot<T extends AggregateState>
     }
     
     
-    public static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateSnapshot: AggregateState & object): AggregateRoot<AggregateState>
+    public static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateSnapshot: AggregateState | object): AggregateRoot<AggregateState>
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
@@ -135,7 +135,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         };
     }
     
-    public abstract snapshot(): AggregateState & object;
+    public abstract snapshot(): T | object;
 
     public constructVersion(version: number): this
     {
