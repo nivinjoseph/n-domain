@@ -77,6 +77,19 @@ class AggregateRoot {
             $events: this.events.map(t => t.serialize())
         };
     }
+    snapshot() {
+        const snapshot = Object.assign({}, this.state);
+        Object.keys(snapshot).forEach(key => {
+            const val = snapshot[key];
+            if (val && typeof (val) === "object") {
+                if (Array.isArray(val))
+                    snapshot[key] = val.map(t => this.serializeForSnapshot(t));
+                else
+                    snapshot[key] = this.serializeForSnapshot(val);
+            }
+        });
+        return snapshot;
+    }
     constructVersion(version) {
         n_defensive_1.given(version, "version").ensureHasValue().ensureIsNumber()
             .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
@@ -131,6 +144,12 @@ class AggregateRoot {
     trim(retroEvents) {
         n_defensive_1.given(retroEvents, "retroEvents").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
         return retroEvents;
+    }
+    serializeForSnapshot(value) {
+        n_defensive_1.given(value, "value").ensureHasValue().ensureIsObject()
+            .ensure(t => t.hasOwnProperty("serialize"), `serialize method is missing on type ${value.getTypeName()}`)
+            .ensure(t => typeof (t.serialize) === "function", `property serialize on type ${value.getTypeName()} is not a function`);
+        return value.serialize();
     }
 }
 exports.AggregateRoot = AggregateRoot;
