@@ -135,7 +135,24 @@ export abstract class AggregateRoot<T extends AggregateState>
         };
     }
     
-    public abstract snapshot(): T | object;
+    public snapshot(): T | object
+    {
+        const snapshot: any = Object.assign({}, this.state);
+        
+        Object.keys(snapshot).forEach(key =>
+        {
+            const val = snapshot[key];
+            if (val && typeof (val) === "object")
+            {
+                if (Array.isArray(val))
+                    snapshot[key] = (<Array<Object>>val).map(t => this.serializeForSnapshot(t));
+                else
+                    snapshot[key] = this.serializeForSnapshot(val);
+            }
+        });
+        
+        return snapshot;
+    }
 
     public constructVersion(version: number): this
     {
@@ -223,5 +240,15 @@ export abstract class AggregateRoot<T extends AggregateState>
         given(retroEvents, "retroEvents").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
         
         return retroEvents;
+    }
+    
+    
+    private serializeForSnapshot(value: Object): object
+    {
+        given(value, "value").ensureHasValue().ensureIsObject()
+            .ensure(t => t.hasOwnProperty("serialize"), `serialize method is missing on type ${value.getTypeName()}`)
+            .ensure(t => typeof ((<any>t).serialize) === "function", `property serialize on type ${value.getTypeName()} is not a function`);
+
+        return (<any>value).serialize();
     }
 }
