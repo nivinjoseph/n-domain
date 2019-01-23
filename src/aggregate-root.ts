@@ -169,6 +169,54 @@ export abstract class AggregateRoot<T extends AggregateState>
         return new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version));
     }
 
+    public hasEventOfType(eventType: Function): boolean
+    {
+        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+
+        const eventTypeName = (<Object>eventType).getTypeName();
+        return this.events.some(t => t.name === eventTypeName);
+    }
+
+    public hasRetroEventOfType(eventType: Function): boolean
+    {
+        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+
+        const eventTypeName = (<Object>eventType).getTypeName();
+        return this._retroEvents.some(t => t.name === eventTypeName);
+    }
+
+    public hasCurrentEventOfType(eventType: Function): boolean
+    {
+        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+
+        const eventTypeName = (<Object>eventType).getTypeName();
+        return this._currentEvents.some(t => t.name === eventTypeName);
+    }
+
+    public getEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
+    {
+        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+
+        const eventTypeName = (<Object>eventType).getTypeName();
+        return this.events.filter(t => t.name === eventTypeName) as any;
+    }
+
+    public getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
+    {
+        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+
+        const eventTypeName = (<Object>eventType).getTypeName();
+        return this._retroEvents.filter(t => t.name === eventTypeName) as any;
+    }
+
+    public getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
+    {
+        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+
+        const eventTypeName = (<Object>eventType).getTypeName();
+        return this._currentEvents.filter(t => t.name === eventTypeName) as any;
+    }
+    
 
     protected applyEvent(event: DomainEvent<AggregateState>): void
     {
@@ -189,54 +237,6 @@ export abstract class AggregateRoot<T extends AggregateState>
 
             this._retroEvents = trimmed;
         }
-    }
-    
-    protected hasEventOfType(eventType: Function): boolean
-    {
-        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
-        
-        const eventTypeName = (<Object>eventType).getTypeName();
-        return this.events.some(t => t.name === eventTypeName);
-    }
-    
-    protected hasRetroEventOfType(eventType: Function): boolean
-    {
-        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
-
-        const eventTypeName = (<Object>eventType).getTypeName();
-        return this._retroEvents.some(t => t.name === eventTypeName);
-    }
-    
-    protected hasCurrentEventOfType(eventType: Function): boolean
-    {
-        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
-
-        const eventTypeName = (<Object>eventType).getTypeName();
-        return this._currentEvents.some(t => t.name === eventTypeName);
-    }
-    
-    protected getEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
-    {
-        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
-        
-        const eventTypeName = (<Object>eventType).getTypeName();
-        return this.events.filter(t => t.name === eventTypeName) as any;
-    }
-    
-    protected getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
-    {
-        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
-
-        const eventTypeName = (<Object>eventType).getTypeName();
-        return this._retroEvents.filter(t => t.name === eventTypeName) as any;
-    }
-    
-    protected getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
-    {
-        given(eventType, "eventType").ensureHasValue().ensureIsFunction();
-
-        const eventTypeName = (<Object>eventType).getTypeName();
-        return this._currentEvents.filter(t => t.name === eventTypeName) as any;
     }
     // override
     protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>
