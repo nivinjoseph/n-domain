@@ -30,13 +30,13 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     serialize(): AggregateRootData;
     snapshot(): T | object;
     constructVersion(version: number): this;
+    hasEventOfType(eventType: Function): boolean;
+    hasRetroEventOfType(eventType: Function): boolean;
+    hasCurrentEventOfType(eventType: Function): boolean;
+    getEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
+    getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
+    getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
     protected applyEvent(event: DomainEvent<AggregateState>): void;
-    protected hasEventOfType(eventType: Function): boolean;
-    protected hasRetroEventOfType(eventType: Function): boolean;
-    protected hasCurrentEventOfType(eventType: Function): boolean;
-    protected getEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
-    protected getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
-    protected getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
     protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>;
     private serializeForSnapshot;
 }
