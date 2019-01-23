@@ -149,7 +149,13 @@ export abstract class AggregateRoot<T extends AggregateState>
             if (val && typeof (val) === "object")
             {
                 if (Array.isArray(val))
-                    snapshot[key] = (<Array<Object>>val).map(t => this.serializeForSnapshot(t));
+                    snapshot[key] = (<Array<Object>>val).map(t =>
+                    {
+                        if (typeof (t) === "object")
+                            return this.serializeForSnapshot(t);
+                        else
+                            return t;
+                    });
                 else
                     snapshot[key] = this.serializeForSnapshot(val);
             }
