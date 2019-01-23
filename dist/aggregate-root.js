@@ -6,6 +6,7 @@ require("@nivinjoseph/n-ext");
 class AggregateRoot {
     constructor(domainContext, events, initialState) {
         this._currentEvents = new Array();
+        this._isNew = false;
         n_defensive_1.given(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
         this._domainContext = domainContext;
@@ -22,6 +23,8 @@ class AggregateRoot {
                 .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
                 .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
             this._retroEvents = events;
+            if (this._retroEvents.some(t => t.aggregateId == null))
+                this._isNew = true;
             this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         }
         this._retroVersion = this.currentVersion;
@@ -35,6 +38,7 @@ class AggregateRoot {
     get version() { return this.currentVersion; }
     get createdAt() { return this._state.createdAt; }
     get updatedAt() { return this._state.updatedAt; }
+    get isNew() { return this._isNew; }
     get hasChanges() { return this.currentVersion !== this.retroVersion; }
     get context() { return this._domainContext; }
     get state() { return this._state; }

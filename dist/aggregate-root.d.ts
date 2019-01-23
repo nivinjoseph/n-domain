@@ -10,6 +10,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     private _retroEvents;
     private readonly _retroVersion;
     private readonly _currentEvents;
+    private readonly _isNew;
     readonly id: string;
     readonly retroEvents: ReadonlyArray<DomainEvent<T>>;
     readonly retroVersion: number;
@@ -19,6 +20,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     readonly version: number;
     readonly createdAt: number;
     readonly updatedAt: number;
+    readonly isNew: boolean;
     readonly hasChanges: boolean;
     protected readonly context: DomainContext;
     protected readonly state: T;
