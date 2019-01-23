@@ -127,6 +127,7 @@ suite("Domain tests", () =>
                 and its createdAt should be > 0,
                 and its updatedAt should be > 0,
                 and its createdAt should be = to its updatedAt,
+                and its isNew should be true,
                 and its hasChanges should be false,
                 and its properties should have creation values
         `,
@@ -144,6 +145,7 @@ suite("Domain tests", () =>
                 Assert.ok(original.createdAt > 0);
                 Assert.ok(original.updatedAt > 0);
                 Assert.strictEqual(original.createdAt, original.updatedAt);
+                Assert.strictEqual(original.isNew, true);
                 Assert.strictEqual(original.hasChanges, false);
                 Assert.strictEqual(original.title, "title");
                 Assert.strictEqual(original.description, "description");
@@ -162,6 +164,7 @@ suite("Domain tests", () =>
                 and its createdAt should be > 0,
                 and its updatedAt should be > 0,
                 and its createdAt should be <= its updatedAt,
+                and its isNew should be true,
                 and its hasChanges should be true,
                 and its updated property should reflect the last update,
                 and its non updated property should have its creation value
@@ -182,6 +185,7 @@ suite("Domain tests", () =>
                 Assert.ok(original.createdAt > 0);
                 Assert.ok(original.updatedAt > 0);
                 Assert.ok(original.createdAt <= original.updatedAt);
+                Assert.strictEqual(original.isNew, true);
                 Assert.strictEqual(original.hasChanges, true);
                 Assert.strictEqual(original.title, "title update 1");
                 Assert.strictEqual(original.description, "description");
@@ -200,7 +204,8 @@ suite("Domain tests", () =>
                 and its createdAt should be > 0,
                 and its updatedAt should be > 0,
                 and its createdAt should be < its updatedAt,
-                and its hasChanges should be true
+                and its isNew should be true,
+                and its hasChanges should be true,
                 and its updated property should reflect the last update,
                 and its non updated property should have its creation value
         `,
@@ -221,6 +226,7 @@ suite("Domain tests", () =>
                 Assert.ok(original.createdAt > 0);
                 Assert.ok(original.updatedAt > 0);
                 Assert.ok(original.createdAt <= original.updatedAt);
+                Assert.strictEqual(original.isNew, true);
                 Assert.strictEqual(original.hasChanges, true);
                 Assert.strictEqual(original.title, "title update 2");
                 Assert.strictEqual(original.description, "description");
@@ -239,6 +245,7 @@ suite("Domain tests", () =>
                 and its version should be 3,
                 and its createdAt should be equal to original createdAt,
                 and its updatedAt should be equal to original updatedAt,
+                and its isNew should be false,
                 and its hasChanges should be false,
                 and its updated property should reflect the last update
         `,
@@ -260,6 +267,7 @@ suite("Domain tests", () =>
                 Assert.strictEqual(deserialized.version, 3);
                 Assert.strictEqual(deserialized.createdAt, original.createdAt);
                 Assert.strictEqual(deserialized.updatedAt, original.updatedAt);
+                Assert.strictEqual(deserialized.isNew, false);
                 Assert.strictEqual(deserialized.hasChanges, false);
                 Assert.strictEqual(deserialized.title, "title update 2");
                 Assert.strictEqual(deserialized.description, "description");
@@ -278,6 +286,7 @@ suite("Domain tests", () =>
                 and its events count should be 4,
                 and its version should be 4,
                 and its createdAt should be equal to original createdAt,
+                and its isNew should be false,
                 and its hasChanges should be true,
                 and its updated property should reflect the last update
         `,
@@ -300,6 +309,7 @@ suite("Domain tests", () =>
                 Assert.strictEqual(deserialized.version, 4);
                 Assert.strictEqual(deserialized.createdAt, original.createdAt);
                 // Assert.ok(deserialized.updatedAt, original.updatedAt);
+                Assert.strictEqual(deserialized.isNew, false);
                 Assert.strictEqual(deserialized.hasChanges, true);
                 Assert.strictEqual(deserialized.title, "title update 3");
                 Assert.strictEqual(deserialized.description, "description");
@@ -323,6 +333,7 @@ suite("Domain tests", () =>
                 and its createdAt should be same as original createdAt,
                 and its updatedAt should be > 0,
                 and its createdAt should be <= its updatedAt,
+                and its isNew should be false, // reconstructed aggregates will always have isNew === false
                 and its hasChanges should be false,
                 and its updated property should reflect the version 2 value
         `,
@@ -344,6 +355,7 @@ suite("Domain tests", () =>
                 Assert.strictEqual(reconstructed.createdAt, original.createdAt);
                 Assert.ok(reconstructed.updatedAt > 0);
                 Assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
+                Assert.strictEqual(reconstructed.isNew, false);
                 Assert.strictEqual(reconstructed.hasChanges, false);
                 Assert.strictEqual(reconstructed.title, "title update 1");
                 Assert.strictEqual(reconstructed.description, "description");
@@ -364,6 +376,7 @@ suite("Domain tests", () =>
                 and its createdAt should be same as original createdAt,
                 and its updatedAt should be > 0,
                 and its createdAt should be <= its updatedAt,
+                and its isNew should be false,
                 and its hasChanges should be false,
                 and its updated property should reflect the version 2 value
         `,
@@ -387,6 +400,7 @@ suite("Domain tests", () =>
                 Assert.strictEqual(reconstructed.createdAt, original.createdAt);
                 Assert.ok(reconstructed.updatedAt > 0);
                 Assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
+                Assert.strictEqual(reconstructed.isNew, false);
                 Assert.strictEqual(reconstructed.hasChanges, false);
                 Assert.strictEqual(reconstructed.title, "title update 1");
                 Assert.strictEqual(reconstructed.description, "description");
@@ -409,6 +423,7 @@ suite("Domain tests", () =>
                 and its createdAt should be > 0,
                 and its updatedAt should be > 0,
                 and its createdAt should be <= its updatedAt,
+                and its isNew should be true,
                 and its hasChanges should be true,
                 and its updated property should reflect the last update
         `,
@@ -428,6 +443,7 @@ suite("Domain tests", () =>
                 Assert.ok(original.createdAt > 0);
                 Assert.ok(original.updatedAt > 0);
                 Assert.ok(original.createdAt <= original.updatedAt);
+                Assert.strictEqual(original.isNew, true);
                 Assert.strictEqual(original.hasChanges, true);
                 Assert.strictEqual(original.description, "description update 1");
                 Assert.strictEqual(original.title, "title");
@@ -449,6 +465,7 @@ suite("Domain tests", () =>
                 and its createdAt should be same as original createdAt,
                 and its updatedAt should be > 0,
                 and its createdAt should be < its updatedAt,
+                and its isNew should be false,
                 and its hasChanges should be true,
                 and its updated property should reflect the last update
         `,
@@ -471,6 +488,7 @@ suite("Domain tests", () =>
                 Assert.strictEqual(deserialized.createdAt, original.createdAt);
                 Assert.ok(deserialized.updatedAt > 0);
                 Assert.ok(deserialized.createdAt <= deserialized.updatedAt);
+                Assert.strictEqual(deserialized.isNew, false);
                 Assert.strictEqual(deserialized.hasChanges, true);
                 Assert.strictEqual(deserialized.description, "description update 2");
                 Assert.strictEqual(deserialized.title, "title");
@@ -492,6 +510,7 @@ suite("Domain tests", () =>
                 and its createdAt should be same as original createdAt,
                 and its updatedAt should be > 0,
                 and its createdAt should be < its updatedAt,
+                and its isNew should be false,
                 and its hasChanges should be true,
                 and its updated property should reflect the last update
         `,
@@ -515,6 +534,7 @@ suite("Domain tests", () =>
                 Assert.strictEqual(deserialized.createdAt, original.createdAt);
                 Assert.ok(deserialized.updatedAt > 0);
                 Assert.ok(deserialized.createdAt <= deserialized.updatedAt);
+                Assert.strictEqual(deserialized.isNew, false);
                 Assert.strictEqual(deserialized.hasChanges, true);
                 Assert.strictEqual(deserialized.description, "description update 3");
                 Assert.strictEqual(deserialized.title, "title");
@@ -536,6 +556,7 @@ suite("Domain tests", () =>
                 and its createdAt should be same as original createdAt,
                 and its updatedAt should be > 0,
                 and its createdAt should be < its updatedAt,
+                and its isNew should be false,
                 and its hasChanges should be true,
                 and its updated property should reflect the last update
         `,
@@ -560,6 +581,7 @@ suite("Domain tests", () =>
                 Assert.strictEqual(deserialized.createdAt, original.createdAt);
                 Assert.ok(deserialized.updatedAt > 0);
                 Assert.ok(deserialized.createdAt <= deserialized.updatedAt);
+                Assert.strictEqual(deserialized.isNew, false);
                 Assert.strictEqual(deserialized.hasChanges, true);
                 Assert.strictEqual(deserialized.description, "description update 4");
                 Assert.strictEqual(deserialized.title, "title");
@@ -585,6 +607,7 @@ suite("Domain tests", () =>
                 and its createdAt should be same as original createdAt,
                 and its updatedAt should be > 0,
                 and its createdAt should be <= its updatedAt,
+                and its isNew should be false,
                 and its hasChanges should be false,
                 and its updated property should reflect the creation value
         `,
@@ -610,6 +633,7 @@ suite("Domain tests", () =>
                 Assert.strictEqual(reconstructed.createdAt, original.createdAt);
                 Assert.ok(reconstructed.updatedAt > 0);
                 Assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
+                Assert.strictEqual(reconstructed.isNew, false);
                 Assert.strictEqual(reconstructed.hasChanges, false);
                 Assert.strictEqual(reconstructed.title, "title");
                 Assert.strictEqual(reconstructed.description, "description");
@@ -633,6 +657,7 @@ suite("Domain tests", () =>
                 and its createdAt should be same as original createdAt,
                 and its updatedAt should be > 0,
                 and its createdAt should be < its updatedAt,
+                and its isNew should be false,
                 and its hasChanges should be false,
                 and its updated property should reflect the creation value
         `,
@@ -660,6 +685,7 @@ suite("Domain tests", () =>
                 Assert.strictEqual(reconstructed.createdAt, original.createdAt);
                 Assert.ok(reconstructed.updatedAt > 0);
                 Assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
+                Assert.strictEqual(reconstructed.isNew, false);
                 Assert.strictEqual(reconstructed.hasChanges, false);
                 Assert.strictEqual(reconstructed.title, "title");
                 Assert.strictEqual(reconstructed.description, "description");

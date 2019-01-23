@@ -15,6 +15,7 @@ export abstract class AggregateRoot<T extends AggregateState>
     private _retroEvents: ReadonlyArray<DomainEvent<T>>;
     private readonly _retroVersion: number;
     private readonly _currentEvents = new Array<DomainEvent<T>>(); // track unit of work stuff
+    private readonly _isNew: boolean = false;
 
 
     public get id(): string { return this._state.id; }
@@ -31,6 +32,7 @@ export abstract class AggregateRoot<T extends AggregateState>
     public get createdAt(): number { return this._state.createdAt; }
     public get updatedAt(): number { return this._state.updatedAt; }
 
+    public get isNew(): boolean { return this._isNew; } // this will always be false for anything that is reconstructed
     public get hasChanges(): boolean { return this.currentVersion !== this.retroVersion; }
 
     protected get context(): DomainContext { return this._domainContext; }
@@ -59,6 +61,8 @@ export abstract class AggregateRoot<T extends AggregateState>
                 .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
                 .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
             this._retroEvents = events;
+            if (this._retroEvents.some(t => t.aggregateId == null))
+                this._isNew = true;
             this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         }
         
