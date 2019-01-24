@@ -81,11 +81,15 @@ class AggregateRoot {
             $events: this.events.map(t => t.serialize())
         };
     }
-    snapshot() {
+    snapshot(...cloneKeys) {
         const snapshot = Object.assign({}, this.state);
         Object.keys(snapshot).forEach(key => {
             const val = snapshot[key];
             if (val && typeof (val) === "object") {
+                if (cloneKeys.contains(key)) {
+                    snapshot[key] = JSON.parse(JSON.stringify(val));
+                    return;
+                }
                 if (Array.isArray(val))
                     snapshot[key] = val.map(t => {
                         if (typeof (t) === "object")

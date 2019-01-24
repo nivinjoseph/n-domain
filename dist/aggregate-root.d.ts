@@ -28,7 +28,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     static deserializeFromEvents(domainContext: DomainContext, aggregateType: Function, eventTypes: ReadonlyArray<Function>, eventData: ReadonlyArray<DomainEventData>): AggregateRoot<AggregateState>;
     static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateSnapshot: AggregateState | object): AggregateRoot<AggregateState>;
     serialize(): AggregateRootData;
-    snapshot(): T | object;
+    snapshot(...cloneKeys: string[]): T | object;
     constructVersion(version: number): this;
     hasEventOfType(eventType: Function): boolean;
     hasRetroEventOfType(eventType: Function): boolean;
