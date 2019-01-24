@@ -139,7 +139,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         };
     }
     
-    public snapshot(): T | object
+    public snapshot(...cloneKeys: string[]): T | object
     {
         const snapshot: any = Object.assign({}, this.state);
         
@@ -148,6 +148,12 @@ export abstract class AggregateRoot<T extends AggregateState>
             const val = snapshot[key];
             if (val && typeof (val) === "object")
             {
+                if (cloneKeys.contains(key))
+                {
+                    snapshot[key] = JSON.parse(JSON.stringify(val));
+                    return;
+                }
+                
                 if (Array.isArray(val))
                     snapshot[key] = (<Array<Object>>val).map(t =>
                     {
