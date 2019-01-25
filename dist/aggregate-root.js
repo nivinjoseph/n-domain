@@ -160,7 +160,7 @@ class AggregateRoot {
     }
     serializeForSnapshot(value) {
         n_defensive_1.given(value, "value").ensureHasValue().ensureIsObject()
-            .ensure(t => t.hasOwnProperty("serialize"), `serialize method is missing on type ${value.getTypeName()}`)
+            .ensure(t => !!t.serialize, `serialize method is missing on type ${value.getTypeName()}`)
             .ensure(t => typeof (t.serialize) === "function", `property serialize on type ${value.getTypeName()} is not a function`);
         return value.serialize();
     }
