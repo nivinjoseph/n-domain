@@ -262,7 +262,7 @@ export abstract class AggregateRoot<T extends AggregateState>
     private serializeForSnapshot(value: Object): object
     {
         given(value, "value").ensureHasValue().ensureIsObject()
-            .ensure(t => t.hasOwnProperty("serialize"), `serialize method is missing on type ${value.getTypeName()}`)
+            .ensure(t => !!(<any>t).serialize, `serialize method is missing on type ${value.getTypeName()}`)
             .ensure(t => typeof ((<any>t).serialize) === "function", `property serialize on type ${value.getTypeName()} is not a function`);
 
         return (<any>value).serialize();
