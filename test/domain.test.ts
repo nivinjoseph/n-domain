@@ -1,12 +1,12 @@
 import "@nivinjoseph/n-ext";
 import * as Assert from "assert";
 import { Todo } from "./domain/todo";
-import { DevDomainContext } from "../src";
+import { DomainContext } from "../src";
 
 
 suite("Domain tests", () =>
 {
-    const domainContext = new DevDomainContext();
+    const domainContext: DomainContext = {userId: "dev"};
 
     // test("AggregateRoot", () =>
     // {
