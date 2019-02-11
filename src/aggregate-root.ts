@@ -45,7 +45,7 @@ export abstract class AggregateRoot<T extends AggregateState>
             .ensureHasStructure({ userId: "string" });
         this._domainContext = domainContext;
         
-        given(initialState, "initialState").ensureIsObject();
+        given(initialState as object, "initialState").ensureIsObject();
         this._state = initialState || {} as any;
         
         if (this._state.version)

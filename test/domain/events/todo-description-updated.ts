@@ -12,7 +12,7 @@ export class TodoDescriptionUpdated extends DomainEvent<TodoState>
     {
         super(data);
 
-        given(description, "description").ensureIsString();
+        given(description as string, "description").ensureIsString();
         this._description = description;
     }
 

@@ -1,3 +1,5 @@
+import "@nivinjoseph/n-ext";
+
 // public
 export abstract class DomainObject
 {
@@ -9,5 +11,25 @@ export abstract class DomainObject
     /**
      * @param value (the value to compare)
      */
-    public abstract equals(value: this): boolean;
+    public equals(value: DomainObject): boolean
+    {
+        if (value == null)
+            return false;
+        
+        if (value === this)
+            return true;
+        
+        if ((<Object>value).getTypeName() !== (<Object>this).getTypeName())
+            return false;
+        
+        return JSON.stringify(this) === JSON.stringify(value);
+        
+        // for (const key in this)
+        // {
+        //     if (this[key] !== (<any>value)[key])
+        //         return false;
+        // }
+        
+        // return true;
+    }
 }

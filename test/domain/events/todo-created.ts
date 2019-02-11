@@ -21,7 +21,7 @@ export class TodoCreated extends DomainEvent<TodoState>
         given(title, "title").ensureHasValue().ensureIsString();
         this._title = title;
 
-        given(description, "description").ensureIsString();
+        given(description as string, "description").ensureIsString();
         this._description = description;
     }
 

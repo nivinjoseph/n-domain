@@ -18,7 +18,7 @@ export class Todo extends AggregateRoot<TodoState>
     {
         given(domainContext, "domainContext").ensureHasValue().ensureIsObject();
         given(title, "title").ensureHasValue().ensureIsString();
-        given(description, "description").ensureIsString();
+        given(description as string, "description").ensureIsString();
 
         return new Todo(domainContext, [new TodoCreated({$isCreatedEvent: true}, DomainHelper.generateId(), title, description)]);
     }
@@ -47,7 +47,7 @@ export class Todo extends AggregateRoot<TodoState>
 
     public updateDescription(description: string | null): void
     {
-        given(description, "description").ensureIsString();
+        given(description as string, "description").ensureIsString();
 
         description = description && !description.isEmptyOrWhiteSpace() ? description.trim() : null;
 
