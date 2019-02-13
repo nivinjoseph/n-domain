@@ -6,6 +6,7 @@ import { DomainEventData } from "./domain-event-data";
 import { DomainHelper } from "./domain-helper";
 import { DomainContext } from "./domain-context";
 import { DomainObject } from "./domain-object";
+import { DomainEntity } from "./domain-entity";
 
 
 export
@@ -17,5 +18,6 @@ export
     DomainEventData,
     DomainHelper,
     DomainContext,
-    DomainObject
+    DomainObject,
+    DomainEntity
 };
