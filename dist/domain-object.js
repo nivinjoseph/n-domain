@@ -9,7 +9,7 @@ class DomainObject {
             return true;
         if (value.getTypeName() !== this.getTypeName())
             return false;
-        return JSON.stringify(this) === JSON.stringify(value);
+        return JSON.stringify(this.serialize()) === JSON.stringify(value.serialize());
     }
 }
 exports.DomainObject = DomainObject;
