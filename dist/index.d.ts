@@ -6,4 +6,5 @@ import { DomainEventData } from "./domain-event-data";
 import { DomainHelper } from "./domain-helper";
 import { DomainContext } from "./domain-context";
 import { DomainObject } from "./domain-object";
-export { AggregateRoot, AggregateState, DomainEvent, AggregateRootData, DomainEventData, DomainHelper, DomainContext, DomainObject };
+import { DomainEntity } from "./domain-entity";
+export { AggregateRoot, AggregateState, DomainEvent, AggregateRootData, DomainEventData, DomainHelper, DomainContext, DomainObject, DomainEntity };
