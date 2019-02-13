@@ -22,7 +22,7 @@ export abstract class DomainObject
         if ((<Object>value).getTypeName() !== (<Object>this).getTypeName())
             return false;
         
-        return JSON.stringify(this) === JSON.stringify(value);
+        return JSON.stringify(this.serialize()) === JSON.stringify(value.serialize());
         
         // for (const key in this)
         // {
