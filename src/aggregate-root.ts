@@ -250,7 +250,11 @@ export abstract class AggregateRoot<T extends AggregateState>
             this._retroEvents = trimmed;
         }
     }
-    // override
+    /**
+     * 
+     * @deprecated DO NOT USE
+     * @description override to trim retro events on the application of a new event
+     */
     protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>
     {
         given(retroEvents, "retroEvents").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
