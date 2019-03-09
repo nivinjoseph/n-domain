@@ -1,5 +1,6 @@
-import { Uuid } from "@nivinjoseph/n-sec";
+
 import "@nivinjoseph/n-ext";
+import { Uuid } from "@nivinjoseph/n-util";
 
 // public
 export class DomainHelper
@@ -9,6 +10,6 @@ export class DomainHelper
 
     public static generateId(): string
     {
-        return Uuid.create().trim().replaceAll(" ", "").replaceAll("-", "").toLowerCase();
+        return Uuid.create().replaceAll("-", "");
     }
 }

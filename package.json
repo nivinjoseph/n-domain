@@ -44,6 +44,6 @@
         "@nivinjoseph/n-defensive": "^1.0.24",
         "@nivinjoseph/n-exception": "^1.0.16",
         "@nivinjoseph/n-ext": "^1.1.3",
-        "@nivinjoseph/n-sec": "^2.0.24"
+        "@nivinjoseph/n-util": "^1.0.23"
     }
 }
