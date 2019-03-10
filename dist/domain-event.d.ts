@@ -12,7 +12,7 @@ export declare abstract class DomainEvent<T extends AggregateState> {
     private _version;
     private readonly _isCreatedEvent;
     readonly aggregateId: string | null;
-    readonly id: string | null;
+    readonly id: string;
     readonly userId: string | null;
     readonly name: string;
     readonly occurredAt: number;
