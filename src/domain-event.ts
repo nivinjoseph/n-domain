@@ -19,7 +19,7 @@ export abstract class DomainEvent<T extends AggregateState>
 
 
     public get aggregateId(): string | null { return this._aggregateId; }
-    public get id(): string | null { return this._id; }
+    public get id(): string { return this._id as string; }
     public get userId(): string | null { return this._userId; }
     public get name(): string { return this._name; }
     public get occurredAt(): number { return this._occurredAt; }
