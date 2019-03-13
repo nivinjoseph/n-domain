@@ -1,5 +1,5 @@
 // public
 export interface DomainContext
 {
-    userId: string;
+    readonly userId: string;
 }
