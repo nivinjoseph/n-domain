@@ -6,6 +6,7 @@ import { AggregateRootData } from "./aggregate-root-data";
 import "@nivinjoseph/n-ext";
 import { DomainContext } from "./domain-context";
 import { DomainEventData } from "./domain-event-data";
+import { AggregateStateFactory } from "./aggregate-state-factory";
 
 // public
 export abstract class AggregateRoot<T extends AggregateState>
@@ -39,24 +40,27 @@ export abstract class AggregateRoot<T extends AggregateState>
     protected get state(): T { return this._state; }
 
 
-    public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, initialState?: T | object)
+    public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
+        stateFactory: AggregateStateFactory<T>, currentState?: T)
     {
         given(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
         this._domainContext = domainContext;
         
-        given(initialState as object, "initialState").ensureIsObject();
-        this._state = initialState || {} as any;
+        given(events, "events").ensureHasValue().ensureIsArray();
+        given(stateFactory, "stateFactory").ensureHasValue().ensureIsObject();
+        given(currentState as object, "currentState").ensureIsObject();
+        this._state = Object.assign(stateFactory.create(), currentState);
         
         if (this._state.version)
         {
-            given(events, "events").ensureHasValue().ensureIsArray()
+            given(events, "events")
                 .ensure(t => t.length === 0, "no events should be passed when constructing from snapshot");
             this._retroEvents = [];
         }
         else
         {
-            given(events, "events").ensureHasValue().ensureIsArray()
+            given(events, "events")
                 .ensure(t => t.length > 0, "no events passed")
                 .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
                 .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
@@ -65,7 +69,7 @@ export abstract class AggregateRoot<T extends AggregateState>
                 this._isNew = true;
             this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         }
-        
+        this._state = stateFactory.update(this._state);
         this._retroVersion = this.currentVersion;
     }
 

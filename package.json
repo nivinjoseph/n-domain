@@ -41,7 +41,7 @@
         "typescript": "^3.2.4"
     },
     "dependencies": {
-        "@nivinjoseph/n-defensive": "^1.0.25",
+        "@nivinjoseph/n-defensive": "^1.0.26",
         "@nivinjoseph/n-exception": "^1.0.17",
         "@nivinjoseph/n-ext": "^1.1.5",
         "@nivinjoseph/n-util": "^1.0.25"

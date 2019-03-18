@@ -1,5 +1,5 @@
 import { AggregateRoot, DomainHelper, DomainContext, DomainEvent, DomainEventData} from "../../src";
-import { TodoState } from "./todo-state";
+import { TodoState, TodoStateFactory } from "./todo-state";
 import { TodoCreated } from "./events/todo-created";
 import { TodoTitleUpdated } from "./events/todo-title-updated";
 import { TodoDescriptionUpdated } from "./events/todo-description-updated";
@@ -13,6 +13,12 @@ export class Todo extends AggregateRoot<TodoState>
     public get description(): string | null { return this.state.description; }
     public get isCompleted(): boolean { return this.state.isCompleted; }
 
+    
+    public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<TodoState>>)
+    {
+        super(domainContext, events, new TodoStateFactory());
+    }
+    
     
     public static create(domainContext: DomainContext, title: string, description: string | null): Todo
     {

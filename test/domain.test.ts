@@ -297,6 +297,8 @@ suite("Domain tests", () =>
                 original.updateTitle("title update 2");
                 const serialized = original.serialize();
                 const deserialized = Todo.deserialize(domainContext, serialized.$events);
+                
+                // console.log("Type version", (<any>deserialized).state.typeVersion);
 
                 deserialized.updateTitle("title update 3");
 
