@@ -1,0 +1,1 @@
+{"version":3,"file":"aggregate-state-factory.js","sourceRoot":"","sources":["../src/aggregate-state-factory.ts"],"names":[],"mappings":"","sourcesContent":["import { AggregateState } from \"./aggregate-state\";\n\n\nexport interface AggregateStateFactory<T extends AggregateState>\n{\n    create(): T;\n    update(state: T): T;\n}"]}
