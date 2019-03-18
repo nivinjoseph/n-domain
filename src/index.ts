@@ -7,12 +7,14 @@ import { DomainHelper } from "./domain-helper";
 import { DomainContext } from "./domain-context";
 import { DomainObject } from "./domain-object";
 import { DomainEntity } from "./domain-entity";
+import { AggregateStateFactory } from "./aggregate-state-factory";
 
 
 export
 {
     AggregateRoot,
     AggregateState,
+    AggregateStateFactory,
     DomainEvent,
     AggregateRootData,
     DomainEventData,
