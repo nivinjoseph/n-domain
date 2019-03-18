@@ -1,4 +1,4 @@
-import { AggregateState } from "../dist";
+import { AggregateState } from "./aggregate-state";
 
 
 export interface AggregateStateFactory<T extends AggregateState>
