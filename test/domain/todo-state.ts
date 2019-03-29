@@ -1,6 +1,5 @@
 import { AggregateStateFactory } from "../../src/aggregate-state-factory";
 import { AggregateState } from "../../src/aggregate-state";
-import { DomainHelper } from "../../src/domain-helper";
 
 
 export interface TodoState extends AggregateState
@@ -11,12 +10,12 @@ export interface TodoState extends AggregateState
 }
 
 
-export class TodoStateFactory implements AggregateStateFactory<TodoState>
+export class TodoStateFactory extends AggregateStateFactory<TodoState>
 {
     public create(): TodoState
     {
         return {
-            ...DomainHelper.createDefaultAggregateState(),
+            ...this.createDefaultAggregateState(),
             title: null as any,
             description: null,
             isCompleted: false
