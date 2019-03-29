@@ -1,5 +1,6 @@
 import { AggregateState } from "./aggregate-state";
-export interface AggregateStateFactory<T extends AggregateState> {
-    create(): T;
-    update(state: T): T;
+export declare abstract class AggregateStateFactory<T extends AggregateState> {
+    abstract create(): T;
+    abstract update(state: T): T;
+    protected createDefaultAggregateState(): AggregateState;
 }

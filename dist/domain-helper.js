@@ -7,15 +7,6 @@ class DomainHelper {
     static generateId() {
         return n_util_1.Uuid.create().replaceAll("-", "");
     }
-    static createDefaultAggregateState() {
-        return {
-            typeVersion: 1,
-            id: null,
-            version: null,
-            createdAt: null,
-            updatedAt: null,
-        };
-    }
 }
 exports.DomainHelper = DomainHelper;
 //# sourceMappingURL=domain-helper.js.map
