@@ -64,6 +64,7 @@ typings/
 .DS_Store
 
 # Ignores compiled TypeScript files
+tsconfig.tsbuildinfo
 src/**/*.js
 src/**/*.map
 test/**/*.js

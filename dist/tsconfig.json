@@ -1,22 +1,6 @@
 {
+    "extends": "../tsconfig.json",
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es2015",
-        "strict": true,
-        "strictNullChecks": true,
-        "strictFunctionTypes": true,
-        "noImplicitThis": true,
-        "noImplicitReturns": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true,
-        "noEmitOnError": true,
-        "sourceMap": true,
-        "inlineSources": true,
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "removeComments": true,
-        "forceConsistentCasingInFileNames": true,
         "outDir": ".",
         "declaration": true,
         "declarationDir": "."
