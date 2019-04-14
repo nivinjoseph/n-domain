@@ -12,6 +12,7 @@ import { AggregateStateFactory } from "./aggregate-state-factory";
 export abstract class AggregateRoot<T extends AggregateState>
 {
     private readonly _domainContext: DomainContext;
+    private readonly _stateFactory: AggregateStateFactory<T>;
     private readonly _state: T;
     private _retroEvents: ReadonlyArray<DomainEvent<T>>;
     private readonly _retroVersion: number;
@@ -49,8 +50,10 @@ export abstract class AggregateRoot<T extends AggregateState>
         
         given(events, "events").ensureHasValue().ensureIsArray();
         given(stateFactory, "stateFactory").ensureHasValue().ensureIsObject();
+        this._stateFactory = stateFactory;
+        
         given(currentState as object, "currentState").ensureIsObject();
-        this._state = Object.assign(stateFactory.create(), currentState);
+        this._state = Object.assign(this._stateFactory.create(), currentState);
         
         if (this._state.version)
         {
@@ -69,7 +72,7 @@ export abstract class AggregateRoot<T extends AggregateState>
                 this._isNew = true;
             this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         }
-        this._state = stateFactory.update(this._state);
+        this._state = this._stateFactory.update(this._state);
         this._retroVersion = this.currentVersion;
     }
 
@@ -114,6 +117,16 @@ export abstract class AggregateRoot<T extends AggregateState>
         return new (<any>aggregateType)(domainContext, deserializedEvents);
     }
     
+    public serialize(): AggregateRootData
+    {
+        return {
+            $id: this.id,
+            $version: this.version,
+            $createdAt: this.createdAt,
+            $updatedAt: this.updatedAt,
+            $events: this.events.map(t => t.serialize())
+        };
+    }
     
     public static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateSnapshot: AggregateState | object): AggregateRoot<AggregateState>
     {
@@ -129,18 +142,6 @@ export abstract class AggregateRoot<T extends AggregateState>
             });
         
         return new (<any>aggregateType)(domainContext, [], stateSnapshot);
-    }
-
-
-    public serialize(): AggregateRootData
-    {
-        return {
-            $id: this.id,
-            $version: this.version,
-            $createdAt: this.createdAt,
-            $updatedAt: this.updatedAt,
-            $events: this.events.map(t => t.serialize())
-        };
     }
     
     public snapshot(...cloneKeys: string[]): T | object
@@ -233,7 +234,55 @@ export abstract class AggregateRoot<T extends AggregateState>
         return this._currentEvents.filter(t => t.name === eventTypeName) as any;
     }
     
-
+    public test(): void
+    {
+        const type = (<Object>this).constructor;
+        given(type, "type").ensureHasValue().ensureIsFunction()
+            .ensure(t => (<Object>t).getTypeName() === (<Object>this).getTypeName(), "type name mismatch");
+        
+        
+        const defaultState = this._stateFactory.create();
+        given(defaultState, "defaultState").ensureHasValue().ensureIsObject()
+            .ensure(t => JSON.stringify(t) === JSON.stringify(this._stateFactory.create()), "multiple default state creations are not consistent");
+        
+        
+        const deserializeEvents: Function = (<any>type).deserializeEvents;
+        given(deserializeEvents, "deserializeEvents").ensureHasValue().ensureIsFunction();
+        
+        const eventsSerialized = this.serialize();
+        given(eventsSerialized, "eventsSerialized").ensureHasValue().ensureIsObject()
+            .ensureHasStructure({
+                $id: "string",
+                $version: "number",
+                $createdAt: "number",
+                $updatedAt: "number",
+                $events: ["object"]
+            })
+            .ensure(t => JSON.stringify(t) === JSON.stringify(this.serialize()), "multiple serializations are not consistent");
+        
+        const eventsDeserializedAggregate: this = (<any>type).deserializeEvents(this._domainContext, eventsSerialized.$events);
+        given(eventsDeserializedAggregate, "eventsDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
+        
+        const eventsDeserializedAggregateState = eventsDeserializedAggregate.state;
+        given(eventsDeserializedAggregateState, "eventsDeserializedAggregateState").ensureHasValue().ensureIsObject()
+            .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
+        
+        
+        const deserializeSnapshot: Function = (<any>type).deserializeSnapshot;
+        given(deserializeSnapshot, "deserializeSnapshot").ensureHasValue().ensureIsFunction();
+        
+        const snapshot = this.snapshot();
+        given(snapshot, "snapshot").ensureHasValue().ensureIsObject()
+            .ensure(t => JSON.stringify(t) === JSON.stringify(this.snapshot()), "multiple snapshots are not consistent");
+        
+        const snapshotDeserializedAggregate: this = (<any>type).deserializeSnapshot(this._domainContext, snapshot);
+        given(snapshotDeserializedAggregate, "snapshotDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
+        
+        const snapshotDeserializedAggregateState = snapshotDeserializedAggregate.state;
+        given(snapshotDeserializedAggregateState, "snapshotDeserializedAggregateState").ensureHasValue().ensureIsObject()
+            .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
+    }
+    
     protected applyEvent(event: DomainEvent<AggregateState>): void
     {
         event.apply(this, this._domainContext, this._state);

@@ -14,9 +14,9 @@ export class Todo extends AggregateRoot<TodoState>
     public get isCompleted(): boolean { return this.state.isCompleted; }
 
     
-    public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<TodoState>>)
+    public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<TodoState>>, state?: TodoState)
     {
-        super(domainContext, events, new TodoStateFactory());
+        super(domainContext, events, new TodoStateFactory(), state);
     }
     
     
@@ -29,7 +29,7 @@ export class Todo extends AggregateRoot<TodoState>
         return new Todo(domainContext, [new TodoCreated({$isCreatedEvent: true}, DomainHelper.generateId(), title, description)]);
     }
 
-    public static deserialize(domainContext: DomainContext, eventData: ReadonlyArray<DomainEventData>): Todo
+    public static deserializeEvents(domainContext: DomainContext, eventData: ReadonlyArray<DomainEventData>): Todo
     {
         const eventTypes = [
             TodoCreated,
@@ -39,6 +39,11 @@ export class Todo extends AggregateRoot<TodoState>
         ];
 
         return AggregateRoot.deserializeFromEvents(domainContext, Todo, eventTypes, eventData) as Todo;
+    }
+    
+    public static deserializeSnapshot(domainContext: DomainContext, snapshot: object): Todo
+    {
+        return AggregateRoot.deserializeFromSnapshot(domainContext, Todo, snapshot) as Todo;
     }
 
 
