@@ -12,8 +12,9 @@ class AggregateRoot {
         this._domainContext = domainContext;
         n_defensive_1.given(events, "events").ensureHasValue().ensureIsArray();
         n_defensive_1.given(stateFactory, "stateFactory").ensureHasValue().ensureIsObject();
+        this._stateFactory = stateFactory;
         n_defensive_1.given(currentState, "currentState").ensureIsObject();
-        this._state = Object.assign(stateFactory.create(), currentState);
+        this._state = Object.assign(this._stateFactory.create(), currentState);
         if (this._state.version) {
             n_defensive_1.given(events, "events")
                 .ensure(t => t.length === 0, "no events should be passed when constructing from snapshot");
@@ -29,7 +30,7 @@ class AggregateRoot {
                 this._isNew = true;
             this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         }
-        this._state = stateFactory.update(this._state);
+        this._state = this._stateFactory.update(this._state);
         this._retroVersion = this.currentVersion;
     }
     get id() { return this._state.id; }
@@ -63,6 +64,15 @@ class AggregateRoot {
         });
         return new aggregateType(domainContext, deserializedEvents);
     }
+    serialize() {
+        return {
+            $id: this.id,
+            $version: this.version,
+            $createdAt: this.createdAt,
+            $updatedAt: this.updatedAt,
+            $events: this.events.map(t => t.serialize())
+        };
+    }
     static deserializeFromSnapshot(domainContext, aggregateType, stateSnapshot) {
         n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         n_defensive_1.given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
@@ -74,15 +84,6 @@ class AggregateRoot {
             updatedAt: "number"
         });
         return new aggregateType(domainContext, [], stateSnapshot);
-    }
-    serialize() {
-        return {
-            $id: this.id,
-            $version: this.version,
-            $createdAt: this.createdAt,
-            $updatedAt: this.updatedAt,
-            $events: this.events.map(t => t.serialize())
-        };
     }
     snapshot(...cloneKeys) {
         const snapshot = Object.assign({}, this.state);
@@ -142,6 +143,41 @@ class AggregateRoot {
         n_defensive_1.given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         const eventTypeName = eventType.getTypeName();
         return this._currentEvents.filter(t => t.name === eventTypeName);
+    }
+    test() {
+        const type = this.constructor;
+        n_defensive_1.given(type, "type").ensureHasValue().ensureIsFunction()
+            .ensure(t => t.getTypeName() === this.getTypeName(), "type name mismatch");
+        const defaultState = this._stateFactory.create();
+        n_defensive_1.given(defaultState, "defaultState").ensureHasValue().ensureIsObject()
+            .ensure(t => JSON.stringify(t) === JSON.stringify(this._stateFactory.create()), "multiple default state creations are not consistent");
+        const deserializeEvents = type.deserializeEvents;
+        n_defensive_1.given(deserializeEvents, "deserializeEvents").ensureHasValue().ensureIsFunction();
+        const eventsSerialized = this.serialize();
+        n_defensive_1.given(eventsSerialized, "eventsSerialized").ensureHasValue().ensureIsObject()
+            .ensureHasStructure({
+            $id: "string",
+            $version: "number",
+            $createdAt: "number",
+            $updatedAt: "number",
+            $events: ["object"]
+        })
+            .ensure(t => JSON.stringify(t) === JSON.stringify(this.serialize()), "multiple serializations are not consistent");
+        const eventsDeserializedAggregate = type.deserializeEvents(this._domainContext, eventsSerialized.$events);
+        n_defensive_1.given(eventsDeserializedAggregate, "eventsDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
+        const eventsDeserializedAggregateState = eventsDeserializedAggregate.state;
+        n_defensive_1.given(eventsDeserializedAggregateState, "eventsDeserializedAggregateState").ensureHasValue().ensureIsObject()
+            .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
+        const deserializeSnapshot = type.deserializeSnapshot;
+        n_defensive_1.given(deserializeSnapshot, "deserializeSnapshot").ensureHasValue().ensureIsFunction();
+        const snapshot = this.snapshot();
+        n_defensive_1.given(snapshot, "snapshot").ensureHasValue().ensureIsObject()
+            .ensure(t => JSON.stringify(t) === JSON.stringify(this.snapshot()), "multiple snapshots are not consistent");
+        const snapshotDeserializedAggregate = type.deserializeSnapshot(this._domainContext, snapshot);
+        n_defensive_1.given(snapshotDeserializedAggregate, "snapshotDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
+        const snapshotDeserializedAggregateState = snapshotDeserializedAggregate.state;
+        n_defensive_1.given(snapshotDeserializedAggregateState, "snapshotDeserializedAggregateState").ensureHasValue().ensureIsObject()
+            .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
     }
     applyEvent(event) {
         event.apply(this, this._domainContext, this._state);
