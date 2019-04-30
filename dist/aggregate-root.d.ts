@@ -29,7 +29,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, stateFactory: AggregateStateFactory<T>, currentState?: T);
     static deserializeFromEvents(domainContext: DomainContext, aggregateType: Function, eventTypes: ReadonlyArray<Function>, eventData: ReadonlyArray<DomainEventData>): AggregateRoot<AggregateState>;
     serialize(): AggregateRootData;
-    static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateSnapshot: AggregateState | object): AggregateRoot<AggregateState>;
+    static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateFactory: AggregateStateFactory<any>, stateSnapshot: AggregateState | object): AggregateRoot<AggregateState>;
     snapshot(...cloneKeys: string[]): T | object;
     constructVersion(version: number): this;
     hasEventOfType(eventType: Function): boolean;

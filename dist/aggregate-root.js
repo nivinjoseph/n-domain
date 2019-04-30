@@ -73,9 +73,10 @@ class AggregateRoot {
             $events: this.events.map(t => t.serialize())
         };
     }
-    static deserializeFromSnapshot(domainContext, aggregateType, stateSnapshot) {
+    static deserializeFromSnapshot(domainContext, aggregateType, stateFactory, stateSnapshot) {
         n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         n_defensive_1.given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
+        n_defensive_1.given(stateFactory, "stateFactory").ensureHasValue().ensureIsObject();
         n_defensive_1.given(stateSnapshot, "stateSnapshot").ensureHasValue().ensureIsObject()
             .ensureHasStructure({
             id: "string",
@@ -83,7 +84,7 @@ class AggregateRoot {
             createdAt: "number",
             updatedAt: "number"
         });
-        return new aggregateType(domainContext, [], stateSnapshot);
+        return new aggregateType(domainContext, [], stateFactory.deserializeSnapshot(stateSnapshot));
     }
     snapshot(...cloneKeys) {
         const snapshot = Object.assign({}, this.state);
