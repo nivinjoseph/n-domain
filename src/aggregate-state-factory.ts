@@ -5,6 +5,7 @@ export abstract class AggregateStateFactory<T extends AggregateState>
 {
     public abstract create(): T;
     public abstract update(state: T): T;
+    public abstract deserializeSnapshot(snapshot: T): T;
     
     protected createDefaultAggregateState(): AggregateState
     {

@@ -43,7 +43,7 @@ export class Todo extends AggregateRoot<TodoState>
     
     public static deserializeSnapshot(domainContext: DomainContext, snapshot: object): Todo
     {
-        return AggregateRoot.deserializeFromSnapshot(domainContext, Todo, snapshot) as Todo;
+        return AggregateRoot.deserializeFromSnapshot(domainContext, Todo, new TodoStateFactory(), snapshot) as Todo;
     }
 
 

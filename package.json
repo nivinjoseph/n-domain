@@ -44,7 +44,7 @@
     "dependencies": {
         "@nivinjoseph/n-defensive": "^1.0.27",
         "@nivinjoseph/n-exception": "^1.0.18",
-        "@nivinjoseph/n-ext": "^1.1.7",
+        "@nivinjoseph/n-ext": "^1.1.9",
         "@nivinjoseph/n-util": "^1.0.30"
     }
 }

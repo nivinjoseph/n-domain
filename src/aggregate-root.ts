@@ -128,11 +128,11 @@ export abstract class AggregateRoot<T extends AggregateState>
         };
     }
     
-    public static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateSnapshot: AggregateState | object): AggregateRoot<AggregateState>
+    public static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateFactory: AggregateStateFactory<any>, stateSnapshot: AggregateState | object): AggregateRoot<AggregateState>
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
-        
+        given(stateFactory, "stateFactory").ensureHasValue().ensureIsObject();
         given(stateSnapshot, "stateSnapshot").ensureHasValue().ensureIsObject()
             .ensureHasStructure({
                 id: "string",
@@ -141,7 +141,7 @@ export abstract class AggregateRoot<T extends AggregateState>
                 updatedAt: "number"
             });
         
-        return new (<any>aggregateType)(domainContext, [], stateSnapshot);
+        return new (<any>aggregateType)(domainContext, [], stateFactory.deserializeSnapshot(stateSnapshot));
     }
     
     public snapshot(...cloneKeys: string[]): T | object
