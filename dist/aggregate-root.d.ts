@@ -40,6 +40,5 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
     test(): void;
     protected applyEvent(event: DomainEvent<AggregateState>): void;
-    protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>;
     private serializeForSnapshot;
 }
