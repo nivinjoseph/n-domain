@@ -180,7 +180,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         given(version, "version").ensureHasValue().ensureIsNumber()
             .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
         
-        given(this, "this").ensure(t => t.retroEvents.length > 0, "constructing version without retro events");
+        given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
         const ctor = (<Object>this).constructor;
         return new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version));
@@ -189,6 +189,8 @@ export abstract class AggregateRoot<T extends AggregateState>
     public hasEventOfType(eventType: Function): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        
+        given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
         const eventTypeName = (<Object>eventType).getTypeName();
         return this.events.some(t => t.name === eventTypeName);
@@ -197,6 +199,8 @@ export abstract class AggregateRoot<T extends AggregateState>
     public hasRetroEventOfType(eventType: Function): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        
+        given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
         const eventTypeName = (<Object>eventType).getTypeName();
         return this._retroEvents.some(t => t.name === eventTypeName);
@@ -213,6 +217,8 @@ export abstract class AggregateRoot<T extends AggregateState>
     public getEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        
+        given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
         const eventTypeName = (<Object>eventType).getTypeName();
         return this.events.filter(t => t.name === eventTypeName) as any;
@@ -221,6 +227,8 @@ export abstract class AggregateRoot<T extends AggregateState>
     public getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
+        
+        given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
         const eventTypeName = (<Object>eventType).getTypeName();
         return this._retroEvents.filter(t => t.name === eventTypeName) as any;
@@ -289,31 +297,31 @@ export abstract class AggregateRoot<T extends AggregateState>
 
         this._currentEvents.push(event);
  
-        if (this._retroEvents.length > 0)
-        {
-            const trimmed = this.trim(this._retroEvents.orderBy(t => t.version)).orderBy(t => t.version);
-            given(trimmed, "trimmed").ensureHasValue().ensureIsArray()
-                .ensure(t => t.length > 0, "cannot trim all retro events")
-                .ensure(t => t.length <= this._retroEvents.length, "only contraction is allowed")
-                .ensure(t => t.some(u => u.isCreatedEvent), "cannot trim created event")
-                .ensure(t => t.count(u => u.isCreatedEvent) === 1, "cannot add new created events")
-                .ensure(t => t.every(u => this._retroEvents.contains(u)), "cannot add new events")
-                ;
+        // if (this._retroEvents.length > 0)
+        // {
+        //     const trimmed = this.trim(this._retroEvents.orderBy(t => t.version)).orderBy(t => t.version);
+        //     given(trimmed, "trimmed").ensureHasValue().ensureIsArray()
+        //         .ensure(t => t.length > 0, "cannot trim all retro events")
+        //         .ensure(t => t.length <= this._retroEvents.length, "only contraction is allowed")
+        //         .ensure(t => t.some(u => u.isCreatedEvent), "cannot trim created event")
+        //         .ensure(t => t.count(u => u.isCreatedEvent) === 1, "cannot add new created events")
+        //         .ensure(t => t.every(u => this._retroEvents.contains(u)), "cannot add new events")
+        //         ;
 
-            this._retroEvents = trimmed;
-        }
+        //     this._retroEvents = trimmed;
+        // }
     }
     /**
      * 
      * @deprecated DO NOT USE
      * @description override to trim retro events on the application of a new event
      */
-    protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>
-    {
-        given(retroEvents, "retroEvents").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+    // protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>
+    // {
+    //     given(retroEvents, "retroEvents").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
         
-        return retroEvents;
-    }
+    //     return retroEvents;
+    // }
     
     
     private serializeForSnapshot(value: Object): object

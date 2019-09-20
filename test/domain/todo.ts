@@ -71,13 +71,13 @@ export class Todo extends AggregateRoot<TodoState>
     }
     
     
-    protected trim(retroEvents: ReadonlyArray<DomainEvent<TodoState>>): ReadonlyArray<DomainEvent<TodoState>>
-    {
-        const result = [...super.trim(retroEvents)];
+    // protected trim(retroEvents: ReadonlyArray<DomainEvent<TodoState>>): ReadonlyArray<DomainEvent<TodoState>>
+    // {
+    //     const result = [...super.trim(retroEvents)];
         
-        if (this.hasCurrentEventOfType(TodoDescriptionUpdated))
-            this.getRetroEventsOfType(TodoDescriptionUpdated).forEach(t => result.remove(t));
+    //     if (this.hasCurrentEventOfType(TodoDescriptionUpdated))
+    //         this.getRetroEventsOfType(TodoDescriptionUpdated).forEach(t => result.remove(t));
         
-        return result;
-    }
+    //     return result;
+    // }
 }
