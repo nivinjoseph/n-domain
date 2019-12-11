@@ -33,18 +33,18 @@
     },
     "homepage": "https://github.com/nivinjoseph/n-domain#readme",
     "devDependencies": {
-        "@types/mocha": "^5.2.5",
-        "@types/node": "^8.10.39",
-        "mocha": "^5.2.0",
-        "ts-node": "^2.1.0",
-        "tslint": "^5.15.0",
-        "typescript": "^3.4.1",
-        "typescript-tslint-plugin": "^0.3.1"
+        "@types/mocha": "^5.2.7",
+        "@types/node": "^12.12.17",
+        "mocha": "^6.2.2",
+        "ts-node": "^8.5.4",
+        "tslint": "^5.20.1",
+        "typescript": "^3.7.3",
+        "typescript-tslint-plugin": "^0.5.5"
     },
     "dependencies": {
-        "@nivinjoseph/n-defensive": "^1.0.27",
-        "@nivinjoseph/n-exception": "^1.0.18",
-        "@nivinjoseph/n-ext": "^1.1.9",
-        "@nivinjoseph/n-util": "^1.0.30"
+        "@nivinjoseph/n-defensive": "^1.0.28",
+        "@nivinjoseph/n-exception": "^1.0.19",
+        "@nivinjoseph/n-ext": "^1.1.10",
+        "@nivinjoseph/n-util": "^1.0.37"
     }
 }
