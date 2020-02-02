@@ -27,18 +27,23 @@ export declare abstract class AggregateRoot<T extends AggregateState> {
     protected get context(): DomainContext;
     protected get state(): T;
     constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, stateFactory: AggregateStateFactory<T>, currentState?: T);
-    static deserializeFromEvents(domainContext: DomainContext, aggregateType: Function, eventTypes: ReadonlyArray<Function>, eventData: ReadonlyArray<DomainEventData>): AggregateRoot<AggregateState>;
+    static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, eventTypes: ReadonlyArray<new (...args: any[]) => DomainEvent<TAggregateState>>, eventData: ReadonlyArray<DomainEventData>): TAggregate;
     serialize(): AggregateRootData;
-    static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateFactory: AggregateStateFactory<any>, stateSnapshot: AggregateState | object): AggregateRoot<AggregateState>;
+    static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate;
     snapshot(...cloneKeys: string[]): T | object;
     constructVersion(version: number): this;
-    hasEventOfType(eventType: Function): boolean;
-    hasRetroEventOfType(eventType: Function): boolean;
-    hasCurrentEventOfType(eventType: Function): boolean;
-    getEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
-    getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
-    getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType>;
+    hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean;
+    hasRetroEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean;
+    hasCurrentEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean;
+    getEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType>;
+    getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType>;
+    getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType>;
     test(): void;
-    protected applyEvent(event: DomainEvent<AggregateState>): void;
+    protected applyEvent(event: DomainEvent<T>): void;
+    /**
+     *
+     * @deprecated DO NOT USE
+     * @description override to trim retro events on the application of a new event
+     */
     private serializeForSnapshot;
 }

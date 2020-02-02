@@ -4,7 +4,10 @@ const n_defensive_1 = require("@nivinjoseph/n-defensive");
 require("@nivinjoseph/n-ext");
 const _1 = require(".");
 const n_exception_1 = require("@nivinjoseph/n-exception");
+// public
 class DomainEvent {
+    // occurredAt is epoch milliseconds
+    // public constructor(user: string, occurredAt: number = DomainHelper.now, version: number = 0)
     constructor(data) {
         n_defensive_1.given(data, "data").ensureHasValue()
             .ensureHasStructure({

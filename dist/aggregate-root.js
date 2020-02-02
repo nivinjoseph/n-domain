@@ -3,9 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const n_defensive_1 = require("@nivinjoseph/n-defensive");
 const n_exception_1 = require("@nivinjoseph/n-exception");
 require("@nivinjoseph/n-ext");
+// public
 class AggregateRoot {
     constructor(domainContext, events, stateFactory, currentState) {
-        this._currentEvents = new Array();
+        this._currentEvents = new Array(); // track unit of work stuff
         this._isNew = false;
         n_defensive_1.given(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
@@ -42,7 +43,7 @@ class AggregateRoot {
     get version() { return this.currentVersion; }
     get createdAt() { return this._state.createdAt; }
     get updatedAt() { return this._state.updatedAt; }
-    get isNew() { return this._isNew; }
+    get isNew() { return this._isNew; } // this will always be false for anything that is reconstructed
     get hasChanges() { return this.currentVersion !== this.retroVersion; }
     get context() { return this._domainContext; }
     get state() { return this._state; }
@@ -53,6 +54,22 @@ class AggregateRoot {
             .ensure(t => t.length > 0, "no eventTypes provided")
             .ensure(t => t.map(u => u.getTypeName()).distinct().length === t.length, "duplicate event types detected");
         n_defensive_1.given(eventData, "eventData").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+        // given(data, "data").ensureHasValue().ensureIsObject()
+        //     .ensureHasStructure({
+        //         $id: "string",
+        //         $version: "number",
+        //         $createdAt: "number",
+        //         $updatedAt: "number",
+        //         $events: [{
+        //             $aggregateId: "string",
+        //             $id: "string",
+        //             $userId: "string",
+        //             $name: "string",
+        //             $occurredAt: "number",
+        //             $version: "number",
+        //             $isCreatedEvent: "boolean"
+        //         }]
+        //     });
         const deserializedEvents = eventData.map((eventData) => {
             const name = eventData.$name;
             const event = eventTypes.find(t => t.getTypeName() === name);
@@ -187,7 +204,29 @@ class AggregateRoot {
     applyEvent(event) {
         event.apply(this, this._domainContext, this._state);
         this._currentEvents.push(event);
+        // if (this._retroEvents.length > 0)
+        // {
+        //     const trimmed = this.trim(this._retroEvents.orderBy(t => t.version)).orderBy(t => t.version);
+        //     given(trimmed, "trimmed").ensureHasValue().ensureIsArray()
+        //         .ensure(t => t.length > 0, "cannot trim all retro events")
+        //         .ensure(t => t.length <= this._retroEvents.length, "only contraction is allowed")
+        //         .ensure(t => t.some(u => u.isCreatedEvent), "cannot trim created event")
+        //         .ensure(t => t.count(u => u.isCreatedEvent) === 1, "cannot add new created events")
+        //         .ensure(t => t.every(u => this._retroEvents.contains(u)), "cannot add new events")
+        //         ;
+        //     this._retroEvents = trimmed;
+        // }
     }
+    /**
+     *
+     * @deprecated DO NOT USE
+     * @description override to trim retro events on the application of a new event
+     */
+    // protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>
+    // {
+    //     given(retroEvents, "retroEvents").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
+    //     return retroEvents;
+    // }
     serializeForSnapshot(value) {
         n_defensive_1.given(value, "value").ensureHasValue().ensureIsObject()
             .ensure(t => !!t.serialize, `serialize method is missing on type ${value.getTypeName()}`)
