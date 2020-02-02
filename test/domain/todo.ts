@@ -38,12 +38,12 @@ export class Todo extends AggregateRoot<TodoState>
             TodoMarkedAsCompleted
         ];
 
-        return AggregateRoot.deserializeFromEvents(domainContext, Todo, eventTypes, eventData) as Todo;
+        return AggregateRoot.deserializeFromEvents(domainContext, Todo, eventTypes, eventData);
     }
     
     public static deserializeSnapshot(domainContext: DomainContext, snapshot: object): Todo
     {
-        return AggregateRoot.deserializeFromSnapshot(domainContext, Todo, new TodoStateFactory(), snapshot) as Todo;
+        return AggregateRoot.deserializeFromSnapshot(domainContext, Todo, new TodoStateFactory(), snapshot);
     }
 
 
@@ -52,7 +52,7 @@ export class Todo extends AggregateRoot<TodoState>
         given(title, "title").ensureHasValue().ensureIsString();
 
         title = title.trim();
-
+        
         this.applyEvent(new TodoTitleUpdated({}, title));
     }
 

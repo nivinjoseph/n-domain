@@ -409,7 +409,7 @@ suite("Domain tests", () =>
             });
     });
 
-    suite("Trimming", () =>
+    suite.skip("Trimming", () =>
     {
         test(`
             Given an aggregate instance of Type Todo,
@@ -590,7 +590,7 @@ suite("Domain tests", () =>
             });
     });
 
-    suite("Reconstruction with Trimming", () =>
+    suite.skip("Reconstruction with Trimming", () =>
     {
         test(`
             Given an aggregate instance of Type Todo,

@@ -76,7 +76,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         this._retroVersion = this.currentVersion;
     }
 
-    public static deserializeFromEvents(domainContext: DomainContext, aggregateType: Function, eventTypes: ReadonlyArray<Function>, eventData: ReadonlyArray<DomainEventData>): AggregateRoot<AggregateState>
+    public static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, eventTypes: ReadonlyArray<new (...args: any[]) => DomainEvent<TAggregateState>>, eventData: ReadonlyArray<DomainEventData>): TAggregate
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
@@ -128,7 +128,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         };
     }
     
-    public static deserializeFromSnapshot(domainContext: DomainContext, aggregateType: Function, stateFactory: AggregateStateFactory<any>, stateSnapshot: AggregateState | object): AggregateRoot<AggregateState>
+    public static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
@@ -141,7 +141,7 @@ export abstract class AggregateRoot<T extends AggregateState>
                 updatedAt: "number"
             });
         
-        return new (<any>aggregateType)(domainContext, [], stateFactory.deserializeSnapshot(stateSnapshot));
+        return new aggregateType(domainContext, [], stateFactory.deserializeSnapshot(stateSnapshot as any));
     }
     
     public snapshot(...cloneKeys: string[]): T | object
@@ -186,7 +186,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         return new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version));
     }
 
-    public hasEventOfType(eventType: Function): boolean
+    public hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         
@@ -196,7 +196,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         return this.events.some(t => t.name === eventTypeName);
     }
 
-    public hasRetroEventOfType(eventType: Function): boolean
+    public hasRetroEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         
@@ -206,7 +206,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         return this._retroEvents.some(t => t.name === eventTypeName);
     }
 
-    public hasCurrentEventOfType(eventType: Function): boolean
+    public hasCurrentEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
 
@@ -214,7 +214,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         return this._currentEvents.some(t => t.name === eventTypeName);
     }
 
-    public getEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
+    public getEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType> 
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         
@@ -224,7 +224,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         return this.events.filter(t => t.name === eventTypeName) as any;
     }
 
-    public getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
+    public getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType> 
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         
@@ -234,7 +234,7 @@ export abstract class AggregateRoot<T extends AggregateState>
         return this._retroEvents.filter(t => t.name === eventTypeName) as any;
     }
 
-    public getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: Function): ReadonlyArray<TEventType> 
+    public getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType> 
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
 
@@ -291,7 +291,7 @@ export abstract class AggregateRoot<T extends AggregateState>
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
     }
     
-    protected applyEvent(event: DomainEvent<AggregateState>): void
+    protected applyEvent(event: DomainEvent<T>): void
     {
         event.apply(this, this._domainContext, this._state);
 

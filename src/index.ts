@@ -1,25 +1,10 @@
-import { AggregateRoot } from "./aggregate-root";
-import { AggregateState } from "./aggregate-state";
-import { DomainEvent } from "./domain-event";
-import { AggregateRootData } from "./aggregate-root-data";
-import { DomainEventData } from "./domain-event-data";
-import { DomainHelper } from "./domain-helper";
-import { DomainContext } from "./domain-context";
-import { DomainObject } from "./domain-object";
-import { DomainEntity } from "./domain-entity";
-import { AggregateStateFactory } from "./aggregate-state-factory";
-
-
-export
-{
-    AggregateRoot,
-    AggregateState,
-    AggregateStateFactory,
-    DomainEvent,
-    AggregateRootData,
-    DomainEventData,
-    DomainHelper,
-    DomainContext,
-    DomainObject,
-    DomainEntity
-};
+export { AggregateRoot } from "./aggregate-root";
+export { AggregateState } from "./aggregate-state";
+export { DomainEvent } from "./domain-event";
+export { AggregateRootData } from "./aggregate-root-data";
+export { DomainEventData } from "./domain-event-data";
+export { DomainHelper } from "./domain-helper";
+export { DomainContext } from "./domain-context";
+export { DomainObject } from "./domain-object";
+export { DomainEntity } from "./domain-entity";
+export { AggregateStateFactory } from "./aggregate-state-factory";
