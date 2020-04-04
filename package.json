@@ -1,6 +1,6 @@
 {
     "name": "@nivinjoseph/n-domain",
-    "version": "1.2.26",
+    "version": "1.2.27",
     "description": "Domain Driven Design and Event Sourcing based framework for business layer implementation",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
