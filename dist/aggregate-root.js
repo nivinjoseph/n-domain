@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const n_defensive_1 = require("@nivinjoseph/n-defensive");
 const n_exception_1 = require("@nivinjoseph/n-exception");
 require("@nivinjoseph/n-ext");
+const domain_object_1 = require("./domain-object");
 // public
 class AggregateRoot {
     constructor(domainContext, events, stateFactory, currentState) {
@@ -228,10 +229,15 @@ class AggregateRoot {
     //     return retroEvents;
     // }
     serializeForSnapshot(value) {
-        n_defensive_1.given(value, "value").ensureHasValue().ensureIsObject()
-            .ensure(t => !!t.serialize, `serialize method is missing on type ${value.getTypeName()}`)
-            .ensure(t => typeof (t.serialize) === "function", `property serialize on type ${value.getTypeName()} is not a function`);
-        return value.serialize();
+        if (value instanceof domain_object_1.DomainObject)
+            return value.serialize();
+        if (Object.keys(value).some(t => t.startsWith("_")))
+            throw new n_exception_1.ApplicationException(`attempting to serialize an object [${value.getTypeName()}] with private fields but does not extend DomainObject for the purposes of snapshot`);
+        return JSON.parse(JSON.stringify(value));
+        // given(value, "value").ensureHasValue().ensureIsObject()
+        //     .ensure(t => !!(<any>t).serialize, `serialize method is missing on type ${value.getTypeName()}`)
+        //     .ensure(t => typeof ((<any>t).serialize) === "function", `property serialize on type ${value.getTypeName()} is not a function`);
+        // return (<any>value).serialize();
     }
 }
 exports.AggregateRoot = AggregateRoot;
