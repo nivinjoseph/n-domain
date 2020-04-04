@@ -7,6 +7,7 @@ import "@nivinjoseph/n-ext";
 import { DomainContext } from "./domain-context";
 import { DomainEventData } from "./domain-event-data";
 import { AggregateStateFactory } from "./aggregate-state-factory";
+import { DomainObject } from "./domain-object";
 
 // public
 export abstract class AggregateRoot<T extends AggregateState>
@@ -326,10 +327,19 @@ export abstract class AggregateRoot<T extends AggregateState>
     
     private serializeForSnapshot(value: Object): object
     {
-        given(value, "value").ensureHasValue().ensureIsObject()
-            .ensure(t => !!(<any>t).serialize, `serialize method is missing on type ${value.getTypeName()}`)
-            .ensure(t => typeof ((<any>t).serialize) === "function", `property serialize on type ${value.getTypeName()} is not a function`);
+        if (value instanceof DomainObject)
+            return value.serialize();
+        
+        if (Object.keys(value).some(t => t.startsWith("_")))
+            throw new ApplicationException(
+                `attempting to serialize an object [${value.getTypeName()}] with private fields but does not extend DomainObject for the purposes of snapshot`);
+        
+        return JSON.parse(JSON.stringify(value));
+        
+        // given(value, "value").ensureHasValue().ensureIsObject()
+        //     .ensure(t => !!(<any>t).serialize, `serialize method is missing on type ${value.getTypeName()}`)
+        //     .ensure(t => typeof ((<any>t).serialize) === "function", `property serialize on type ${value.getTypeName()} is not a function`);
 
-        return (<any>value).serialize();
+        // return (<any>value).serialize();
     }
 }
