@@ -26,7 +26,7 @@ export class Todo extends AggregateRoot<TodoState>
         given(title, "title").ensureHasValue().ensureIsString();
         given(description as string, "description").ensureIsString();
 
-        return new Todo(domainContext, [new TodoCreated({$isCreatedEvent: true}, DomainHelper.generateId(), title, description)]);
+        return new Todo(domainContext, [new TodoCreated({$isCreatedEvent: true}, DomainHelper.generateId("tdo"), title, description)]);
     }
 
     public static deserializeEvents(domainContext: DomainContext, eventData: ReadonlyArray<DomainEventData>): Todo

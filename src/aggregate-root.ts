@@ -245,7 +245,7 @@ export abstract class AggregateRoot<T extends AggregateState>
     
     public test(): void
     {
-        const type = (<Object>this).constructor;
+        const type = (<Object>this).constructor as new (...params: any[]) => this;
         given(type, "type").ensureHasValue().ensureIsFunction()
             .ensure(t => (<Object>t).getTypeName() === (<Object>this).getTypeName(), "type name mismatch");
         

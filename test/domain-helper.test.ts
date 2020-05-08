@@ -18,11 +18,12 @@ suite("DomainHelper tests", () =>
 
     test("generateId", () =>
     {
-        const id = DomainHelper.generateId();
+        const id = DomainHelper.generateId("usr");
 
         Assert.ok(!id.contains(" "));
         Assert.ok(!id.contains("-"));
-        Assert.strictEqual(id.length, 32);
+        Assert.ok(id.startsWith("usr_"));
+        Assert.strictEqual(id.length, 36);
         console.log("id", id);
         console.log("max number length", Number.MAX_SAFE_INTEGER.toString().length);
     });

@@ -1,3 +1,4 @@
+import "@nivinjoseph/n-ext";
 export { AggregateRoot } from "./aggregate-root";
 export { AggregateState } from "./aggregate-state";
 export { DomainEvent } from "./domain-event";
