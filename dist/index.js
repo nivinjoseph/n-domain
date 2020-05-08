@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+require("@nivinjoseph/n-ext");
 var aggregate_root_1 = require("./aggregate-root");
 exports.AggregateRoot = aggregate_root_1.AggregateRoot;
 var domain_event_1 = require("./domain-event");
