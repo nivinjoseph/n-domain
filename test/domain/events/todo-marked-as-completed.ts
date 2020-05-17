@@ -1,22 +1,23 @@
 import { TodoState } from "../todo-state";
-import { given } from "@nivinjoseph/n-defensive";
-import { DomainEvent, DomainEventData } from "../../../src";
+import { DomainEvent } from "../../../src";
+import { deserialize } from "@nivinjoseph/n-util";
 
 
+@deserialize
 export class TodoMarkedAsCompleted extends DomainEvent<TodoState>
 {
-    public static deserializeEvent(data: DomainEventData): TodoMarkedAsCompleted
-    {
-        given(data, "data").ensureHasValue().ensureIsObject();
+    // public static deserializeEvent(data: DomainEventData): TodoMarkedAsCompleted
+    // {
+    //     given(data, "data").ensureHasValue().ensureIsObject();
 
-        return new TodoMarkedAsCompleted(data);
-    }
+    //     return new TodoMarkedAsCompleted(data);
+    // }
 
 
-    protected serializeEvent(): object
-    {
-        return {};
-    }
+    // protected serializeEvent(): object
+    // {
+    //     return {};
+    // }
 
     protected applyEvent(state: TodoState): void
     {

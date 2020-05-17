@@ -5,9 +5,10 @@ import "@nivinjoseph/n-ext";
 import { DomainHelper, AggregateRoot } from ".";
 import { DomainContext } from "./domain-context";
 import { ApplicationException } from "@nivinjoseph/n-exception";
+import { serialize, Serializable } from "@nivinjoseph/n-util";
 
 // public
-export abstract class DomainEvent<T extends AggregateState>
+export abstract class DomainEvent<T extends AggregateState> extends Serializable
 {
     private _aggregateId: string | null;
     private _id: string | null; // _aggregateId-_version
@@ -17,39 +18,64 @@ export abstract class DomainEvent<T extends AggregateState>
     private _version: number;
     private readonly _isCreatedEvent: boolean;
 
-
+    
+    @serialize("$aggregateId")
     public get aggregateId(): string | null { return this._aggregateId; }
+    
+    @serialize("$id")
     public get id(): string { return this._id as string; }
+    
+    @serialize("$userId")
     public get userId(): string | null { return this._userId; }
+    
+    @serialize("$name")
     public get name(): string { return this._name; }
+    
+    @serialize("$occurredAt")
     public get occurredAt(): number { return this._occurredAt; }
+    
+    @serialize("$version")
     public get version(): number { return this._version; }
+    
+    @serialize("$isCreatedEvent")
     public get isCreatedEvent(): boolean { return this._isCreatedEvent; }
 
     // occurredAt is epoch milliseconds
-    // public constructor(user: string, occurredAt: number = DomainHelper.now, version: number = 0)
     public constructor(data: DomainEventData)
     {
-        given(data, "data").ensureHasValue()
-            .ensureHasStructure({
-                "$aggregateId?": "string",
-                "$id?": "string",
-                "$userId?": "string",
-                "$name?": "string",
-                "$occurredAt?": "number",
-                "$version?": "number",
-                "$isCreatedEvent?": "boolean"
-            });
+        super();
+        
+        const {
+            $aggregateId,
+            $id,
+            $userId,
+            $name,
+            $occurredAt,
+            $version,
+            $isCreatedEvent
+        } = data;
+        
+        given($aggregateId as string, "$aggregateId").ensureIsString();
+        this._aggregateId = $aggregateId || null;
 
-        this._aggregateId = data.$aggregateId || null;
-        this._id = data.$id || null;
-        this._userId = data.$userId && !data.$userId.isEmptyOrWhiteSpace() ? data.$userId.trim() : null;
+        given($id as string, "$id").ensureIsString();
+        this._id = $id || null;
+
+        given($userId as string, "$userId").ensureIsString();
+        this._userId = $userId && !$userId.isEmptyOrWhiteSpace() ? $userId.trim() : null;
+
         this._name = (<Object>this).getTypeName();
-        if (data.$name && data.$name !== this._name)
-            throw new ApplicationException(`Deserialized event name '${data.$name}' does not match target type name '${this._name}'.`);
-        this._occurredAt = data.$occurredAt || DomainHelper.now;
-        this._version = data.$version || 0;
-        this._isCreatedEvent = !!data.$isCreatedEvent;
+        if ($name && $name !== this._name)
+            throw new ApplicationException(`Deserialized event name '${$name}' does not match target type name '${this._name}'.`);
+
+        given($occurredAt as number, "$occurredAt").ensureIsNumber();
+        this._occurredAt = $occurredAt || DomainHelper.now;
+
+        given($version as number, "$version").ensureIsNumber().ensure(t => t > 0);
+        this._version = $version || 0;
+
+        given($isCreatedEvent as boolean, "$isCreatedEvent").ensureIsBoolean();
+        this._isCreatedEvent = !!$isCreatedEvent;
     }
 
 
@@ -61,45 +87,45 @@ export abstract class DomainEvent<T extends AggregateState>
 
         if (this._userId == null)
             this._userId = domainContext.userId;
-        
+
         const version = this._version || (state.version + 1) || 1;
-        
+
         this.applyEvent(state as T);
-        
+
         if (this._isCreatedEvent)
             state.createdAt = this._occurredAt;
-        
+
         state.updatedAt = this._occurredAt;
-        
+
         if (aggregate.id == null)
             throw new ApplicationException("Created event is not setting the id of the aggregate");
 
         if (this._aggregateId != null && this._aggregateId !== aggregate.id)
             throw new ApplicationException(`Event of type '${this._name}' with id ${this._id} and aggregateId '${this._aggregateId}' is being applied on Aggregate of type '${(<Object>aggregate).getTypeName()}' with id '${aggregate.id}'`);
         this._aggregateId = aggregate.id;
-        
+
         state.version = this._version = version;
-        
+
         const id = `${this._aggregateId}-${this._version}`;
         if (this._id != null && this._id !== id)
             throw new ApplicationException(`Deserialized id '${this._id}' does not match computed id ${id}`);
         this._id = id;
     }
 
-    public serialize(): DomainEventData
-    {
-        return Object.assign(this.serializeEvent(), {
-            $aggregateId: this._aggregateId,
-            $id: this._id,
-            $userId: this._userId,
-            $name: this._name,
-            $occurredAt: this._occurredAt,
-            $version: this._version,
-            $isCreatedEvent: this._isCreatedEvent
-        });
-    }
+    // public serialize(): DomainEventData
+    // {
+    //     return Object.assign(this.serializeEvent(), {
+    //         $aggregateId: this._aggregateId,
+    //         $id: this._id,
+    //         $userId: this._userId,
+    //         $name: this._name,
+    //         $occurredAt: this._occurredAt,
+    //         $version: this._version,
+    //         $isCreatedEvent: this._isCreatedEvent
+    //     } as any);
+    // }
 
 
-    protected abstract serializeEvent(): object;
+    // protected abstract serializeEvent(): object;
     protected abstract applyEvent(state: T): void;
 }

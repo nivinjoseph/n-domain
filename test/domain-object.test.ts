@@ -6,9 +6,9 @@ suite("DomainObject tests", () =>
 {
     test("equality check", () =>
     {
-        const foo = new TestDomainObject("foo", "i am foo");
-        const bar = new TestDomainObject("bar", "i am foo");
-        const baz = new TestDomainObject("bar", "i am foo");
+        const foo = new TestDomainObject({id: "foo", name: "i am foo"});
+        const bar = new TestDomainObject({id: "bar", name: "i am foo"});
+        const baz = new TestDomainObject({id: "bar", name: "i am foo"});
         
         Assert.ok(foo.equals(foo));
         Assert.ok(!foo.equals(bar));

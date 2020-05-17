@@ -1,13 +1,9 @@
 import "@nivinjoseph/n-ext";
+import { Serializable } from "@nivinjoseph/n-util";
 
 // public
-export abstract class DomainObject
+export abstract class DomainObject extends Serializable
 {
-    /**
-     * Please also provide corresponding static deserialize method
-     */
-    public abstract serialize(): any;
-    
     /**
      * @param value (the value to compare)
      */
@@ -23,13 +19,5 @@ export abstract class DomainObject
             return false;
         
         return JSON.stringify(this.serialize()) === JSON.stringify(value.serialize());
-        
-        // for (const key in this)
-        // {
-        //     if (this[key] !== (<any>value)[key])
-        //         return false;
-        // }
-        
-        // return true;
     }
 }

@@ -8,9 +8,10 @@ import { DomainContext } from "./domain-context";
 import { DomainEventData } from "./domain-event-data";
 import { AggregateStateFactory } from "./aggregate-state-factory";
 import { DomainObject } from "./domain-object";
+import { Deserializer, Serializable, serialize } from "@nivinjoseph/n-util";
 
 // public
-export abstract class AggregateRoot<T extends AggregateState>
+export abstract class AggregateRoot<T extends AggregateState> extends Serializable
 {
     private readonly _domainContext: DomainContext;
     private readonly _stateFactory: AggregateStateFactory<T>;
@@ -20,7 +21,7 @@ export abstract class AggregateRoot<T extends AggregateState>
     private readonly _currentEvents = new Array<DomainEvent<T>>(); // track unit of work stuff
     private readonly _isNew: boolean = false;
 
-
+    @serialize("$id")
     public get id(): string { return this._state.id; }
     
     public get retroEvents(): ReadonlyArray<DomainEvent<T>> { return this._retroEvents.orderBy(t => t.version); }
@@ -29,10 +30,16 @@ export abstract class AggregateRoot<T extends AggregateState>
     public get currentEvents(): ReadonlyArray<DomainEvent<T>> { return this._currentEvents.orderBy(t => t.version); }
     public get currentVersion(): number { return this._state.version; }
     
+    @serialize("$events")
     public get events(): ReadonlyArray<DomainEvent<T>> { return [...this._retroEvents, ...this._currentEvents].orderBy(t => t.version); }
+    
+    @serialize("$version")
     public get version(): number { return this.currentVersion; }
     
+    @serialize("$createdAt")
     public get createdAt(): number { return this._state.createdAt; }
+    
+    @serialize("$updatedAt")
     public get updatedAt(): number { return this._state.updatedAt; }
 
     public get isNew(): boolean { return this._isNew; } // this will always be false for anything that is reconstructed
@@ -45,6 +52,8 @@ export abstract class AggregateRoot<T extends AggregateState>
     public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
         stateFactory: AggregateStateFactory<T>, currentState?: T)
     {
+        super();
+        
         given(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
         this._domainContext = domainContext;
@@ -77,13 +86,12 @@ export abstract class AggregateRoot<T extends AggregateState>
         this._retroVersion = this.currentVersion;
     }
 
-    public static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, eventTypes: ReadonlyArray<new (...args: any[]) => DomainEvent<TAggregateState>>, eventData: ReadonlyArray<DomainEventData>): TAggregate
+    public static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState>,
+        TAggregateState extends AggregateState>(domainContext: DomainContext,
+            aggregateType: new (...args: any[]) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
-        given(eventTypes, "eventTypes").ensureHasValue().ensureIsArray()
-            .ensure(t => t.length > 0, "no eventTypes provided")
-            .ensure(t => t.map(u => (<Object>u).getTypeName()).distinct().length === t.length, "duplicate event types detected");
         given(eventData, "eventData").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
         
         
@@ -106,27 +114,34 @@ export abstract class AggregateRoot<T extends AggregateState>
         
         const deserializedEvents = eventData.map((eventData) =>
         {
-            const name = eventData.$name;
-            const event = eventTypes.find(t => (<Object>t).getTypeName() === name);
-            if (!event)
-                throw new ApplicationException(`No event type supplied for event with name '${name}'`);
-            if (!(<any>event).deserializeEvent)
-                throw new ApplicationException(`Event type '${name}' does not have a static deserializeEvent method defined.`);
-            return (<any>event).deserializeEvent(eventData);
+            return Deserializer.deserialize(eventData);
+            
+            // const name = eventData.$name;
+            // const event = eventTypes.find(t => (<Object>t).getTypeName() === name);
+            // if (!event)
+            //     throw new ApplicationException(`No event type supplied for event with name '${name}'`);
+            // if (!(<any>event).deserializeEvent)
+            //     throw new ApplicationException(`Event type '${name}' does not have a static deserializeEvent method defined.`);
+            // return (<any>event).deserializeEvent(eventData);
         });
         
         return new (<any>aggregateType)(domainContext, deserializedEvents);
     }
     
+    // public serialize(): AggregateRootData
+    // {
+    //     return {
+    //         $id: this.id,
+    //         $version: this.version,
+    //         $createdAt: this.createdAt,
+    //         $updatedAt: this.updatedAt,
+    //         $events: this.events.map(t => t.serialize())
+    //     };
+    // }
+    
     public serialize(): AggregateRootData
     {
-        return {
-            $id: this.id,
-            $version: this.version,
-            $createdAt: this.createdAt,
-            $updatedAt: this.updatedAt,
-            $events: this.events.map(t => t.serialize())
-        };
+        return super.serialize() as AggregateRootData;
     }
     
     public static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate
@@ -273,6 +288,8 @@ export abstract class AggregateRoot<T extends AggregateState>
         given(eventsDeserializedAggregate, "eventsDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
         
         const eventsDeserializedAggregateState = eventsDeserializedAggregate.state;
+        console.log("t", JSON.stringify(eventsDeserializedAggregateState));
+        console.log("state", JSON.stringify(this.state));
         given(eventsDeserializedAggregateState, "eventsDeserializedAggregateState").ensureHasValue().ensureIsObject()
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
         
