@@ -1,8 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.DomainObject = void 0;
 require("@nivinjoseph/n-ext");
+const n_util_1 = require("@nivinjoseph/n-util");
 // public
-class DomainObject {
+class DomainObject extends n_util_1.Serializable {
     /**
      * @param value (the value to compare)
      */
@@ -14,12 +16,6 @@ class DomainObject {
         if (value.getTypeName() !== this.getTypeName())
             return false;
         return JSON.stringify(this.serialize()) === JSON.stringify(value.serialize());
-        // for (const key in this)
-        // {
-        //     if (this[key] !== (<any>value)[key])
-        //         return false;
-        // }
-        // return true;
     }
 }
 exports.DomainObject = DomainObject;

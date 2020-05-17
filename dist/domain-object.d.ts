@@ -1,9 +1,6 @@
 import "@nivinjoseph/n-ext";
-export declare abstract class DomainObject {
-    /**
-     * Please also provide corresponding static deserialize method
-     */
-    abstract serialize(): any;
+import { Serializable } from "@nivinjoseph/n-util";
+export declare abstract class DomainObject extends Serializable {
     /**
      * @param value (the value to compare)
      */

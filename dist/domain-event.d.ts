@@ -3,7 +3,8 @@ import { DomainEventData } from "./domain-event-data";
 import "@nivinjoseph/n-ext";
 import { AggregateRoot } from ".";
 import { DomainContext } from "./domain-context";
-export declare abstract class DomainEvent<T extends AggregateState> {
+import { Serializable } from "@nivinjoseph/n-util";
+export declare abstract class DomainEvent<T extends AggregateState> extends Serializable {
     private _aggregateId;
     private _id;
     private _userId;
@@ -20,7 +21,5 @@ export declare abstract class DomainEvent<T extends AggregateState> {
     get isCreatedEvent(): boolean;
     constructor(data: DomainEventData);
     apply(aggregate: AggregateRoot<T>, domainContext: DomainContext, state: T): void;
-    serialize(): DomainEventData;
-    protected abstract serializeEvent(): object;
     protected abstract applyEvent(state: T): void;
 }

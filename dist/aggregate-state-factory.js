@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.AggregateStateFactory = void 0;
 class AggregateStateFactory {
     createDefaultAggregateState() {
         return {
