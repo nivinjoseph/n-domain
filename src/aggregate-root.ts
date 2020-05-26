@@ -9,6 +9,7 @@ import { DomainEventData } from "./domain-event-data";
 import { AggregateStateFactory } from "./aggregate-state-factory";
 import { DomainObject } from "./domain-object";
 import { Deserializer, Serializable, serialize } from "@nivinjoseph/n-util";
+import * as Crypto from "crypto";
 
 // public
 export abstract class AggregateRoot<T extends AggregateState> extends Serializable
@@ -290,9 +291,17 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         const eventsDeserializedAggregateState = eventsDeserializedAggregate.state;
         console.log("eventsDeserializedAggregateState", JSON.stringify(eventsDeserializedAggregateState));
         console.log("state", JSON.stringify(this.state));
-        given(eventsDeserializedAggregateState, "eventsDeserializedAggregateState").ensureHasValue().ensureIsObject()
-            .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
         
+        const eventsDeserializedAggregateStateHash = Crypto.createHash("sha512")
+            .update(JSON.stringify(eventsDeserializedAggregateState).trim())
+            .digest("hex").toUpperCase();
+        
+        const originalStateHash = Crypto.createHash("sha512")
+            .update(JSON.stringify(this.state).trim())
+            .digest("hex").toUpperCase();
+        
+        given(eventsDeserializedAggregateStateHash, "eventsDeserializedAggregateStateHash").ensureHasValue().ensureIsString()
+            .ensure(t => t === originalStateHash, "state is not consistent with original state");
         
         const deserializeSnapshot: Function = (<any>type).deserializeSnapshot;
         given(deserializeSnapshot, "deserializeSnapshot").ensureHasValue().ensureIsFunction();
