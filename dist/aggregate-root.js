@@ -204,7 +204,7 @@ let AggregateRoot = /** @class */ (() => {
             const eventsDeserializedAggregate = type.deserializeEvents(this._domainContext, eventsSerialized.$events);
             n_defensive_1.given(eventsDeserializedAggregate, "eventsDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
             const eventsDeserializedAggregateState = eventsDeserializedAggregate.state;
-            console.log("t", JSON.stringify(eventsDeserializedAggregateState));
+            console.log("eventsDeserializedAggregateState", JSON.stringify(eventsDeserializedAggregateState));
             console.log("state", JSON.stringify(this.state));
             n_defensive_1.given(eventsDeserializedAggregateState, "eventsDeserializedAggregateState").ensureHasValue().ensureIsObject()
                 .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
