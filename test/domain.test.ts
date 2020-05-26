@@ -693,18 +693,6 @@ suite("Domain tests", () =>
                 Assert.strictEqual(reconstructed.description, "description");
             });
     });
-    
-    suite("Built in test", () =>
-    {
-        test("Built in sanity check", () =>
-        {
-            const todo = Todo.create(domainContext, "title", "description");
-            
-            todo.test();
-            
-            Assert.ok(true);
-        });
-    });
 });
 
 

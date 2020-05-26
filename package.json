@@ -35,16 +35,16 @@
     "devDependencies": {
         "@types/mocha": "^7.0.2",
         "@types/node": "^12.12.17",
-        "mocha": "^7.1.2",
+        "mocha": "^7.2.0",
         "ts-node": "^8.10.1",
         "tslint": "^6.1.2",
-        "typescript": "^3.9.2",
+        "typescript": "^3.9.3",
         "typescript-tslint-plugin": "^0.5.5"
     },
     "dependencies": {
-        "@nivinjoseph/n-defensive": "^1.0.32",
+        "@nivinjoseph/n-defensive": "^1.0.33",
         "@nivinjoseph/n-exception": "^1.0.19",
         "@nivinjoseph/n-ext": "^1.1.19",
-        "@nivinjoseph/n-util": "^1.0.43"
+        "@nivinjoseph/n-util": "^1.0.46"
     }
 }
