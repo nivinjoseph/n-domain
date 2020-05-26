@@ -15,6 +15,7 @@ const n_exception_1 = require("@nivinjoseph/n-exception");
 require("@nivinjoseph/n-ext");
 const domain_object_1 = require("./domain-object");
 const n_util_1 = require("@nivinjoseph/n-util");
+const Crypto = require("crypto");
 // public
 let AggregateRoot = /** @class */ (() => {
     class AggregateRoot extends n_util_1.Serializable {
@@ -206,8 +207,14 @@ let AggregateRoot = /** @class */ (() => {
             const eventsDeserializedAggregateState = eventsDeserializedAggregate.state;
             console.log("eventsDeserializedAggregateState", JSON.stringify(eventsDeserializedAggregateState));
             console.log("state", JSON.stringify(this.state));
-            n_defensive_1.given(eventsDeserializedAggregateState, "eventsDeserializedAggregateState").ensureHasValue().ensureIsObject()
-                .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
+            const eventsDeserializedAggregateStateHash = Crypto.createHash("sha512")
+                .update(JSON.stringify(eventsDeserializedAggregateState).trim())
+                .digest("hex").toUpperCase();
+            const originalStateHash = Crypto.createHash("sha512")
+                .update(JSON.stringify(this.state).trim())
+                .digest("hex").toUpperCase();
+            n_defensive_1.given(eventsDeserializedAggregateStateHash, "eventsDeserializedAggregateStateHash").ensureHasValue().ensureIsString()
+                .ensure(t => t === originalStateHash, "state is not consistent with original state");
             const deserializeSnapshot = type.deserializeSnapshot;
             n_defensive_1.given(deserializeSnapshot, "deserializeSnapshot").ensureHasValue().ensureIsFunction();
             const snapshot = this.snapshot();
