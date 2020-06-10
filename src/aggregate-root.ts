@@ -145,7 +145,10 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         return super.serialize() as AggregateRootData;
     }
     
-    public static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate
+    public static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>,
+        TAggregateState extends AggregateState>(domainContext: DomainContext,
+            aggregateType: new (...args: any[]) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>,
+            stateSnapshot: TAggregateState | object): TAggregate
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
