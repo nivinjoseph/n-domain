@@ -17,7 +17,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     private readonly _domainContext: DomainContext;
     private readonly _stateFactory: AggregateStateFactory<T>;
     private readonly _state: T;
-    private _retroEvents: ReadonlyArray<DomainEvent<T>>;
+    private readonly _retroEvents: ReadonlyArray<DomainEvent<T>>;
     private readonly _retroVersion: number;
     private readonly _currentEvents = new Array<DomainEvent<T>>(); // track unit of work stuff
     private readonly _isNew: boolean = false;

@@ -45,6 +45,8 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     {
         super();
         
+        given(data, "data").ensureHasValue().ensureIsObject();
+        
         const {
             $aggregateId,
             $id,

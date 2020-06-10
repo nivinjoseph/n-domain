@@ -7,13 +7,17 @@ export abstract class DomainEntity extends DomainObject
 {
     private readonly _id: string;
     
+    
     @serialize()
     public get id(): string { return this._id; }
     
     
-    protected constructor({ id }: {id: string})
+    protected constructor(data: Pick<DomainEntity, "id">)
     {
         super();
+        given(data, "data").ensureHasValue().ensureIsObject();
+        
+        const { id } = data;
         
         given(id, "id").ensureHasValue().ensureIsString();
         this._id = id;

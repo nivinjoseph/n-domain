@@ -3,7 +3,7 @@ import { Todo } from "./domain/todo";
 import * as Assert from "assert";
 
 
-suite.only("Domain Builtin test", () =>
+suite("Domain Builtin test", () =>
 {
     const domainContext: DomainContext = { userId: "dev" };
     
