@@ -10,7 +10,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     private readonly _domainContext;
     private readonly _stateFactory;
     private readonly _state;
-    private _retroEvents;
+    private readonly _retroEvents;
     private readonly _retroVersion;
     private readonly _currentEvents;
     private readonly _isNew;

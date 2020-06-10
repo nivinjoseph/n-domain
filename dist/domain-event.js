@@ -21,6 +21,7 @@ let DomainEvent = /** @class */ (() => {
         // occurredAt is epoch milliseconds
         constructor(data) {
             super();
+            n_defensive_1.given(data, "data").ensureHasValue().ensureIsObject();
             const { $aggregateId, $id, $userId, $name, $occurredAt, $version, $isCreatedEvent } = data;
             n_defensive_1.given($aggregateId, "$aggregateId").ensureIsString();
             this._aggregateId = $aggregateId || null;

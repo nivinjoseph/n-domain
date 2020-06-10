@@ -16,8 +16,10 @@ const n_util_1 = require("@nivinjoseph/n-util");
 // public
 let DomainEntity = /** @class */ (() => {
     class DomainEntity extends domain_object_1.DomainObject {
-        constructor({ id }) {
+        constructor(data) {
             super();
+            n_defensive_1.given(data, "data").ensureHasValue().ensureIsObject();
+            const { id } = data;
             n_defensive_1.given(id, "id").ensureHasValue().ensureIsString();
             this._id = id;
         }
