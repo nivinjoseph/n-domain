@@ -4,7 +4,7 @@ import "@nivinjoseph/n-ext";
 import { AggregateRoot } from ".";
 import { DomainContext } from "./domain-context";
 import { Serializable } from "@nivinjoseph/n-util";
-export declare abstract class DomainEvent<T extends AggregateState> extends Serializable {
+export declare abstract class DomainEvent<T extends AggregateState> extends Serializable<DomainEventData> {
     private _aggregateId;
     private _id;
     private _userId;

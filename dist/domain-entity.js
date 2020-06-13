@@ -14,23 +14,19 @@ const domain_object_1 = require("./domain-object");
 const n_defensive_1 = require("@nivinjoseph/n-defensive");
 const n_util_1 = require("@nivinjoseph/n-util");
 // public
-let DomainEntity = /** @class */ (() => {
-    class DomainEntity extends domain_object_1.DomainObject {
-        constructor(data) {
-            super();
-            n_defensive_1.given(data, "data").ensureHasValue().ensureIsObject();
-            const { id } = data;
-            n_defensive_1.given(id, "id").ensureHasValue().ensureIsString();
-            this._id = id;
-        }
-        get id() { return this._id; }
+class DomainEntity extends domain_object_1.DomainObject {
+    constructor(data) {
+        super(data);
+        const { id } = data;
+        n_defensive_1.given(id, "id").ensureHasValue().ensureIsString();
+        this._id = id;
     }
-    __decorate([
-        n_util_1.serialize(),
-        __metadata("design:type", String),
-        __metadata("design:paramtypes", [])
-    ], DomainEntity.prototype, "id", null);
-    return DomainEntity;
-})();
+    get id() { return this._id; }
+}
+__decorate([
+    n_util_1.serialize(),
+    __metadata("design:type", String),
+    __metadata("design:paramtypes", [])
+], DomainEntity.prototype, "id", null);
 exports.DomainEntity = DomainEntity;
 //# sourceMappingURL=domain-entity.js.map

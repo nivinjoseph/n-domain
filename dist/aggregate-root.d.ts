@@ -6,7 +6,7 @@ import { DomainContext } from "./domain-context";
 import { DomainEventData } from "./domain-event-data";
 import { AggregateStateFactory } from "./aggregate-state-factory";
 import { Serializable } from "@nivinjoseph/n-util";
-export declare abstract class AggregateRoot<T extends AggregateState> extends Serializable {
+export declare abstract class AggregateRoot<T extends AggregateState> extends Serializable<AggregateRootData> {
     private readonly _domainContext;
     private readonly _stateFactory;
     private readonly _state;
@@ -29,7 +29,6 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     protected get state(): T;
     constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, stateFactory: AggregateStateFactory<T>, currentState?: T);
     static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate;
-    serialize(): AggregateRootData;
     static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate;
     snapshot(...cloneKeys: string[]): T | object;
     constructVersion(version: number): this;
