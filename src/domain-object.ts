@@ -2,12 +2,12 @@ import "@nivinjoseph/n-ext";
 import { Serializable } from "@nivinjoseph/n-util";
 
 // public
-export abstract class DomainObject extends Serializable
+export abstract class DomainObject<TData extends object = {}> extends Serializable<TData>
 {
     /**
      * @param value (the value to compare)
      */
-    public equals(value: DomainObject): boolean
+    public equals(value: DomainObject | null): boolean
     {
         if (value == null)
             return false;

@@ -3,7 +3,7 @@ import { given } from "@nivinjoseph/n-defensive";
 import { serialize } from "@nivinjoseph/n-util";
 
 // public
-export abstract class DomainEntity extends DomainObject
+export abstract class DomainEntity<TData extends object = {}> extends DomainObject<TData>
 {
     private readonly _id: string;
     
@@ -14,8 +14,7 @@ export abstract class DomainEntity extends DomainObject
     
     protected constructor(data: Pick<DomainEntity, "id">)
     {
-        super();
-        given(data, "data").ensureHasValue().ensureIsObject();
+        super(data as any);
         
         const { id } = data;
         

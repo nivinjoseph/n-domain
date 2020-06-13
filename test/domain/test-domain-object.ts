@@ -18,7 +18,7 @@ export class TestDomainObject extends DomainObject
     
     public constructor(data: Data)
     {
-        super();
+        super(data);
         
         const { id, name } = data;
         

@@ -12,7 +12,7 @@ import { Deserializer, Serializable, serialize } from "@nivinjoseph/n-util";
 import * as Crypto from "crypto";
 
 // public
-export abstract class AggregateRoot<T extends AggregateState> extends Serializable
+export abstract class AggregateRoot<T extends AggregateState> extends Serializable<AggregateRootData>
 {
     private readonly _domainContext: DomainContext;
     private readonly _stateFactory: AggregateStateFactory<T>;
@@ -53,7 +53,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
         stateFactory: AggregateStateFactory<T>, currentState?: T)
     {
-        super();
+        super({} as any);
         
         given(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
@@ -140,10 +140,10 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     //     };
     // }
     
-    public serialize(): AggregateRootData
-    {
-        return super.serialize() as AggregateRootData;
-    }
+    // public serialize(): AggregateRootData
+    // {
+    //     return super.serialize() as AggregateRootData;
+    // }
     
     public static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>,
         TAggregateState extends AggregateState>(domainContext: DomainContext,

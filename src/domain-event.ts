@@ -8,7 +8,7 @@ import { ApplicationException } from "@nivinjoseph/n-exception";
 import { serialize, Serializable } from "@nivinjoseph/n-util";
 
 // public
-export abstract class DomainEvent<T extends AggregateState> extends Serializable
+export abstract class DomainEvent<T extends AggregateState> extends Serializable<DomainEventData>
 {
     private _aggregateId: string | null;
     private _id: string | null; // _aggregateId-_version
@@ -43,9 +43,7 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     // occurredAt is epoch milliseconds
     public constructor(data: DomainEventData)
     {
-        super();
-        
-        given(data, "data").ensureHasValue().ensureIsObject();
+        super(data);
         
         const {
             $aggregateId,
