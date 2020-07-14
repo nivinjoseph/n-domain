@@ -11,13 +11,13 @@ export class TodoCreated extends DomainEvent<TodoState>
     private readonly _description: string | null;
     
     
-    @serialize()
+    @serialize
     public get todoId(): string { return this._todoId; }
     
-    @serialize()
+    @serialize
     public get title(): string { return this._title; }
     
-    @serialize()
+    @serialize
     public get description(): string | null { return this._description; }
 
     

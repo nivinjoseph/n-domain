@@ -8,7 +8,7 @@ export class TodoDescriptionUpdated extends DomainEvent<TodoState>
 {
     private readonly _description: string | null;
     
-    @serialize()
+    @serialize
     public get description(): string | null { return this._description; }
 
 

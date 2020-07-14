@@ -9,10 +9,10 @@ export class TestDomainObject extends DomainObject
     private readonly _name: string;
     
     
-    @serialize()
+    @serialize
     public get id(): string { return this._id; }
     
-    @serialize()
+    @serialize
     public get name(): string { return this._name; }
     
     

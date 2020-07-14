@@ -9,7 +9,7 @@ export class TodoTitleUpdated extends DomainEvent<TodoState>
     private readonly _title: string;
     
     
-    @serialize()
+    @serialize
     public get title(): string { return this._title; }
 
 
