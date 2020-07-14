@@ -38,13 +38,13 @@
         "mocha": "^7.2.0",
         "ts-node": "^8.10.2",
         "tslint": "^6.1.2",
-        "typescript": "^3.9.5",
+        "typescript": "^3.9.6",
         "typescript-tslint-plugin": "^0.5.5"
     },
     "dependencies": {
         "@nivinjoseph/n-defensive": "^1.0.33",
         "@nivinjoseph/n-exception": "^1.0.19",
         "@nivinjoseph/n-ext": "^1.1.19",
-        "@nivinjoseph/n-util": "^1.0.53"
+        "@nivinjoseph/n-util": "^1.0.54"
     }
 }
