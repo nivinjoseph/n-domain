@@ -24,7 +24,7 @@ class DomainEntity extends domain_object_1.DomainObject {
     get id() { return this._id; }
 }
 __decorate([
-    n_util_1.serialize(),
+    n_util_1.serialize,
     __metadata("design:type", String),
     __metadata("design:paramtypes", [])
 ], DomainEntity.prototype, "id", null);
