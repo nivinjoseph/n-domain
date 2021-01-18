@@ -323,6 +323,10 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     
     protected applyEvent(event: DomainEvent<T>): void
     {
+        given(event, "event").ensureHasValue().ensureIsObject().ensureIsInstanceOf(DomainEvent)
+            .ensure(t => t.isCreatedEvent ? this._retroEvents.isEmpty && this._currentEvents.isEmpty : true,
+                "'isCreatedEvent = true' cannot be the case for multiple events");
+        
         event.apply(this, this._domainContext, this._state);
 
         this._currentEvents.push(event);
