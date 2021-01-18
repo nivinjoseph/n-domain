@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AggregateRoot = void 0;
+const domain_event_1 = require("./domain-event");
 const n_defensive_1 = require("@nivinjoseph/n-defensive");
 const n_exception_1 = require("@nivinjoseph/n-exception");
 require("@nivinjoseph/n-ext");
@@ -227,6 +228,8 @@ class AggregateRoot extends n_util_1.Serializable {
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
     }
     applyEvent(event) {
+        n_defensive_1.given(event, "event").ensureHasValue().ensureIsObject().ensureIsInstanceOf(domain_event_1.DomainEvent)
+            .ensure(t => t.isCreatedEvent ? this._retroEvents.isEmpty && this._currentEvents.isEmpty : true, "'isCreatedEvent = true' cannot be the case for multiple events");
         event.apply(this, this._domainContext, this._state);
         this._currentEvents.push(event);
         // if (this._retroEvents.length > 0)
