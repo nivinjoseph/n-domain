@@ -27,7 +27,6 @@ export class Todo extends AggregateRoot<TodoState>
         given(description as string, "description").ensureIsString();
 
         return new Todo(domainContext, [new TodoCreated({
-            $isCreatedEvent: true,
             todoId: DomainHelper.generateId("tdo"),
             title,
             description

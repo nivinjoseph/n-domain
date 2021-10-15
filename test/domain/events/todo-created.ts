@@ -23,6 +23,8 @@ export class TodoCreated extends DomainEvent<TodoState>
     
     public constructor(data: EventData)
     {
+        given(data, "data").ensureHasValue().ensureIsObject();
+        data.$isCreatedEvent = true;
         super(data);
 
         const { todoId, title, description } = data;

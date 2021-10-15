@@ -1,7 +1,9 @@
 import "@nivinjoseph/n-ext";
 import * as Assert from "assert";
 import { Todo } from "./domain/todo";
-import { DomainContext } from "../src";
+import { DomainContext, DomainHelper } from "../src";
+import { TodoCreated } from "./domain/events/todo-created";
+import { Delay } from "@nivinjoseph/n-util";
 
 
 suite("Domain tests", () =>
@@ -407,6 +409,39 @@ suite("Domain tests", () =>
                 Assert.strictEqual(reconstructed.title, "title update 1");
                 Assert.strictEqual(reconstructed.description, "description");
             });
+    });
+    
+    suite("Cloning", () =>
+    {
+        test(`
+            Given an aggregate,
+            When it is cloned,
+            Then the clone should be identical to the original except in identity and meta information
+        `, async () =>
+        {
+            let original = Todo.create(domainContext, "title", "description");
+            original.updateDescription("original description");
+            original.markAsCompleted();
+            // original = Todo.deserializeEvents(domainContext, original.serialize().$events);
+            
+            await Delay.seconds(1);
+            
+            const clone = original.clone(domainContext, new TodoCreated({
+                todoId: DomainHelper.generateId("tdo"),
+                title: "different title",
+                description: "different description"
+            }));
+            
+            
+            Assert.notStrictEqual(clone.id, original.id, "id");
+            Assert.strictEqual(clone.version, original.version, "version");
+            Assert.notStrictEqual(clone.createdAt, original.createdAt, "createdAt");
+            Assert.notStrictEqual(clone.updatedAt, original.updatedAt, "updatedAt");
+            
+            Assert.notStrictEqual(clone.title, original.title, "title");
+            Assert.strictEqual(clone.description, original.description, "description");
+            Assert.strictEqual(clone.isCompleted, original.isCompleted, "isCompleted");
+        });
     });
 
     suite.skip("Trimming", () =>

@@ -1,11 +1,11 @@
 // public
 export interface DomainEventData
 {
-    $aggregateId?: string;
-    $id?: string;
-    $userId?: string;
-    $name?: string;
-    $occurredAt?: number;
-    $version?: number;
-    $isCreatedEvent?: boolean;
+    $aggregateId?: string | null;
+    $id?: string | null;
+    $userId?: string | null;
+    $name?: string | null;
+    $occurredAt?: number | null;
+    $version?: number | null;
+    $isCreatedEvent?: boolean | null;
 }

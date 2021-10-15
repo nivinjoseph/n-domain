@@ -50,7 +50,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     protected get state(): T { return this._state; }
 
 
-    public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
+    protected constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
         stateFactory: AggregateStateFactory<T>, currentState?: T)
     {
         super({} as any);
@@ -260,6 +260,38 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
 
         const eventTypeName = (<Object>eventType).getTypeName();
         return this._currentEvents.filter(t => t.name === eventTypeName) as any;
+    }
+    
+    public clone(domainContext: DomainContext, createdEvent: DomainEvent<T>): this
+    {
+        given(domainContext, "domainContext").ensureHasValue()
+            .ensureHasStructure({ userId: "string" });
+        
+        given(createdEvent, "createdEvent").ensureHasValue().ensureIsInstanceOf(DomainEvent)
+            .ensure(t => t.isCreatedEvent, "must be created event");
+        
+        given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
+        
+        const clone: this = new (<any>this.constructor)(domainContext, [createdEvent]);
+        
+        this.events
+            .where(t => !t.isCreatedEvent)
+            .forEach(t =>
+            {
+                const serializedEvent = t.serialize();
+                
+                serializedEvent.$aggregateId = null;
+                serializedEvent.$id = null;
+                serializedEvent.$userId = null;
+                // serializedEvent.$name = null; // we keep the name intact
+                serializedEvent.$occurredAt = null;
+                serializedEvent.$version = null;
+                // serializedEvent.$isCreatedEvent = null; // we dont need to touch this
+                
+                clone.applyEvent(Deserializer.deserialize(serializedEvent));
+            });
+        
+        return clone;
     }
     
     public test(): void
