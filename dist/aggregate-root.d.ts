@@ -27,7 +27,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     get hasChanges(): boolean;
     protected get context(): DomainContext;
     protected get state(): T;
-    constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, stateFactory: AggregateStateFactory<T>, currentState?: T);
+    protected constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, stateFactory: AggregateStateFactory<T>, currentState?: T);
     static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate;
     static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate;
     snapshot(...cloneKeys: string[]): T | object;
@@ -38,6 +38,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     getEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType>;
     getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType>;
     getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType>;
+    clone(domainContext: DomainContext, createdEvent: DomainEvent<T>): this;
     test(): void;
     protected applyEvent(event: DomainEvent<T>): void;
     /**

@@ -21,20 +21,20 @@ class DomainEvent extends n_util_1.Serializable {
     constructor(data) {
         super(data);
         const { $aggregateId, $id, $userId, $name, $occurredAt, $version, $isCreatedEvent } = data;
-        n_defensive_1.given($aggregateId, "$aggregateId").ensureIsString();
+        (0, n_defensive_1.given)($aggregateId, "$aggregateId").ensureIsString();
         this._aggregateId = $aggregateId || null;
-        n_defensive_1.given($id, "$id").ensureIsString();
+        (0, n_defensive_1.given)($id, "$id").ensureIsString();
         this._id = $id || null;
-        n_defensive_1.given($userId, "$userId").ensureIsString();
+        (0, n_defensive_1.given)($userId, "$userId").ensureIsString();
         this._userId = $userId && !$userId.isEmptyOrWhiteSpace() ? $userId.trim() : null;
         this._name = this.getTypeName();
         if ($name && $name !== this._name)
             throw new n_exception_1.ApplicationException(`Deserialized event name '${$name}' does not match target type name '${this._name}'.`);
-        n_defensive_1.given($occurredAt, "$occurredAt").ensureIsNumber();
+        (0, n_defensive_1.given)($occurredAt, "$occurredAt").ensureIsNumber();
         this._occurredAt = $occurredAt || _1.DomainHelper.now;
-        n_defensive_1.given($version, "$version").ensureIsNumber().ensure(t => t > 0);
+        (0, n_defensive_1.given)($version, "$version").ensureIsNumber().ensure(t => t > 0);
         this._version = $version || 0;
-        n_defensive_1.given($isCreatedEvent, "$isCreatedEvent").ensureIsBoolean();
+        (0, n_defensive_1.given)($isCreatedEvent, "$isCreatedEvent").ensureIsBoolean();
         this._isCreatedEvent = !!$isCreatedEvent;
     }
     get aggregateId() { return this._aggregateId; }
@@ -45,9 +45,9 @@ class DomainEvent extends n_util_1.Serializable {
     get version() { return this._version; }
     get isCreatedEvent() { return this._isCreatedEvent; }
     apply(aggregate, domainContext, state) {
-        n_defensive_1.given(aggregate, "aggregate").ensureHasValue().ensureIsObject().ensure(t => t instanceof _1.AggregateRoot);
-        n_defensive_1.given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
-        n_defensive_1.given(state, "state").ensureHasValue().ensureIsObject();
+        (0, n_defensive_1.given)(aggregate, "aggregate").ensureHasValue().ensureIsObject().ensure(t => t instanceof _1.AggregateRoot);
+        (0, n_defensive_1.given)(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
+        (0, n_defensive_1.given)(state, "state").ensureHasValue().ensureIsObject();
         if (this._userId == null)
             this._userId = domainContext.userId;
         const version = this._version || (state.version + 1) || 1;
@@ -68,37 +68,37 @@ class DomainEvent extends n_util_1.Serializable {
     }
 }
 __decorate([
-    n_util_1.serialize("$aggregateId"),
+    (0, n_util_1.serialize)("$aggregateId"),
     __metadata("design:type", Object),
     __metadata("design:paramtypes", [])
 ], DomainEvent.prototype, "aggregateId", null);
 __decorate([
-    n_util_1.serialize("$id"),
+    (0, n_util_1.serialize)("$id"),
     __metadata("design:type", String),
     __metadata("design:paramtypes", [])
 ], DomainEvent.prototype, "id", null);
 __decorate([
-    n_util_1.serialize("$userId"),
+    (0, n_util_1.serialize)("$userId"),
     __metadata("design:type", Object),
     __metadata("design:paramtypes", [])
 ], DomainEvent.prototype, "userId", null);
 __decorate([
-    n_util_1.serialize("$name"),
+    (0, n_util_1.serialize)("$name"),
     __metadata("design:type", String),
     __metadata("design:paramtypes", [])
 ], DomainEvent.prototype, "name", null);
 __decorate([
-    n_util_1.serialize("$occurredAt"),
+    (0, n_util_1.serialize)("$occurredAt"),
     __metadata("design:type", Number),
     __metadata("design:paramtypes", [])
 ], DomainEvent.prototype, "occurredAt", null);
 __decorate([
-    n_util_1.serialize("$version"),
+    (0, n_util_1.serialize)("$version"),
     __metadata("design:type", Number),
     __metadata("design:paramtypes", [])
 ], DomainEvent.prototype, "version", null);
 __decorate([
-    n_util_1.serialize("$isCreatedEvent"),
+    (0, n_util_1.serialize)("$isCreatedEvent"),
     __metadata("design:type", Boolean),
     __metadata("design:paramtypes", [])
 ], DomainEvent.prototype, "isCreatedEvent", null);

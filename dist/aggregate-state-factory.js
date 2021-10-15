@@ -5,11 +5,11 @@ const n_defensive_1 = require("@nivinjoseph/n-defensive");
 const n_util_1 = require("@nivinjoseph/n-util");
 class AggregateStateFactory {
     update(state) {
-        n_defensive_1.given(state, "state").ensureHasValue().ensureIsObject();
+        (0, n_defensive_1.given)(state, "state").ensureHasValue().ensureIsObject();
         return state;
     }
     deserializeSnapshot(snapshot) {
-        n_defensive_1.given(snapshot, "snapshot").ensureHasValue().ensureIsObject();
+        (0, n_defensive_1.given)(snapshot, "snapshot").ensureHasValue().ensureIsObject();
         const deserialized = {};
         Object.keys(snapshot).forEach(key => {
             const value = snapshot[key];

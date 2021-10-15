@@ -8,7 +8,7 @@ const n_defensive_1 = require("@nivinjoseph/n-defensive");
 class DomainHelper {
     static get now() { return Date.now(); }
     static generateId(prefix) {
-        n_defensive_1.given(prefix, "prefix").ensureHasValue().ensureIsString()
+        (0, n_defensive_1.given)(prefix, "prefix").ensureHasValue().ensureIsString()
             .ensure(t => t.trim().length === 3, "should be 3 chars long")
             .ensure((t) => t.matchesFormat("@@@"), "should contain only alphabet chars");
         // 4 + 32 = 36

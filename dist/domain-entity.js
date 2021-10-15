@@ -18,7 +18,7 @@ class DomainEntity extends domain_object_1.DomainObject {
     constructor(data) {
         super(data);
         const { id } = data;
-        n_defensive_1.given(id, "id").ensureHasValue().ensureIsString();
+        (0, n_defensive_1.given)(id, "id").ensureHasValue().ensureIsString();
         this._id = id;
     }
     get id() { return this._id; }
