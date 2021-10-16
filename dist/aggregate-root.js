@@ -184,17 +184,23 @@ class AggregateRoot extends n_util_1.Serializable {
         const eventTypeName = eventType.getTypeName();
         return this._currentEvents.filter(t => t.name === eventTypeName);
     }
-    clone(domainContext, createdEvent) {
+    clone(domainContext, createdEvent, serializedEventMutator) {
         (0, n_defensive_1.given)(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
         (0, n_defensive_1.given)(createdEvent, "createdEvent").ensureHasValue().ensureIsInstanceOf(domain_event_1.DomainEvent)
             .ensure(t => t.isCreatedEvent, "must be created event");
+        (0, n_defensive_1.given)(serializedEventMutator, "serializedEventMutator").ensureIsFunction();
         (0, n_defensive_1.given)(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
         const clone = new this.constructor(domainContext, [createdEvent]);
         this.events
             .where(t => !t.isCreatedEvent)
             .forEach(t => {
             const serializedEvent = t.serialize();
+            if (serializedEventMutator != null) {
+                const keep = serializedEventMutator(serializedEvent);
+                if (!keep)
+                    return;
+            }
             serializedEvent.$aggregateId = null;
             serializedEvent.$id = null;
             serializedEvent.$userId = null;

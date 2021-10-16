@@ -38,7 +38,9 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     getEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType>;
     getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType>;
     getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType>;
-    clone(domainContext: DomainContext, createdEvent: DomainEvent<T>): this;
+    clone(domainContext: DomainContext, createdEvent: DomainEvent<T>, serializedEventMutator?: (event: {
+        $name: string;
+    }) => boolean): this;
     test(): void;
     protected applyEvent(event: DomainEvent<T>): void;
     /**
