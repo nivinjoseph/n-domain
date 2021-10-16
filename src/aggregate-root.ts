@@ -262,13 +262,16 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         return this._currentEvents.filter(t => t.name === eventTypeName) as any;
     }
     
-    public clone(domainContext: DomainContext, createdEvent: DomainEvent<T>): this
+    public clone(domainContext: DomainContext, createdEvent: DomainEvent<T>,
+        serializedEventMutator?: (event: { $name: string }) => boolean): this
     {
         given(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
         
         given(createdEvent, "createdEvent").ensureHasValue().ensureIsInstanceOf(DomainEvent)
             .ensure(t => t.isCreatedEvent, "must be created event");
+        
+        given(serializedEventMutator as Function, "serializedEventMutator").ensureIsFunction();
         
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
         
@@ -279,6 +282,13 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
             .forEach(t =>
             {
                 const serializedEvent = t.serialize();
+                
+                if (serializedEventMutator != null)
+                {
+                    const keep = serializedEventMutator(serializedEvent as any);
+                    if (!keep)
+                        return;
+                }
                 
                 serializedEvent.$aggregateId = null;
                 serializedEvent.$id = null;

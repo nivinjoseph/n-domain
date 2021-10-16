@@ -3,7 +3,8 @@ import * as Assert from "assert";
 import { Todo } from "./domain/todo";
 import { DomainContext, DomainHelper } from "../src";
 import { TodoCreated } from "./domain/events/todo-created";
-import { Delay } from "@nivinjoseph/n-util";
+import { Delay, Schema } from "@nivinjoseph/n-util";
+import { TodoDescriptionUpdated } from "./domain/events/todo-description-updated";
 
 
 suite("Domain tests", () =>
@@ -440,6 +441,42 @@ suite("Domain tests", () =>
             
             Assert.notStrictEqual(clone.title, original.title, "title");
             Assert.strictEqual(clone.description, original.description, "description");
+            Assert.strictEqual(clone.isCompleted, original.isCompleted, "isCompleted");
+        });
+        
+        test(`
+            Given an aggregate,
+            When it is cloned and there is mutator involved,
+            Then the clone should be identical to the original except in identity, meta information
+                and mutated event data
+        `, async () =>
+        {
+            let original = Todo.create(domainContext, "title", "description");
+            original.updateDescription("original description");
+            original.markAsCompleted();
+            // original = Todo.deserializeEvents(domainContext, original.serialize().$events);
+
+            await Delay.seconds(1);
+
+            const clone = original.clone(domainContext, new TodoCreated({
+                todoId: DomainHelper.generateId("tdo"),
+                title: "different title",
+                description: "different description"
+            }), (event) =>
+            {
+                if (event.$name === (<Object>TodoDescriptionUpdated).getTypeName())
+                    (event as unknown as Schema<TodoDescriptionUpdated, "description">).description = "mutated description";
+                return true;
+            });
+
+
+            Assert.notStrictEqual(clone.id, original.id, "id");
+            Assert.strictEqual(clone.version, original.version, "version");
+            Assert.notStrictEqual(clone.createdAt, original.createdAt, "createdAt");
+            Assert.notStrictEqual(clone.updatedAt, original.updatedAt, "updatedAt");
+
+            Assert.notStrictEqual(clone.title, original.title, "title");
+            Assert.strictEqual(clone.description, "mutated description", "description");
             Assert.strictEqual(clone.isCompleted, original.isCompleted, "isCompleted");
         });
     });
