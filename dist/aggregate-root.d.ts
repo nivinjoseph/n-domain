@@ -32,6 +32,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: any[]) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate;
     snapshot(...cloneKeys: string[]): T | object;
     constructVersion(version: number): this;
+    constructBefore(dateTime: number): this;
     hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean;
     hasRetroEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean;
     hasCurrentEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean;

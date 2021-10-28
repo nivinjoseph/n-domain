@@ -150,6 +150,13 @@ class AggregateRoot extends n_util_1.Serializable {
         const ctor = this.constructor;
         return new ctor(this._domainContext, this.events.filter(t => t.version <= version));
     }
+    constructBefore(dateTime) {
+        (0, n_defensive_1.given)(dateTime, "dateTime").ensureHasValue().ensureIsNumber()
+            .ensure(t => t > this.createdAt, "dateTime must be before createdAt");
+        (0, n_defensive_1.given)(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
+        const ctor = this.constructor;
+        return new ctor(this._domainContext, this.events.filter(t => t.occurredAt < dateTime));
+    }
     hasEventOfType(eventType) {
         (0, n_defensive_1.given)(eventType, "eventType").ensureHasValue().ensureIsFunction();
         (0, n_defensive_1.given)(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
