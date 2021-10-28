@@ -205,6 +205,17 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         const ctor = (<Object>this).constructor;
         return new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version));
     }
+    
+    public constructBefore(dateTime: number): this
+    {
+        given(dateTime, "dateTime").ensureHasValue().ensureIsNumber()
+            .ensure(t => t > this.createdAt, "dateTime must be before createdAt");
+        
+        given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
+
+        const ctor = (<Object>this).constructor;
+        return new (<any>ctor)(this._domainContext, this.events.filter(t => t.occurredAt < dateTime));
+    }
 
     public hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean
     {
