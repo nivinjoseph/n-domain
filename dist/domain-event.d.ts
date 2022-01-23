@@ -1,6 +1,5 @@
 import { AggregateState } from "./aggregate-state";
 import { DomainEventData } from "./domain-event-data";
-import "@nivinjoseph/n-ext";
 import { AggregateRoot } from ".";
 import { DomainContext } from "./domain-context";
 import { Serializable } from "@nivinjoseph/n-util";

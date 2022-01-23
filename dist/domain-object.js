@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DomainObject = void 0;
-require("@nivinjoseph/n-ext");
 const n_util_1 = require("@nivinjoseph/n-util");
 // public
 class DomainObject extends n_util_1.Serializable {

@@ -1,7 +1,6 @@
 import { DomainEvent } from "./domain-event";
 import { AggregateState } from "./aggregate-state";
 import { AggregateRootData } from "./aggregate-root-data";
-import "@nivinjoseph/n-ext";
 import { DomainContext } from "./domain-context";
 import { DomainEventData } from "./domain-event-data";
 import { AggregateStateFactory } from "./aggregate-state-factory";
