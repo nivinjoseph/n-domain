@@ -3,7 +3,6 @@ import { AggregateState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
 import { AggregateRootData } from "./aggregate-root-data";
-import "@nivinjoseph/n-ext";
 import { DomainContext } from "./domain-context";
 import { DomainEventData } from "./domain-event-data";
 import { AggregateStateFactory } from "./aggregate-state-factory";

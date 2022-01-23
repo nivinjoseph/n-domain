@@ -1,7 +1,6 @@
 import { AggregateState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
 import { DomainEventData } from "./domain-event-data";
-import "@nivinjoseph/n-ext";
 import { DomainHelper, AggregateRoot } from ".";
 import { DomainContext } from "./domain-context";
 import { ApplicationException } from "@nivinjoseph/n-exception";

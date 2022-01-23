@@ -42,9 +42,9 @@
         "typescript-tslint-plugin": "^1.0.1"
     },
     "dependencies": {
-        "@nivinjoseph/n-defensive": "^1.0.35",
-        "@nivinjoseph/n-exception": "^1.0.23",
-        "@nivinjoseph/n-ext": "^1.1.31",
-        "@nivinjoseph/n-util": "^1.0.73"
+        "@nivinjoseph/n-defensive": "^1.0.37",
+        "@nivinjoseph/n-exception": "^1.0.24",
+        "@nivinjoseph/n-ext": "^1.1.34",
+        "@nivinjoseph/n-util": "^1.0.74"
     }
 }
