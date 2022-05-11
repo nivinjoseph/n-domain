@@ -19,13 +19,28 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
 
     
     @serialize("$aggregateId")
-    public get aggregateId(): string | null { return this._aggregateId; }
+    public get aggregateId(): string
+    {
+        given(this, "this").ensure(t => t._aggregateId != null, "accessing property before apply");
+        
+        return this._aggregateId as string;
+    }
     
     @serialize("$id")
-    public get id(): string { return this._id as string; }
+    public get id(): string
+    {
+        given(this, "this").ensure(t => t._id != null, "accessing property before apply");
+        
+        return this._id as string;
+    }
     
     @serialize("$userId")
-    public get userId(): string | null { return this._userId; }
+    public get userId(): string
+    {
+        given(this, "this").ensure(t => t._userId != null, "accessing property before apply");
+        
+        return this._userId as string;
+    }
     
     @serialize("$name")
     public get name(): string { return this._name; }
@@ -85,7 +100,7 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
         given(state, "state").ensureHasValue().ensureIsObject();
 
         if (this._userId == null)
-            this._userId = domainContext.userId;
+            this._userId = domainContext.userId || "UNKNOWN";
 
         const version = this._version || (state.version + 1) || 1;
 
