@@ -11,9 +11,9 @@ export declare abstract class DomainEvent<T extends AggregateState> extends Seri
     private readonly _occurredAt;
     private _version;
     private readonly _isCreatedEvent;
-    get aggregateId(): string | null;
+    get aggregateId(): string;
     get id(): string;
-    get userId(): string | null;
+    get userId(): string;
     get name(): string;
     get occurredAt(): number;
     get version(): number;

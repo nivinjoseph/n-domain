@@ -36,9 +36,18 @@ class DomainEvent extends n_util_1.Serializable {
         (0, n_defensive_1.given)($isCreatedEvent, "$isCreatedEvent").ensureIsBoolean();
         this._isCreatedEvent = !!$isCreatedEvent;
     }
-    get aggregateId() { return this._aggregateId; }
-    get id() { return this._id; }
-    get userId() { return this._userId; }
+    get aggregateId() {
+        (0, n_defensive_1.given)(this, "this").ensure(t => t._aggregateId != null, "accessing property before apply");
+        return this._aggregateId;
+    }
+    get id() {
+        (0, n_defensive_1.given)(this, "this").ensure(t => t._id != null, "accessing property before apply");
+        return this._id;
+    }
+    get userId() {
+        (0, n_defensive_1.given)(this, "this").ensure(t => t._userId != null, "accessing property before apply");
+        return this._userId;
+    }
     get name() { return this._name; }
     get occurredAt() { return this._occurredAt; }
     get version() { return this._version; }
@@ -48,7 +57,7 @@ class DomainEvent extends n_util_1.Serializable {
         (0, n_defensive_1.given)(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         (0, n_defensive_1.given)(state, "state").ensureHasValue().ensureIsObject();
         if (this._userId == null)
-            this._userId = domainContext.userId;
+            this._userId = domainContext.userId || "UNKNOWN";
         const version = this._version || (state.version + 1) || 1;
         this.applyEvent(state);
         if (this._isCreatedEvent)
@@ -68,7 +77,7 @@ class DomainEvent extends n_util_1.Serializable {
 }
 __decorate([
     (0, n_util_1.serialize)("$aggregateId"),
-    __metadata("design:type", Object),
+    __metadata("design:type", String),
     __metadata("design:paramtypes", [])
 ], DomainEvent.prototype, "aggregateId", null);
 __decorate([
@@ -78,7 +87,7 @@ __decorate([
 ], DomainEvent.prototype, "id", null);
 __decorate([
     (0, n_util_1.serialize)("$userId"),
-    __metadata("design:type", Object),
+    __metadata("design:type", String),
     __metadata("design:paramtypes", [])
 ], DomainEvent.prototype, "userId", null);
 __decorate([

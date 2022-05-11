@@ -41,9 +41,12 @@ class AggregateRoot extends n_util_1.Serializable {
                 .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
                 .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
             this._retroEvents = events;
-            if (this._retroEvents.some(t => t.aggregateId == null))
+            if (this._retroEvents.some(t => t._aggregateId == null)) // Deliberate workaround to access aggregateId
                 this._isNew = true;
-            this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
+            if (this._isNew)
+                this._retroEvents.forEach(t => t.apply(this, this._domainContext, this._state));
+            else
+                this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         }
         this._state = this._stateFactory.update(this._state);
         this._retroVersion = this.currentVersion;
