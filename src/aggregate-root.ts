@@ -20,6 +20,9 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     private readonly _retroVersion: number;
     private readonly _currentEvents = new Array<DomainEvent<T>>(); // track unit of work stuff
     private readonly _isNew: boolean = false;
+    
+    protected get context(): DomainContext { return this._domainContext; }
+    protected get state(): T { return this._state; }
 
     @serialize("$id")
     public get id(): string { return this._state.id; }
@@ -44,9 +47,6 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
 
     public get isNew(): boolean { return this._isNew; } // this will always be false for anything that is reconstructed
     public get hasChanges(): boolean { return this.currentVersion !== this.retroVersion; }
-
-    protected get context(): DomainContext { return this._domainContext; }
-    protected get state(): T { return this._state; }
 
 
     protected constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
@@ -91,7 +91,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
 
     public static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState>,
         TAggregateState extends AggregateState>(domainContext: DomainContext,
-            aggregateType: new (...args: any[]) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate
+            aggregateType: new (...args: Array<any>) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
@@ -128,7 +128,8 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
             // return (<any>event).deserializeEvent(eventData);
         });
         
-        return new (<any>aggregateType)(domainContext, deserializedEvents);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        return new (<any>aggregateType)(domainContext, deserializedEvents) as TAggregate;
     }
     
     // public serialize(): AggregateRootData
@@ -149,7 +150,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     
     public static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>,
         TAggregateState extends AggregateState>(domainContext: DomainContext,
-            aggregateType: new (...args: any[]) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>,
+            aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>,
             stateSnapshot: TAggregateState | object): TAggregate
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
@@ -166,14 +167,14 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         return new aggregateType(domainContext, [], stateFactory.deserializeSnapshot(stateSnapshot as any));
     }
     
-    public snapshot(...cloneKeys: string[]): T | object
+    public snapshot(...cloneKeys: Array<string>): T | object
     {
-        const snapshot: any = Object.assign({}, this.state);
+        const snapshot: Record<string, any> = Object.assign({}, this.state);
         
         Object.keys(snapshot).forEach(key =>
         {
             const val = snapshot[key];
-            if (val && typeof (val) === "object")
+            if (val && typeof val === "object")
             {
                 if (cloneKeys.contains(key))
                 {
@@ -184,13 +185,13 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
                 if (Array.isArray(val))
                     snapshot[key] = (<Array<Object>>val).map(t =>
                     {
-                        if (typeof (t) === "object")
-                            return this.serializeForSnapshot(t);
+                        if (typeof t === "object")
+                            return this._serializeForSnapshot(t);
                         else
                             return t;
                     });
                 else
-                    snapshot[key] = this.serializeForSnapshot(val);
+                    snapshot[key] = this._serializeForSnapshot(val);
             }
         });
         
@@ -205,7 +206,8 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
         const ctor = (<Object>this).constructor;
-        return new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        return new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version)) as this;
     }
     
     public constructBefore(dateTime: number): this
@@ -216,10 +218,11 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
         const ctor = (<Object>this).constructor;
-        return new (<any>ctor)(this._domainContext, this.events.filter(t => t.occurredAt < dateTime));
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        return new (<any>ctor)(this._domainContext, this.events.filter(t => t.occurredAt < dateTime)) as this;
     }
 
-    public hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean
+    public hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         
@@ -229,7 +232,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         return this.events.some(t => t.name === eventTypeName);
     }
 
-    public hasRetroEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean
+    public hasRetroEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         
@@ -239,7 +242,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         return this._retroEvents.some(t => t.name === eventTypeName);
     }
 
-    public hasCurrentEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): boolean
+    public hasCurrentEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
 
@@ -247,36 +250,36 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         return this._currentEvents.some(t => t.name === eventTypeName);
     }
 
-    public getEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType> 
+    public getEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType> 
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
         const eventTypeName = (<Object>eventType).getTypeName();
-        return this.events.filter(t => t.name === eventTypeName) as any;
+        return this.events.filter(t => t.name === eventTypeName) as Array<TEventType>;
     }
 
-    public getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType> 
+    public getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType> 
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
         
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
         const eventTypeName = (<Object>eventType).getTypeName();
-        return this._retroEvents.filter(t => t.name === eventTypeName) as any;
+        return this._retroEvents.filter(t => t.name === eventTypeName) as Array<TEventType>;
     }
 
-    public getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: any[]) => TEventType): ReadonlyArray<TEventType> 
+    public getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType> 
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
 
         const eventTypeName = (<Object>eventType).getTypeName();
-        return this._currentEvents.filter(t => t.name === eventTypeName) as any;
+        return this._currentEvents.filter(t => t.name === eventTypeName) as Array<TEventType>;
     }
     
     public clone(domainContext: DomainContext, createdEvent: DomainEvent<T>,
-        serializedEventMutator?: (event: { $name: string }) => boolean): this
+        serializedEventMutator?: (event: { $name: string; }) => boolean): this
     {
         given(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
@@ -288,6 +291,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
         
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const clone: this = new (<any>this.constructor)(domainContext, [createdEvent]);
         
         this.events
@@ -319,7 +323,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     
     public test(): void
     {
-        const type = (<Object>this).constructor as new (...params: any[]) => this;
+        const type = (<Object>this).constructor as new (...params: Array<any>) => this;
         given(type, "type").ensureHasValue().ensureIsFunction()
             .ensure(t => (<Object>t).getTypeName() === (<Object>this).getTypeName(), "type name mismatch");
         
@@ -343,6 +347,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
             })
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.serialize()), "multiple serializations are not consistent");
         
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const eventsDeserializedAggregate: this = (<any>type).deserializeEvents(this._domainContext, eventsSerialized.$events);
         given(eventsDeserializedAggregate, "eventsDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
         
@@ -368,6 +373,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         given(snapshot, "snapshot").ensureHasValue().ensureIsObject()
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.snapshot()), "multiple snapshots are not consistent");
         
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const snapshotDeserializedAggregate: this = (<any>type).deserializeSnapshot(this._domainContext, snapshot);
         given(snapshotDeserializedAggregate, "snapshotDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
         
@@ -413,16 +419,16 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     // }
     
     
-    private serializeForSnapshot(value: Object): object
+    private _serializeForSnapshot(value: Object): object
     {
         if (value instanceof DomainObject)
-            return value.serialize();
+            return value.serialize() as object;
         
         if (Object.keys(value).some(t => t.startsWith("_")))
             throw new ApplicationException(
                 `attempting to serialize an object [${value.getTypeName()}] with private fields but does not extend DomainObject for the purposes of snapshot`);
         
-        return JSON.parse(JSON.stringify(value));
+        return JSON.parse(JSON.stringify(value)) as object;
         
         // given(value, "value").ensureHasValue().ensureIsObject()
         //     .ensure(t => !!(<any>t).serialize, `serialize method is missing on type ${value.getTypeName()}`)

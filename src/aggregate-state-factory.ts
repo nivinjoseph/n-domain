@@ -18,7 +18,7 @@ export abstract class AggregateStateFactory<T extends AggregateState>
     {
         given(snapshot, "snapshot").ensureHasValue().ensureIsObject();
         
-        const deserialized: { [index: string]: any } = {};
+        const deserialized: Record<string, any> = {};
         
         Object.keys(snapshot).forEach(key =>
         {
@@ -34,6 +34,7 @@ export abstract class AggregateStateFactory<T extends AggregateState>
                 deserialized[key] = value.map(v =>
                 {
                     if (v == null || typeof v !== "object" || !Deserializer.hasType(v.$typename))
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         return v;
                     
                     return Deserializer.deserialize(v);
@@ -56,7 +57,7 @@ export abstract class AggregateStateFactory<T extends AggregateState>
             id: null as any,
             version: null as any,
             createdAt: null as any,
-            updatedAt: null as any,
+            updatedAt: null as any
         };
     }
 }

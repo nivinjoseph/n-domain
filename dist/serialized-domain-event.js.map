@@ -1,1 +1,0 @@
-{"version":3,"file":"serialized-domain-event.js","sourceRoot":"","sources":["../src/serialized-domain-event.ts"],"names":[],"mappings":"","sourcesContent":["// public\nexport interface SerializedDomainEvent\n{\n    $user: string;\n    $name: string;\n    $occurredAt: number;\n    $version: number;\n}"]}

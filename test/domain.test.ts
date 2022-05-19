@@ -138,6 +138,7 @@ suite("Domain tests", () =>
             {
                 const original = Todo.create(domainContext, "title", "description");
 
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 Assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
                 Assert.strictEqual(original.retroEvents.length, 1);
                 Assert.strictEqual(original.retroVersion, 1);
@@ -178,6 +179,7 @@ suite("Domain tests", () =>
 
                 original.updateTitle("title update 1");
 
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 Assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
                 Assert.strictEqual(original.retroEvents.length, 1);
                 Assert.strictEqual(original.retroVersion, 1);
@@ -219,6 +221,7 @@ suite("Domain tests", () =>
                 original.updateTitle("title update 1");
                 original.updateTitle("title update 2");
 
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 Assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
                 Assert.strictEqual(original.retroEvents.length, 1);
                 Assert.strictEqual(original.retroVersion, 1);
@@ -420,7 +423,7 @@ suite("Domain tests", () =>
             Then the clone should be identical to the original except in identity and meta information
         `, async () =>
         {
-            let original = Todo.create(domainContext, "title", "description");
+            const original = Todo.create(domainContext, "title", "description");
             original.updateDescription("original description");
             original.markAsCompleted();
             // original = Todo.deserializeEvents(domainContext, original.serialize().$events);
@@ -451,7 +454,7 @@ suite("Domain tests", () =>
                 and mutated event data
         `, async () =>
         {
-            let original = Todo.create(domainContext, "title", "description");
+            const original = Todo.create(domainContext, "title", "description");
             original.updateDescription("original description");
             original.markAsCompleted();
             // original = Todo.deserializeEvents(domainContext, original.serialize().$events);
@@ -507,6 +510,7 @@ suite("Domain tests", () =>
 
                 original.updateDescription("description update 1");
 
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                 Assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
                 Assert.strictEqual(original.retroEvents.length, 1);
                 Assert.strictEqual(original.retroVersion, 1);

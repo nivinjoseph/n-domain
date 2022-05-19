@@ -104,13 +104,14 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
 
         const version = this._version || (state.version + 1) || 1;
 
-        this.applyEvent(state as T);
+        this.applyEvent(state);
 
         if (this._isCreatedEvent)
             state.createdAt = this._occurredAt;
 
         state.updatedAt = this._occurredAt;
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (aggregate.id == null)
             throw new ApplicationException("Created event is not setting the id of the aggregate");
 

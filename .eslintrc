@@ -1,0 +1,335 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+        "@typescript-eslint"
+    ],
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended"
+    ],
+    "parserOptions": {
+        "project": "tsconfig.json"
+    },
+    "rules": {
+        "no-eval": "error",
+        "no-void": "error",
+        "no-with": "error",
+        "@typescript-eslint/adjacent-overload-signatures": "error",
+        "@typescript-eslint/array-type": [
+            "error",
+            {
+                "default": "generic",
+                "readonly": "generic"
+            }
+        ],
+        "@typescript-eslint/await-thenable": "error",
+        "@typescript-eslint/ban-ts-comment": [
+            "error",
+            {
+                "ts-expect-error": "allow-with-description",
+                "ts-ignore": "allow-with-description",
+                "ts-nocheck": true,
+                "ts-check": true
+            }
+        ],
+        "@typescript-eslint/ban-tslint-comment": "error",
+        "@typescript-eslint/ban-types": [
+            "error",
+            {
+                "extendDefaults": false,
+                "types": {
+                    "String": {
+                        "message": "Use string instead",
+                        "fixWith": "string"
+                    },
+                    "Boolean": {
+                        "message": "Use boolean instead",
+                        "fixWith": "boolean"
+                    },
+                    "Number": {
+                        "message": "Use number instead",
+                        "fixWith": "number"
+                    },
+                    "Symbol": {
+                        "message": "Use symbol instead",
+                        "fixWith": "symbol"
+                    }
+                }
+            }
+        ],
+        "brace-style": "off",
+        "@typescript-eslint/brace-style": [
+            "error",
+            "allman",
+            {
+                "allowSingleLine": true
+            }
+        ],
+        "@typescript-eslint/class-literal-property-style": [
+            "off",
+            "getters"
+        ],
+        "comma-dangle": "off",
+        "@typescript-eslint/comma-dangle": [
+            "error",
+            "never"
+        ],
+        "default-param-last": "off",
+        "@typescript-eslint/default-param-last": "error",
+        "@typescript-eslint/explicit-function-return-type": "error",
+        "@typescript-eslint/explicit-member-accessibility": "error",
+        "@typescript-eslint/explicit-module-boundary-types": "error",
+        "func-call-spacing": "off",
+        "@typescript-eslint/func-call-spacing": [
+            "error",
+            "never"
+        ],
+        "@typescript-eslint/member-delimiter-style": [
+            "error",
+            {
+                "multiline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "singleline": {
+                    "delimiter": "semi",
+                    "requireLast": true
+                },
+                "multilineDetection": "brackets"
+            }
+        ],
+        "@typescript-eslint/member-ordering": [
+            "error",
+            {
+                "default": [
+                    // Index signature
+                    "signature",
+                    // Fields
+                    "private-static-field",
+                    "protected-static-field",
+                    "public-static-field",
+                    // "private-decorated-field",
+                    // "protected-decorated-field",
+                    // "public-decorated-field",
+                    "private-instance-field",
+                    "protected-instance-field",
+                    "public-instance-field",
+                    // "public-abstract-field",
+                    // "protected-abstract-field",
+                    // "private-abstract-field",
+                    // "private-field",
+                    // "protected-field",
+                    // "public-field",
+                    // "static-field",
+                    // "instance-field",
+                    // "abstract-field",
+                    // "decorated-field",
+                    // "field",
+                    // Getters
+                    // "public-static-get",
+                    // "protected-static-get",
+                    // "private-static-get",
+                    // "public-decorated-get",
+                    // "protected-decorated-get",
+                    // "private-decorated-get",
+                    // "public-instance-get",
+                    // "protected-instance-get",
+                    // "private-instance-get",
+                    // "public-abstract-get",
+                    // "protected-abstract-get",
+                    // "private-abstract-get",
+                    // "public-get",
+                    // "protected-get",
+                    // "private-get",
+                    // "static-get",
+                    // "instance-get",
+                    // "abstract-get",
+                    // "decorated-get",
+                    // "get",
+                    // Setters
+                    // "public-static-set",
+                    // "protected-static-set",
+                    // "private-static-set",
+                    // "public-decorated-set",
+                    // "protected-decorated-set",
+                    // "private-decorated-set",
+                    // "public-instance-set",
+                    // "protected-instance-set",
+                    // "private-instance-set",
+                    // "public-abstract-set",
+                    // "protected-abstract-set",
+                    // "private-abstract-set",
+                    // "public-set",
+                    // "protected-set",
+                    // "private-set",
+                    // "static-set",
+                    // "instance-set",
+                    // "abstract-set",
+                    // "decorated-set",
+                    // "set",
+                    // [
+                    //     "get",
+                    //     "set"
+                    // ],
+                    [
+                        "private-static-get",
+                        "private-static-set"
+                    ],
+                    [
+                        "protected-static-get",
+                        "protected-static-set"
+                    ],
+                    [
+                        "public-static-get",
+                        "public-static-set"
+                    ],
+                    [
+                        "private-instance-get",
+                        "private-instance-set"
+                    ],
+                    [
+                        "protected-instance-get",
+                        "protected-instance-set"
+                    ],
+                    [
+                        "public-instance-get",
+                        "public-instance-set"
+                    ],
+                    // Constructors
+                    "public-constructor",
+                    "protected-constructor",
+                    "private-constructor",
+                    // "constructor",
+                    // Methods
+                    "public-static-method",
+                    "protected-static-method",
+                    "private-static-method",
+                    // "public-decorated-method",
+                    // "protected-decorated-method",
+                    // "private-decorated-method",
+                    "public-instance-method",
+                    "protected-instance-method",
+                    "private-instance-method",
+                    // "public-abstract-method",
+                    // "protected-abstract-method",
+                    // "private-abstract-method",
+                    // "public-method",
+                    // "protected-method",
+                    // "private-method",
+                    // "static-method",
+                    // "instance-method",
+                    // "abstract-method",
+                    // "decorated-method",
+                    // "method"
+                ]
+            }
+        ],
+        "@typescript-eslint/method-signature-style": [
+            "error",
+            "method"
+        ],
+        "@typescript-eslint/naming-convention": [
+            "error",
+            {
+                "selector": "memberLike",
+                "modifiers": [
+                    "private"
+                ],
+                "format": [
+                    "camelCase"
+                ],
+                "leadingUnderscore": "require"
+            }
+        ],
+        "@typescript-eslint/no-confusing-non-null-assertion": "error",
+        "@typescript-eslint/no-confusing-void-expression": [
+            "error",
+            {
+                "ignoreArrowShorthand": true
+            }
+        ],
+        "no-dupe-class-members": "off",
+        "@typescript-eslint/no-dupe-class-members": "error",
+        "@typescript-eslint/no-duplicate-enum-values": "error",
+        "no-duplicate-imports": "off",
+        "@typescript-eslint/no-duplicate-imports": "error",
+        "no-empty-function": "off",
+        "@typescript-eslint/no-empty-function": [
+            "error",
+            {
+                "allow": [
+                    "private-constructors"
+                ]
+            }
+        ],
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-extra-non-null-assertion": "error",
+        "no-extra-parens": "off",
+        "@typescript-eslint/no-extra-parens": [
+            "error",
+            "all",
+            {
+                "nestedBinaryExpressions": false
+            }
+        ],
+        "no-extra-semi": "off",
+        "@typescript-eslint/no-extra-semi": "error",
+        "@typescript-eslint/no-floating-promises": "error",
+        "@typescript-eslint/no-for-in-array": "error",
+        "no-implied-eval": "off",
+        "@typescript-eslint/no-implied-eval": "error",
+        "no-invalid-this": "off",
+        "@typescript-eslint/no-invalid-this": "error",
+        "@typescript-eslint/no-invalid-void-type": "error",
+        "no-loop-func": "off",
+        "@typescript-eslint/no-loop-func": "error",
+        "no-loss-of-precision": "off",
+        "@typescript-eslint/no-loss-of-precision": "error",
+        "@typescript-eslint/no-meaningless-void-operator": "error",
+        "@typescript-eslint/no-misused-new": "error",
+        "@typescript-eslint/no-misused-promises": "error",
+        "@typescript-eslint/no-non-null-asserted-nullish-coalescing": "error",
+        "@typescript-eslint/no-non-null-asserted-optional-chain": "error",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "no-redeclare": "off",
+        "@typescript-eslint/no-redeclare": "error",
+        "@typescript-eslint/no-this-alias": "error",
+        "@typescript-eslint/no-throw-literal": "error",
+        "@typescript-eslint/no-unnecessary-condition": [
+            "error",
+            {
+                "allowConstantLoopConditions": true
+            }
+        ],
+        "@typescript-eslint/no-unnecessary-type-assertion": "error",
+        "@typescript-eslint/no-unnecessary-type-constraint": "error",
+        "@typescript-eslint/no-unsafe-call": "error",
+        "@typescript-eslint/no-unsafe-return": "error",
+        "no-unused-expressions": "off",
+        "@typescript-eslint/no-unused-expressions": "error",
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "no-use-before-define": "off",
+        "@typescript-eslint/no-use-before-define": "off",
+        "no-useless-constructor": "off",
+        "@typescript-eslint/no-useless-constructor": "error",
+        "@typescript-eslint/no-useless-empty-export": "error",
+        "@typescript-eslint/no-var-requires": "off",
+        "@typescript-eslint/parameter-properties": "error",
+        "@typescript-eslint/prefer-enum-initializers": "error",
+        "@typescript-eslint/prefer-includes": "error",
+        "@typescript-eslint/prefer-literal-enum-member": "error",
+        "@typescript-eslint/prefer-readonly": "error",
+        "@typescript-eslint/prefer-reduce-type-parameter": "error",
+        "@typescript-eslint/prefer-string-starts-ends-with": "error",
+        "@typescript-eslint/prefer-ts-expect-error": "error",
+        "@typescript-eslint/require-array-sort-compare": "error",
+        "no-return-await": "off",
+        "@typescript-eslint/return-await": "error",
+        "semi": "off",
+        "@typescript-eslint/semi": "error",
+        "@typescript-eslint/unbound-method": "error"
+    }
+}

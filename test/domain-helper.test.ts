@@ -9,7 +9,7 @@ suite("DomainHelper tests", () =>
     {
         const now = DomainHelper.now;
 
-        Assert.ok(typeof (now) === "number");
+        Assert.ok(typeof now === "number");
         Assert.ok(now > 0);
         // Assert.ok(now > Date.now());
         console.log("now", now);
