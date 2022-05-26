@@ -278,8 +278,15 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         return this._currentEvents.filter(t => t.name === eventTypeName) as Array<TEventType>;
     }
     
+    /**
+     * 
+     * @param domainContext - provide the Domain Context
+     * @param createdEvent - provide a new created event to be used by the clone
+     * @param serializedEventMutatorAndFilter - provide a function that can mutate the serialized event if required and returns a boolean indicating whether to include the event or not.
+     * @returns - cloned Aggregate
+     */
     public clone(domainContext: DomainContext, createdEvent: DomainEvent<T>,
-        serializedEventMutator?: (event: { $name: string; }) => boolean): this
+        serializedEventMutatorAndFilter?: (event: { $name: string; }) => boolean): this
     {
         given(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
@@ -287,7 +294,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         given(createdEvent, "createdEvent").ensureHasValue().ensureIsInstanceOf(DomainEvent)
             .ensure(t => t.isCreatedEvent, "must be created event");
         
-        given(serializedEventMutator as Function, "serializedEventMutator").ensureIsFunction();
+        given(serializedEventMutatorAndFilter as Function, "serializedEventMutator").ensureIsFunction();
         
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
         
@@ -300,9 +307,9 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
             {
                 const serializedEvent = t.serialize();
                 
-                if (serializedEventMutator != null)
+                if (serializedEventMutatorAndFilter != null)
                 {
-                    const keep = serializedEventMutator(serializedEvent as any);
+                    const keep = serializedEventMutatorAndFilter(serializedEvent as any);
                     if (!keep)
                         return;
                 }
@@ -406,11 +413,11 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         //     this._retroEvents = trimmed;
         // }
     }
-    /**
-     * 
-     * @deprecated DO NOT USE
-     * @description override to trim retro events on the application of a new event
-     */
+    // /**
+    //  * 
+    //  * @deprecated DO NOT USE
+    //  * @description override to trim retro events on the application of a new event
+    //  */
     // protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>
     // {
     //     given(retroEvents, "retroEvents").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
