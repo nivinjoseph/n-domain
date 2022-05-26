@@ -38,15 +38,17 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     getEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType>;
     getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType>;
     getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType>;
-    clone(domainContext: DomainContext, createdEvent: DomainEvent<T>, serializedEventMutator?: (event: {
+    /**
+     *
+     * @param domainContext - provide the Domain Context
+     * @param createdEvent - provide a new created event to be used by the clone
+     * @param serializedEventMutatorAndFilter - provide a function that can mutate the serialized event if required and returns a boolean indicating whether to include the event or not.
+     * @returns - cloned Aggregate
+     */
+    clone(domainContext: DomainContext, createdEvent: DomainEvent<T>, serializedEventMutatorAndFilter?: (event: {
         $name: string;
     }) => boolean): this;
     test(): void;
     protected applyEvent(event: DomainEvent<T>): void;
-    /**
-     *
-     * @deprecated DO NOT USE
-     * @description override to trim retro events on the application of a new event
-     */
     private _serializeForSnapshot;
 }

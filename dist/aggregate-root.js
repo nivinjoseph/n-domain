@@ -188,12 +188,19 @@ class AggregateRoot extends n_util_1.Serializable {
         const eventTypeName = eventType.getTypeName();
         return this._currentEvents.filter(t => t.name === eventTypeName);
     }
-    clone(domainContext, createdEvent, serializedEventMutator) {
+    /**
+     *
+     * @param domainContext - provide the Domain Context
+     * @param createdEvent - provide a new created event to be used by the clone
+     * @param serializedEventMutatorAndFilter - provide a function that can mutate the serialized event if required and returns a boolean indicating whether to include the event or not.
+     * @returns - cloned Aggregate
+     */
+    clone(domainContext, createdEvent, serializedEventMutatorAndFilter) {
         (0, n_defensive_1.given)(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
         (0, n_defensive_1.given)(createdEvent, "createdEvent").ensureHasValue().ensureIsInstanceOf(domain_event_1.DomainEvent)
             .ensure(t => t.isCreatedEvent, "must be created event");
-        (0, n_defensive_1.given)(serializedEventMutator, "serializedEventMutator").ensureIsFunction();
+        (0, n_defensive_1.given)(serializedEventMutatorAndFilter, "serializedEventMutator").ensureIsFunction();
         (0, n_defensive_1.given)(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const clone = new this.constructor(domainContext, [createdEvent]);
@@ -201,8 +208,8 @@ class AggregateRoot extends n_util_1.Serializable {
             .where(t => !t.isCreatedEvent)
             .forEach(t => {
             const serializedEvent = t.serialize();
-            if (serializedEventMutator != null) {
-                const keep = serializedEventMutator(serializedEvent);
+            if (serializedEventMutatorAndFilter != null) {
+                const keep = serializedEventMutatorAndFilter(serializedEvent);
                 if (!keep)
                     return;
             }
@@ -280,11 +287,11 @@ class AggregateRoot extends n_util_1.Serializable {
         //     this._retroEvents = trimmed;
         // }
     }
-    /**
-     *
-     * @deprecated DO NOT USE
-     * @description override to trim retro events on the application of a new event
-     */
+    // /**
+    //  * 
+    //  * @deprecated DO NOT USE
+    //  * @description override to trim retro events on the application of a new event
+    //  */
     // protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>
     // {
     //     given(retroEvents, "retroEvents").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
