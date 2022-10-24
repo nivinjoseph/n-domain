@@ -41,7 +41,7 @@ class DomainEvent extends n_util_1.Serializable {
         return this._userId;
     }
     get name() { return this._name; }
-    get partitionKey() { return this.id; }
+    get partitionKey() { return this.aggregateId; }
     get occurredAt() { return this._occurredAt; }
     get version() { return this._version; }
     get isCreatedEvent() { return this._isCreatedEvent; }
