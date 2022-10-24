@@ -34,7 +34,7 @@
     "homepage": "https://github.com/nivinjoseph/n-domain#readme",
     "devDependencies": {
         "@types/mocha": "^9.1.1",
-        "@types/node": "^14.14.43",
+        "@types/node": "^16.18.0",
         "@typescript-eslint/eslint-plugin": "^5.25.0",
         "@typescript-eslint/parser": "^5.25.0",
         "eslint": "^8.15.0",
@@ -43,9 +43,9 @@
         "typescript": "^4.6.4"
     },
     "dependencies": {
-        "@nivinjoseph/n-defensive": "^1.0.39",
+        "@nivinjoseph/n-defensive": "^1.0.41",
         "@nivinjoseph/n-exception": "^1.0.26",
         "@nivinjoseph/n-ext": "^1.1.35",
-        "@nivinjoseph/n-util": "^1.0.79"
+        "@nivinjoseph/n-util": "^1.0.80"
     }
 }
