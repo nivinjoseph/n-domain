@@ -19,7 +19,6 @@ suite("DomainHelper tests", () =>
     test("generateId", () =>
     {
         const id = DomainHelper.generateId("usr");
-
         Assert.ok(!id.contains(" "));
         Assert.ok(!id.contains("-"));
         Assert.ok(id.startsWith("usr_"));

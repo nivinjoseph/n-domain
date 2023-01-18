@@ -2,6 +2,7 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "es2015",
+        "lib": ["ES2021"],
         "strict": true,
         "strictNullChecks": true,
         "strictFunctionTypes": true,
