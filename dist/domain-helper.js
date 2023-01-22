@@ -3,7 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DomainHelper = void 0;
 // import { Uuid } from "@nivinjoseph/n-util";
 const n_defensive_1 = require("@nivinjoseph/n-defensive");
+// import { ulid } from "ulid";
 const ulid_1 = require("ulid");
+const ulid = (0, ulid_1.monotonicFactory)();
 // public
 class DomainHelper {
     static get now() { return Date.now(); }
@@ -24,9 +26,8 @@ class DomainHelper {
         const month = ((date.getUTCMonth() + 1) / 100).toFixed(2).split(".").takeLast();
         const day = (date.getUTCDate() / 100).toFixed(2).split(".").takeLast();
         const dateValue = `${year}${month}${day}`;
-        console.log(dateValue);
         // 4 + 32 = 36
-        return `${prefix.trim().toLowerCase()}_${dateValue}${(0, ulid_1.ulid)()}`.toLowerCase();
+        return `${prefix.trim().toLowerCase()}_${dateValue}${ulid(date.valueOf())}`.toLowerCase();
     }
 }
 exports.DomainHelper = DomainHelper;
