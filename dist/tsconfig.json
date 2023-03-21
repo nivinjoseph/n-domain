@@ -3,7 +3,8 @@
     "compilerOptions": {
         "outDir": ".",
         "declaration": true,
-        "declarationDir": "."
+        "declarationDir": ".",
+        "declarationMap": true
     },
     "include": [
         "../src/**/*.ts"
