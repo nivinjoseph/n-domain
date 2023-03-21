@@ -23,3 +23,4 @@ export declare abstract class DomainEvent<T extends AggregateState> extends Seri
     apply(aggregate: AggregateRoot<T>, domainContext: DomainContext, state: T): void;
     protected abstract applyEvent(state: T): void;
 }
+//# sourceMappingURL=domain-event.d.ts.map

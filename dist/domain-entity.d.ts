@@ -4,3 +4,4 @@ export declare abstract class DomainEntity<TData extends object = {}> extends Do
     get id(): string;
     protected constructor(data: Pick<DomainEntity, "id">);
 }
+//# sourceMappingURL=domain-entity.d.ts.map

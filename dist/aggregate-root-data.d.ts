@@ -6,3 +6,4 @@ export interface AggregateRootData {
     $updatedAt: number;
     $events: ReadonlyArray<DomainEventData>;
 }
+//# sourceMappingURL=aggregate-root-data.d.ts.map

@@ -52,3 +52,4 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     protected applyEvent(event: DomainEvent<T>): void;
     private _serializeForSnapshot;
 }
+//# sourceMappingURL=aggregate-root.d.ts.map

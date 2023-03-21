@@ -1,0 +1,1 @@
+{"version":3,"file":"aggregate-state-factory.d.ts","sourceRoot":"","sources":["../src/aggregate-state-factory.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,cAAc,EAAE,MAAM,mBAAmB,CAAC;AAKnD,8BAAsB,qBAAqB,CAAC,CAAC,SAAS,cAAc;aAEhD,MAAM,IAAI,CAAC;IAEpB,MAAM,CAAC,KAAK,EAAE,CAAC,GAAG,CAAC;IAOnB,mBAAmB,CAAC,QAAQ,EAAE,CAAC,GAAG,CAAC;IAoC1C,SAAS,CAAC,2BAA2B,IAAI,cAAc;CAU1D"}

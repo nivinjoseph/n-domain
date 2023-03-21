@@ -5,3 +5,4 @@ export declare abstract class DomainObject<TData extends object = {}> extends Se
      */
     equals(value: DomainObject | null): boolean;
 }
+//# sourceMappingURL=domain-object.d.ts.map

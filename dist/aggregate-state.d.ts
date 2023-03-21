@@ -5,3 +5,4 @@ export interface AggregateState {
     createdAt: number;
     updatedAt: number;
 }
+//# sourceMappingURL=aggregate-state.d.ts.map

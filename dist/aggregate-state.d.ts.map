@@ -1,0 +1,1 @@
+{"version":3,"file":"aggregate-state.d.ts","sourceRoot":"","sources":["../src/aggregate-state.ts"],"names":[],"mappings":"AACA,MAAM,WAAW,cAAc;IAE3B,QAAQ,CAAC,WAAW,EAAE,MAAM,CAAC;IAC7B,EAAE,EAAE,MAAM,CAAC;IACX,OAAO,EAAE,MAAM,CAAC;IAChB,SAAS,EAAE,MAAM,CAAC;IAClB,SAAS,EAAE,MAAM,CAAC;CACrB"}

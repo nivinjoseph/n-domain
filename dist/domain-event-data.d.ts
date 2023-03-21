@@ -7,3 +7,4 @@ export interface DomainEventData {
     $version?: number | null;
     $isCreatedEvent?: boolean | null;
 }
+//# sourceMappingURL=domain-event-data.d.ts.map

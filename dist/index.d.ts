@@ -9,3 +9,4 @@ export { DomainContext } from "./domain-context";
 export { DomainObject } from "./domain-object";
 export { DomainEntity } from "./domain-entity";
 export { AggregateStateFactory } from "./aggregate-state-factory";
+//# sourceMappingURL=index.d.ts.map

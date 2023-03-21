@@ -5,3 +5,4 @@ export declare abstract class AggregateStateFactory<T extends AggregateState> {
     deserializeSnapshot(snapshot: T): T;
     protected createDefaultAggregateState(): AggregateState;
 }
+//# sourceMappingURL=aggregate-state-factory.d.ts.map
