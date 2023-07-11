@@ -36,4 +36,25 @@ export class DomainHelper
         // 4 + 32 = 36
         return `${prefix.trim().toLowerCase()}_${dateValue}${ulid(date.valueOf())}`.toLowerCase();
     }
+    
+    public static aggregateTypeToSnakeCase(aggregateType: Function): string
+    {
+        let aggregateName = (<Object>aggregateType).getTypeName();
+        const re = /[A-Z]/g;
+
+        let index = aggregateName.search(re);
+        while (index !== -1)
+        {
+            const char = aggregateName[index];
+            const replacement = "_" + char.toLowerCase();
+            aggregateName = aggregateName.replace(char, replacement);
+
+            index = aggregateName.search(re);
+        }
+
+        if (aggregateName.startsWith("_"))
+            aggregateName = aggregateName.substring(1);
+
+        return aggregateName;
+    }
 }
