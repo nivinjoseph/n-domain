@@ -6,6 +6,7 @@ export { AggregateRootData } from "./aggregate-root-data";
 export { DomainEventData } from "./domain-event-data";
 export { DomainHelper } from "./domain-helper";
 export { DomainContext } from "./domain-context";
+export { ConfigurableDomainContext } from "./configurable-domain-context";
 export { DomainObject } from "./domain-object";
 export { DomainEntity } from "./domain-entity";
 export { AggregateStateFactory } from "./aggregate-state-factory";
