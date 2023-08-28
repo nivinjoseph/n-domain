@@ -13,8 +13,8 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     private readonly _retroVersion;
     private readonly _currentEvents;
     private readonly _isNew;
-    protected get context(): DomainContext;
     protected get state(): T;
+    get context(): DomainContext;
     get id(): string;
     get retroEvents(): ReadonlyArray<DomainEvent<T>>;
     get retroVersion(): number;

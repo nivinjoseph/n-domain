@@ -43,8 +43,8 @@ class AggregateRoot extends n_util_1.Serializable {
         this._state = this._stateFactory.update(this._state);
         this._retroVersion = this.currentVersion;
     }
-    get context() { return this._domainContext; }
     get state() { return this._state; }
+    get context() { return this._domainContext; }
     get id() { return this._state.id; }
     get retroEvents() { return this._retroEvents.orderBy(t => t.version); }
     get retroVersion() { return this._retroVersion; }
