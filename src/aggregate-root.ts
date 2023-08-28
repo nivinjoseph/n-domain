@@ -21,8 +21,11 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     private readonly _currentEvents = new Array<DomainEvent<T>>(); // track unit of work stuff
     private readonly _isNew: boolean = false;
     
-    protected get context(): DomainContext { return this._domainContext; }
+    
     protected get state(): T { return this._state; }
+    
+    
+    public get context(): DomainContext { return this._domainContext; }
 
     @serialize("$id")
     public get id(): string { return this._state.id; }
