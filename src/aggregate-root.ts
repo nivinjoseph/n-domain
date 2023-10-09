@@ -20,6 +20,8 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     private readonly _retroVersion: number;
     private readonly _currentEvents = new Array<DomainEvent<T>>(); // track unit of work stuff
     private readonly _isNew: boolean = false;
+    private _isReconstructed = false;
+    private _reconstructedFromVersion = 0;
     
     
     protected get state(): T { return this._state; }
@@ -50,6 +52,9 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
 
     public get isNew(): boolean { return this._isNew; } // this will always be false for anything that is reconstructed
     public get hasChanges(): boolean { return this.currentVersion !== this.retroVersion; }
+    
+    public get isReconstructed(): boolean { return this._isReconstructed; }
+    public get reconstructedFromVersion(): number { return this._reconstructedFromVersion; }
 
 
     protected constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
@@ -210,7 +215,11 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
 
         const ctor = (<Object>this).constructor;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        return new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version)) as this;
+        const result = new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version)) as this;
+        result._isReconstructed = true;
+        result._reconstructedFromVersion = this.version;
+        
+        return result;
     }
     
     public constructBefore(dateTime: number): this
@@ -222,7 +231,11 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
 
         const ctor = (<Object>this).constructor;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        return new (<any>ctor)(this._domainContext, this.events.filter(t => t.occurredAt < dateTime)) as this;
+        const result = new (<any>ctor)(this._domainContext, this.events.filter(t => t.occurredAt < dateTime)) as this;
+        result._isReconstructed = true;
+        result._reconstructedFromVersion = this.version;
+        
+        return this;
     }
 
     public hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
