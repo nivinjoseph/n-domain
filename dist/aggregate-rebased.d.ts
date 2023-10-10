@@ -5,8 +5,8 @@ export declare class AggregateRebased<T extends AggregateState> extends DomainEv
     private readonly _defaultState;
     private readonly _rebaseState;
     private readonly _rebaseVersion;
-    get defaultState(): T;
-    get rebaseState(): T;
+    get defaultState(): object;
+    get rebaseState(): object;
     get rebaseVersion(): number;
     constructor(data: DomainEventData & Pick<AggregateRebased<T>, "defaultState" | "rebaseState" | "rebaseVersion">);
     protected applyEvent(state: T): void;

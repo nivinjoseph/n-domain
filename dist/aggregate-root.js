@@ -5,11 +5,10 @@ const tslib_1 = require("tslib");
 const domain_event_1 = require("./domain-event");
 const aggregate_state_1 = require("./aggregate-state");
 const n_defensive_1 = require("@nivinjoseph/n-defensive");
-const n_exception_1 = require("@nivinjoseph/n-exception");
-const domain_object_1 = require("./domain-object");
 const n_util_1 = require("@nivinjoseph/n-util");
 const Crypto = require("crypto");
 const aggregate_rebased_1 = require("./aggregate-rebased");
+const aggregate_state_helper_1 = require("./aggregate-state-helper");
 // public
 class AggregateRoot extends n_util_1.Serializable {
     constructor(domainContext, events, stateFactory, currentState) {
@@ -125,26 +124,7 @@ class AggregateRoot extends n_util_1.Serializable {
         return new aggregateType(domainContext, [], stateFactory.deserializeSnapshot(stateSnapshot));
     }
     snapshot(...cloneKeys) {
-        const snapshot = Object.assign({}, this.state);
-        Object.keys(snapshot).forEach(key => {
-            const val = snapshot[key];
-            if (val && typeof val === "object") {
-                if (cloneKeys.contains(key)) {
-                    snapshot[key] = JSON.parse(JSON.stringify(val));
-                    return;
-                }
-                if (Array.isArray(val))
-                    snapshot[key] = val.map(t => {
-                        if (typeof t === "object")
-                            return this._serializeForSnapshot(t);
-                        else
-                            return t;
-                    });
-                else
-                    snapshot[key] = this._serializeForSnapshot(val);
-            }
-        });
-        return snapshot;
+        return aggregate_state_helper_1.AggregateStateHelper.serializeStateIntoSnapshot(this.state, ...cloneKeys);
     }
     constructVersion(version) {
         (0, n_defensive_1.given)(version, "version").ensureHasValue().ensureIsNumber()
@@ -167,19 +147,6 @@ class AggregateRoot extends n_util_1.Serializable {
         result._isReconstructed = true;
         result._reconstructedFromVersion = this.version;
         return this;
-    }
-    rebase(version, rebasedEventFactoryFunc) {
-        (0, n_defensive_1.given)(version, "version").ensureHasValue().ensureIsNumber()
-            .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
-        (0, n_defensive_1.given)(rebasedEventFactoryFunc, "rebasedEventFactoryFunc").ensureIsFunction();
-        const rebaseState = this.constructVersion(version)._state;
-        const rebaseVersion = rebaseState.version;
-        (0, aggregate_state_1.clearBaseState)(rebaseState);
-        const defaultState = this._stateFactory.create();
-        (0, aggregate_state_1.clearBaseState)(defaultState);
-        this.applyEvent(rebasedEventFactoryFunc != null
-            ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
-            : new aggregate_rebased_1.AggregateRebased({ defaultState, rebaseState, rebaseVersion }));
     }
     hasEventOfType(eventType) {
         (0, n_defensive_1.given)(eventType, "eventType").ensureHasValue().ensureIsFunction();
@@ -296,6 +263,29 @@ class AggregateRoot extends n_util_1.Serializable {
         (0, n_defensive_1.given)(snapshotDeserializedAggregateState, "snapshotDeserializedAggregateState").ensureHasValue().ensureIsObject()
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
     }
+    rebase(version, rebasedEventFactoryFunc) {
+        (0, n_defensive_1.given)(version, "version").ensureHasValue().ensureIsNumber()
+            .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
+        (0, n_defensive_1.given)(rebasedEventFactoryFunc, "rebasedEventFactoryFunc").ensureIsFunction();
+        const rebaseVersionInstance = this.constructVersion(version);
+        (0, n_defensive_1.given)(rebaseVersionInstance, "rebaseVersionInstance")
+            .ensure(t => t.version === version, "could not reconstruct rebase version");
+        const rebaseVersion = rebaseVersionInstance.version;
+        const rebaseState = aggregate_state_helper_1.AggregateStateHelper.serializeStateIntoSnapshot(rebaseVersionInstance.state);
+        (0, aggregate_state_1.clearBaseState)(rebaseState);
+        const defaultState = aggregate_state_helper_1.AggregateStateHelper.serializeStateIntoSnapshot(this._stateFactory.create());
+        (0, aggregate_state_1.clearBaseState)(defaultState);
+        const rebaseEvent = rebasedEventFactoryFunc != null
+            ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
+            : new aggregate_rebased_1.AggregateRebased({ defaultState, rebaseState, rebaseVersion });
+        this.applyEvent(rebaseEvent);
+        // console.log("rebaseEvent");
+        // console.dir(rebaseEvent);
+        // console.log("rebaseEvent serialized");
+        // console.dir(rebaseEvent.serialize());
+        // console.log("rebaseEvent deserialized");
+        // console.dir(Deserializer.deserialize(rebaseEvent.serialize()));
+    }
     applyEvent(event) {
         (0, n_defensive_1.given)(event, "event").ensureHasValue().ensureIsObject().ensureIsInstanceOf(domain_event_1.DomainEvent)
             .ensure(t => t.isCreatedEvent ? this._retroEvents.isEmpty && this._currentEvents.isEmpty : true, "'isCreatedEvent = true' cannot be the case for multiple events");
@@ -313,27 +303,6 @@ class AggregateRoot extends n_util_1.Serializable {
         //         ;
         //     this._retroEvents = trimmed;
         // }
-    }
-    // /**
-    //  * 
-    //  * @deprecated DO NOT USE
-    //  * @description override to trim retro events on the application of a new event
-    //  */
-    // protected trim(retroEvents: ReadonlyArray<DomainEvent<T>>): ReadonlyArray<DomainEvent<T>>
-    // {
-    //     given(retroEvents, "retroEvents").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
-    //     return retroEvents;
-    // }
-    _serializeForSnapshot(value) {
-        if (value instanceof domain_object_1.DomainObject)
-            return value.serialize();
-        if (Object.keys(value).some(t => t.startsWith("_")))
-            throw new n_exception_1.ApplicationException(`attempting to serialize an object [${value.getTypeName()}] with private fields but does not extend DomainObject for the purposes of snapshot`);
-        return JSON.parse(JSON.stringify(value));
-        // given(value, "value").ensureHasValue().ensureIsObject()
-        //     .ensure(t => !!(<any>t).serialize, `serialize method is missing on type ${value.getTypeName()}`)
-        //     .ensure(t => typeof ((<any>t).serialize) === "function", `property serialize on type ${value.getTypeName()} is not a function`);
-        // return (<any>value).serialize();
     }
 }
 tslib_1.__decorate([

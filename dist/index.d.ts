@@ -10,4 +10,5 @@ export { ConfigurableDomainContext } from "./configurable-domain-context";
 export { DomainObject } from "./domain-object";
 export { DomainEntity } from "./domain-entity";
 export { AggregateStateFactory } from "./aggregate-state-factory";
+export { AggregateRebased } from "./aggregate-rebased";
 //# sourceMappingURL=index.d.ts.map

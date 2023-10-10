@@ -1,0 +1,1 @@
+{"version":3,"file":"aggregate-state-helper.d.ts","sourceRoot":"","sources":["../src/aggregate-state-helper.ts"],"names":[],"mappings":"AAMA,qBAAa,oBAAoB;WAEf,0BAA0B,CAAC,KAAK,EAAE,MAAM,EAAE,GAAG,SAAS,EAAE,aAAa,CAAC,MAAM,CAAC,GAAG,MAAM;WA+BtF,4BAA4B,CAAC,QAAQ,EAAE,MAAM,GAAG,MAAM;IAoCpE,OAAO,CAAC,MAAM,CAAC,qBAAqB;CAiBvC"}

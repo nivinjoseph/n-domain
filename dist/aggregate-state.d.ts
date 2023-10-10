@@ -7,5 +7,5 @@ export interface AggregateState {
     isRebased: boolean;
     rebasedFromVersion: number;
 }
-export declare function clearBaseState(state: AggregateState): void;
+export declare function clearBaseState(state: object): void;
 //# sourceMappingURL=aggregate-state.d.ts.map

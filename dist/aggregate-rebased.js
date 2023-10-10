@@ -4,6 +4,7 @@ exports.AggregateRebased = void 0;
 const tslib_1 = require("tslib");
 const n_defensive_1 = require("@nivinjoseph/n-defensive");
 const n_util_1 = require("@nivinjoseph/n-util");
+const aggregate_state_helper_1 = require("./aggregate-state-helper");
 const domain_event_1 = require("./domain-event");
 class AggregateRebased extends domain_event_1.DomainEvent {
     constructor(data) {
@@ -25,10 +26,12 @@ class AggregateRebased extends domain_event_1.DomainEvent {
         // current factory generated default state
         // layer base state on top of it
         // layer the above result on top of current state
+        const defaultState = aggregate_state_helper_1.AggregateStateHelper.deserializeSnapshotIntoState(this._defaultState);
+        const rebaseState = aggregate_state_helper_1.AggregateStateHelper.deserializeSnapshotIntoState(this._rebaseState);
         // console.dir(state);
-        // console.dir(this._defaultState);
-        // console.dir(this._rebaseState);
-        Object.assign(state, this._defaultState, this._rebaseState);
+        // console.dir(defaultState);
+        // console.dir(rebaseState);
+        Object.assign(state, defaultState, rebaseState);
         state.isRebased = true;
         state.rebasedFromVersion = this._rebaseVersion;
         // console.dir(state);
