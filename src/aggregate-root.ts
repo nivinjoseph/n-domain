@@ -1,15 +1,14 @@
 import { DomainEvent } from "./domain-event";
 import { AggregateState, clearBaseState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
-import { ApplicationException } from "@nivinjoseph/n-exception";
 import { AggregateRootData } from "./aggregate-root-data";
 import { DomainContext } from "./domain-context";
 import { DomainEventData } from "./domain-event-data";
 import { AggregateStateFactory } from "./aggregate-state-factory";
-import { DomainObject } from "./domain-object";
 import { Deserializer, Serializable, serialize } from "@nivinjoseph/n-util";
 import * as Crypto from "crypto";
 import { AggregateRebased } from "./aggregate-rebased";
+import { AggregateStateHelper } from "./aggregate-state-helper";
 
 // public
 export abstract class AggregateRoot<T extends AggregateState> extends Serializable<AggregateRootData>
@@ -179,35 +178,9 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         return new aggregateType(domainContext, [], stateFactory.deserializeSnapshot(stateSnapshot as any));
     }
     
-    public snapshot(...cloneKeys: Array<string>): T | object
+    public snapshot(...cloneKeys: ReadonlyArray<string>): T | object
     {
-        const snapshot: Record<string, any> = Object.assign({}, this.state);
-        
-        Object.keys(snapshot).forEach(key =>
-        {
-            const val = snapshot[key];
-            if (val && typeof val === "object")
-            {
-                if (cloneKeys.contains(key))
-                {
-                    snapshot[key] = JSON.parse(JSON.stringify(val));
-                    return;
-                }
-                
-                if (Array.isArray(val))
-                    snapshot[key] = (<Array<Object>>val).map(t =>
-                    {
-                        if (typeof t === "object")
-                            return this._serializeForSnapshot(t);
-                        else
-                            return t;
-                    });
-                else
-                    snapshot[key] = this._serializeForSnapshot(val);
-            }
-        });
-        
-        return snapshot;
+        return AggregateStateHelper.serializeStateIntoSnapshot(this.state, ...cloneKeys);
     }
 
     public constructVersion(version: number): this
@@ -240,26 +213,6 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         result._reconstructedFromVersion = this.version;
         
         return this;
-    }
-    
-    public rebase(version: number, rebasedEventFactoryFunc?: (defaultState: T, rebaseState: T, rebaseVersion: number) => AggregateRebased<T>): void
-    {
-        given(version, "version").ensureHasValue().ensureIsNumber()
-            .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
-        
-        given(rebasedEventFactoryFunc, "rebasedEventFactoryFunc").ensureIsFunction();
-        
-        const rebaseState = this.constructVersion(version)._state;
-        const rebaseVersion = rebaseState.version;
-        clearBaseState(rebaseState);
-        
-        const defaultState = this._stateFactory.create();
-        clearBaseState(defaultState);
-        
-        this.applyEvent(rebasedEventFactoryFunc != null
-            ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
-            : new AggregateRebased({ defaultState, rebaseState, rebaseVersion })
-        );
     }
 
     public hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
@@ -429,6 +382,39 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
     }
     
+    protected rebase(version: number, rebasedEventFactoryFunc?: (defaultState: object, rebaseState: object, rebaseVersion: number) => AggregateRebased<T>): void
+    {
+        given(version, "version").ensureHasValue().ensureIsNumber()
+            .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
+
+        given(rebasedEventFactoryFunc, "rebasedEventFactoryFunc").ensureIsFunction();
+
+        const rebaseVersionInstance = this.constructVersion(version);
+        given(rebaseVersionInstance, "rebaseVersionInstance")
+            .ensure(t => t.version === version, "could not reconstruct rebase version");
+        const rebaseVersion = rebaseVersionInstance.version;
+        const rebaseState = AggregateStateHelper.serializeStateIntoSnapshot(rebaseVersionInstance.state);
+        clearBaseState(rebaseState);
+
+        const defaultState = AggregateStateHelper.serializeStateIntoSnapshot(this._stateFactory.create());
+        clearBaseState(defaultState);
+
+        const rebaseEvent = rebasedEventFactoryFunc != null
+            ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
+            : new AggregateRebased({ defaultState, rebaseState, rebaseVersion });
+
+        this.applyEvent(rebaseEvent);
+
+        // console.log("rebaseEvent");
+        // console.dir(rebaseEvent);
+
+        // console.log("rebaseEvent serialized");
+        // console.dir(rebaseEvent.serialize());
+
+        // console.log("rebaseEvent deserialized");
+        // console.dir(Deserializer.deserialize(rebaseEvent.serialize()));
+    }
+    
     protected applyEvent(event: DomainEvent<T>): void
     {
         given(event, "event").ensureHasValue().ensureIsObject().ensureIsInstanceOf(DomainEvent)
@@ -454,7 +440,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         // }
     }
     // /**
-    //  * 
+    //  *
     //  * @deprecated DO NOT USE
     //  * @description override to trim retro events on the application of a new event
     //  */
@@ -464,23 +450,4 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         
     //     return retroEvents;
     // }
-    
-    
-    private _serializeForSnapshot(value: Object): object
-    {
-        if (value instanceof DomainObject)
-            return value.serialize() as object;
-        
-        if (Object.keys(value).some(t => t.startsWith("_")))
-            throw new ApplicationException(
-                `attempting to serialize an object [${value.getTypeName()}] with private fields but does not extend DomainObject for the purposes of snapshot`);
-        
-        return JSON.parse(JSON.stringify(value)) as object;
-        
-        // given(value, "value").ensureHasValue().ensureIsObject()
-        //     .ensure(t => !!(<any>t).serialize, `serialize method is missing on type ${value.getTypeName()}`)
-        //     .ensure(t => typeof ((<any>t).serialize) === "function", `property serialize on type ${value.getTypeName()} is not a function`);
-
-        // return (<any>value).serialize();
-    }
 }

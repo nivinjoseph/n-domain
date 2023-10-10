@@ -2,14 +2,15 @@ import { TodoState } from "../todo-state";
 import { given } from "@nivinjoseph/n-defensive";
 import { DomainEvent, DomainEventData } from "../../../src";
 import { serialize } from "@nivinjoseph/n-util";
+import { TodoDescription } from "../value-objects/todo-description";
 
 
 export class TodoDescriptionUpdated extends DomainEvent<TodoState>
 {
-    private readonly _description: string | null;
+    private readonly _description: TodoDescription | null;
     
     @serialize
-    public get description(): string | null { return this._description; }
+    public get description(): TodoDescription | null { return this._description; }
 
 
     public constructor(data: EventData)
@@ -18,7 +19,7 @@ export class TodoDescriptionUpdated extends DomainEvent<TodoState>
 
         const { description } = data;
         
-        given(description as string, "description").ensureIsString();
+        given(description, "description").ensureIsType(TodoDescription);
         this._description = description;
     }
 
@@ -47,5 +48,5 @@ export class TodoDescriptionUpdated extends DomainEvent<TodoState>
 
 interface EventData extends DomainEventData
 {
-    description: string | null;
+    description: TodoDescription | null;
 }

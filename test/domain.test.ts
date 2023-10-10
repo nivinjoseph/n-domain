@@ -5,6 +5,7 @@ import { DomainContext, DomainHelper } from "../src";
 import { TodoCreated } from "./domain/events/todo-created";
 import { Delay, Schema } from "@nivinjoseph/n-util";
 import { TodoDescriptionUpdated } from "./domain/events/todo-description-updated";
+import { TodoDescription } from "./domain/value-objects/todo-description";
 
 
 suite("Domain tests", () =>
@@ -441,7 +442,7 @@ suite("Domain tests", () =>
             const clone = original.clone(domainContext, new TodoCreated({
                 todoId: DomainHelper.generateId("tdo"),
                 title: "different title",
-                description: "different description"
+                description: TodoDescription.create("different description")
             }));
             
             
@@ -472,11 +473,12 @@ suite("Domain tests", () =>
             const clone = original.clone(domainContext, new TodoCreated({
                 todoId: DomainHelper.generateId("tdo"),
                 title: "different title",
-                description: "different description"
+                description: TodoDescription.create("different description")
             }), (event) =>
             {
                 if (event.$name === (<Object>TodoDescriptionUpdated).getTypeName())
-                    (event as unknown as Schema<TodoDescriptionUpdated, "description">).description = "mutated description";
+                    ((event as unknown as Schema<TodoDescriptionUpdated, "description">)
+                        .description! as Schema<TodoDescription, "description">).description = "mutated description";
                 return true;
             });
 
@@ -589,6 +591,90 @@ suite("Domain tests", () =>
                 Assert.strictEqual(rebased.rebasedFromVersion, 2);
                 Assert.strictEqual(rebased.title, "title update 1");
                 Assert.strictEqual(rebased.description, "description");
+            });
+        
+        test(`
+            Given an aggregate instance of Type Todo,
+                and it has been updated twice,
+                and serialized and deserialized,
+                and rebased to version 2,
+                and updated
+                and serialized and deserialized,
+            When the instance is rebased again to version 2
+            Then rebased instance should have same id as original,
+                and its retroEvents count should be 5
+                and its retroVersion should be 5,
+                and its currentEvents count should be 1,
+                and its currentVersion should be 6,
+                and its events count should be 6,
+                and its version should be 6,
+                and its createdAt should be same as original createdAt,
+                and its updatedAt should be >= original updatedAt,
+                and its createdAt should be <= its updatedAt,
+                and its isNew should be false,
+                and its hasChanges should be true,
+                and its isRebased should be true,
+                and its rebasedFromVersion should be 2
+                and its updated property should reflect the version 2 value
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", "description");
+                
+                const processSnapshot = (snapshot: object, details: string): object =>
+                {
+                    console.log(details, snapshot);
+                    
+                    // @ts-expect-error: deliberate
+                    delete snapshot.version;
+                    // @ts-expect-error: deliberate
+                    delete snapshot.isRebased;
+                    // @ts-expect-error: deliberate
+                    delete snapshot.rebasedFromVersion;
+                    // @ts-expect-error: deliberate
+                    delete snapshot.updatedAt;
+                    
+                    return snapshot;
+                };
+                
+                original.updateTitle("title update 1");
+                const originalSnapshot = JSON.stringify(processSnapshot(original.snapshot(), "original"));
+                original.updateTitle("title update 2");
+                
+                let serialized = original.serialize();
+                let deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+
+                let rebased = deserialized;
+                rebased.rebase(2);
+                const rebase1Snapshot = JSON.stringify(processSnapshot(rebased.snapshot(), "rebase1"));
+                
+                rebased.updateTitle("title update 3");
+                
+                serialized = rebased.serialize();
+                deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                
+                rebased = deserialized;
+                rebased.rebase(2);
+                const rebase2Snapshot = JSON.stringify(processSnapshot(rebased.snapshot(), "rebase2"));
+
+                Assert.strictEqual(rebased.id, original.id);
+                Assert.strictEqual(rebased.retroEvents.length, 5);
+                Assert.strictEqual(rebased.retroVersion, 5);
+                Assert.strictEqual(rebased.currentEvents.length, 1);
+                Assert.strictEqual(rebased.currentVersion, 6);
+                Assert.strictEqual(rebased.events.length, 6);
+                Assert.strictEqual(rebased.version, 6);
+                Assert.strictEqual(rebased.createdAt, original.createdAt);
+                Assert.ok(rebased.updatedAt >= original.updatedAt);
+                Assert.ok(rebased.createdAt <= rebased.updatedAt);
+                Assert.strictEqual(rebased.isNew, false);
+                Assert.strictEqual(rebased.hasChanges, true);
+                Assert.strictEqual(rebased.isRebased, true);
+                Assert.strictEqual(rebased.rebasedFromVersion, 2);
+                Assert.strictEqual(rebased.title, "title update 1");
+                Assert.strictEqual(rebased.description, "description");
+                Assert.strictEqual(originalSnapshot, rebase1Snapshot, "original vs rebase 1");
+                Assert.strictEqual(rebase1Snapshot, rebase2Snapshot, "rebase 1 vs rebase 2");
             });
     });
 

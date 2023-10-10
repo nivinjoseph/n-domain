@@ -1,6 +1,6 @@
 import { AggregateState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
-import { Deserializer } from "@nivinjoseph/n-util";
+import { AggregateStateHelper } from "./aggregate-state-helper";
 
 
 export abstract class AggregateStateFactory<T extends AggregateState>
@@ -16,38 +16,40 @@ export abstract class AggregateStateFactory<T extends AggregateState>
     
     public deserializeSnapshot(snapshot: T): T
     {
-        given(snapshot, "snapshot").ensureHasValue().ensureIsObject();
+        // given(snapshot, "snapshot").ensureHasValue().ensureIsObject();
         
-        const deserialized: Record<string, any> = {};
+        // const deserialized: Record<string, any> = {};
         
-        Object.keys(snapshot).forEach(key =>
-        {
-            const value = (snapshot as any)[key];
-            if (value == null || typeof value !== "object")
-            {
-                deserialized[key] = value;
-                return;
-            }
+        // Object.keys(snapshot).forEach(key =>
+        // {
+        //     const value = (snapshot as any)[key];
+        //     if (value == null || typeof value !== "object")
+        //     {
+        //         deserialized[key] = value;
+        //         return;
+        //     }
             
-            if (Array.isArray(value))
-            {
-                deserialized[key] = value.map(v =>
-                {
-                    if (v == null || typeof v !== "object" || !Deserializer.hasType(v.$typename))
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                        return v;
+        //     if (Array.isArray(value))
+        //     {
+        //         deserialized[key] = value.map(v =>
+        //         {
+        //             if (v == null || typeof v !== "object" || !Deserializer.hasType(v.$typename))
+        //                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        //                 return v;
                     
-                    return Deserializer.deserialize(v);
-                });
-            }
-            else
-            {
-                deserialized[key] = Deserializer.hasType(value.$typename)
-                    ? Deserializer.deserialize(value) : value;
-            }
-        });
+        //             return Deserializer.deserialize(v);
+        //         });
+        //     }
+        //     else
+        //     {
+        //         deserialized[key] = Deserializer.hasType(value.$typename)
+        //             ? Deserializer.deserialize(value) : value;
+        //     }
+        // });
         
-        return deserialized as T;
+        // return deserialized as T;
+        
+        return AggregateStateHelper.deserializeSnapshotIntoState(snapshot) as T;
     }
     
     protected createDefaultAggregateState(): AggregateState

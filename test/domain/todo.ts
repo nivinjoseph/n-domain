@@ -5,12 +5,13 @@ import { TodoTitleUpdated } from "./events/todo-title-updated";
 import { TodoDescriptionUpdated } from "./events/todo-description-updated";
 import { TodoMarkedAsCompleted } from "./events/todo-marked-as-completed";
 import { given } from "@nivinjoseph/n-defensive";
+import { TodoDescription } from "./value-objects/todo-description";
 
 
 export class Todo extends AggregateRoot<TodoState>
 {
     public get title(): string { return this.state.title; }
-    public get description(): string | null { return this.state.description; }
+    public get description(): string | null { return this.state.description?.description ?? null; }
     public get isCompleted(): boolean { return this.state.isCompleted; }
 
     
@@ -29,7 +30,7 @@ export class Todo extends AggregateRoot<TodoState>
         return new Todo(domainContext, [new TodoCreated({
             todoId: DomainHelper.generateId("tdo"),
             title,
-            description
+            description: description != null ? TodoDescription.create(description) : null
         })]);
     }
 
@@ -66,12 +67,19 @@ export class Todo extends AggregateRoot<TodoState>
 
         description = description && !description.isEmptyOrWhiteSpace() ? description.trim() : null;
 
-        this.applyEvent(new TodoDescriptionUpdated({ description }));
+        this.applyEvent(new TodoDescriptionUpdated({
+            description: description != null ? TodoDescription.create(description) : null
+        }));
     }
 
     public markAsCompleted(): void
     {
         this.applyEvent(new TodoMarkedAsCompleted({}));
+    }
+    
+    public override rebase(version: number): void
+    {
+        super.rebase(version);
     }
     
     

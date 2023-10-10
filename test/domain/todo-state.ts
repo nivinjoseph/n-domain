@@ -1,11 +1,12 @@
 import { AggregateStateFactory } from "../../src/aggregate-state-factory";
 import { AggregateState } from "../../src/aggregate-state";
+import { TodoDescription } from "./value-objects/todo-description";
 
 
 export interface TodoState extends AggregateState
 {
     title: string;
-    description: string | null;
+    description: TodoDescription | null;
     isCompleted: boolean;
 }
 

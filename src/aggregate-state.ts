@@ -14,7 +14,7 @@ export interface AggregateState
     // ^^^^^ any change to this should also affect the clearBaseState function below
 }
 
-export function clearBaseState(state: AggregateState): void
+export function clearBaseState(state: object): void
 {
     given(state, "state").ensureHasValue().ensureIsObject();
     
