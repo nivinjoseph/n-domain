@@ -57,7 +57,9 @@ export abstract class AggregateStateFactory<T extends AggregateState>
             id: null as any,
             version: null as any,
             createdAt: null as any,
-            updatedAt: null as any
+            updatedAt: null as any,
+            isRebased: false,
+            rebasedFromVersion: 0
         };
     }
 }

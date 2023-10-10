@@ -343,6 +343,8 @@ suite("Domain tests", () =>
                 and its createdAt should be <= its updatedAt,
                 and its isNew should be false, // reconstructed aggregates will always have isNew === false
                 and its hasChanges should be false,
+                and its isReconstructed should be true,
+                and its reconstructedFromVersion should be 3,
                 and its updated property should reflect the version 2 value
         `,
             () =>
@@ -365,6 +367,8 @@ suite("Domain tests", () =>
                 Assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
                 Assert.strictEqual(reconstructed.isNew, false);
                 Assert.strictEqual(reconstructed.hasChanges, false);
+                Assert.strictEqual(reconstructed.isReconstructed, true);
+                Assert.strictEqual(reconstructed.reconstructedFromVersion, 3);
                 Assert.strictEqual(reconstructed.title, "title update 1");
                 Assert.strictEqual(reconstructed.description, "description");
             });
@@ -386,6 +390,8 @@ suite("Domain tests", () =>
                 and its createdAt should be <= its updatedAt,
                 and its isNew should be false,
                 and its hasChanges should be false,
+                and its isReconstructed should be true,
+                and its reconstructedFromVersion should be 3,
                 and its updated property should reflect the version 2 value
         `,
             () =>
@@ -410,6 +416,8 @@ suite("Domain tests", () =>
                 Assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
                 Assert.strictEqual(reconstructed.isNew, false);
                 Assert.strictEqual(reconstructed.hasChanges, false);
+                Assert.strictEqual(reconstructed.isReconstructed, true);
+                Assert.strictEqual(reconstructed.reconstructedFromVersion, 3);
                 Assert.strictEqual(reconstructed.title, "title update 1");
                 Assert.strictEqual(reconstructed.description, "description");
             });
@@ -482,6 +490,106 @@ suite("Domain tests", () =>
             Assert.strictEqual(clone.description, "mutated description", "description");
             Assert.strictEqual(clone.isCompleted, original.isCompleted, "isCompleted");
         });
+    });
+    
+    suite("Rebasing", () =>
+    {
+        test(`
+            Given an aggregate instance of Type Todo,
+                and it has been updated twice,
+            When the instance is rebased to version 2
+            Then rebased instance should have same id as original,
+                and its retroEvents count should be 1
+                and its retroVersion should be 1,
+                and its currentEvents count should be 3,
+                and its currentVersion should be 4,
+                and its events count should be 4,
+                and its version should be 4,
+                and its createdAt should be same as original createdAt,
+                and its updatedAt should be >= original updatedAt,
+                and its createdAt should be <= its updatedAt,
+                and its isNew should be false, 
+                and its hasChanges should be true,
+                and its isRebased should be true,
+                and its rebasedFromVersion should be 2
+                and its updated property should reflect the version 2 value
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", "description");
+                original.updateTitle("title update 1");
+                original.updateTitle("title update 2");
+
+                const rebased = original;
+                rebased.rebase(2);
+
+                Assert.strictEqual(rebased.id, original.id);
+                Assert.strictEqual(rebased.retroEvents.length, 1);
+                Assert.strictEqual(rebased.retroVersion, 1);
+                Assert.strictEqual(rebased.currentEvents.length, 3);
+                Assert.strictEqual(rebased.currentVersion, 4);
+                Assert.strictEqual(rebased.events.length, 4);
+                Assert.strictEqual(rebased.version, 4);
+                Assert.strictEqual(rebased.createdAt, original.createdAt);
+                Assert.ok(rebased.updatedAt >= original.updatedAt);
+                Assert.ok(rebased.createdAt <= rebased.updatedAt);
+                Assert.strictEqual(rebased.isNew, true);
+                Assert.strictEqual(rebased.hasChanges, true);
+                Assert.strictEqual(rebased.isRebased, true);
+                Assert.strictEqual(rebased.rebasedFromVersion, 2);
+                Assert.strictEqual(rebased.title, "title update 1");
+                Assert.strictEqual(rebased.description, "description");
+            });
+
+        test(`
+            Given an aggregate instance of Type Todo,
+                and it has been updated twice,
+                and serialized and deserialized
+            When the instance is rebased to version 2
+            Then rebased instance should have same id as original,
+                and its retroEvents count should be 3
+                and its retroVersion should be 3,
+                and its currentEvents count should be 1,
+                and its currentVersion should be 4,
+                and its events count should be 4,
+                and its version should be 4,
+                and its createdAt should be same as original createdAt,
+                and its updatedAt should be >= original updatedAt,
+                and its createdAt should be <= its updatedAt,
+                and its isNew should be false,
+                and its hasChanges should be true,
+                and its isRebased should be true,
+                and its rebasedFromVersion should be 2
+                and its updated property should reflect the version 2 value
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", "description");
+                original.updateTitle("title update 1");
+                original.updateTitle("title update 2");
+                const serialized = original.serialize();
+                const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+
+                const rebased = deserialized;
+                rebased.rebase(2);
+
+                Assert.strictEqual(rebased.id, original.id);
+                Assert.strictEqual(rebased.retroEvents.length, 3);
+                Assert.strictEqual(rebased.retroVersion, 3);
+                Assert.strictEqual(rebased.currentEvents.length, 1);
+                Assert.strictEqual(rebased.currentVersion, 4);
+                Assert.strictEqual(rebased.events.length, 4);
+                Assert.strictEqual(rebased.version, 4);
+                Assert.strictEqual(rebased.createdAt, original.createdAt);
+                Assert.ok(rebased.updatedAt >= original.updatedAt);
+                Assert.ok(rebased.createdAt <= rebased.updatedAt);
+                Assert.strictEqual(rebased.isNew, false);
+                Assert.strictEqual(rebased.hasChanges, true);
+                Assert.strictEqual(rebased.isRebased, true);
+                Assert.strictEqual(rebased.rebasedFromVersion, 2);
+                Assert.strictEqual(rebased.title, "title update 1");
+                Assert.strictEqual(rebased.description, "description");
+            });
     });
 
     suite.skip("Trimming", () =>

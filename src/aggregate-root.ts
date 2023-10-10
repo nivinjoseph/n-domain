@@ -1,5 +1,5 @@
 import { DomainEvent } from "./domain-event";
-import { AggregateState } from "./aggregate-state";
+import { AggregateState, clearBaseState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
 import { AggregateRootData } from "./aggregate-root-data";
@@ -9,6 +9,7 @@ import { AggregateStateFactory } from "./aggregate-state-factory";
 import { DomainObject } from "./domain-object";
 import { Deserializer, Serializable, serialize } from "@nivinjoseph/n-util";
 import * as Crypto from "crypto";
+import { AggregateRebased } from "./aggregate-rebased";
 
 // public
 export abstract class AggregateRoot<T extends AggregateState> extends Serializable<AggregateRootData>
@@ -55,6 +56,9 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     
     public get isReconstructed(): boolean { return this._isReconstructed; }
     public get reconstructedFromVersion(): number { return this._reconstructedFromVersion; }
+    
+    public get isRebased(): boolean { return this._state.isRebased; }
+    public get rebasedFromVersion(): number { return this._state.rebasedFromVersion; }
 
 
     protected constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
@@ -236,6 +240,26 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         result._reconstructedFromVersion = this.version;
         
         return this;
+    }
+    
+    public rebase(version: number, rebasedEventFactoryFunc?: (defaultState: T, rebaseState: T, rebaseVersion: number) => AggregateRebased<T>): void
+    {
+        given(version, "version").ensureHasValue().ensureIsNumber()
+            .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
+        
+        given(rebasedEventFactoryFunc, "rebasedEventFactoryFunc").ensureIsFunction();
+        
+        const rebaseState = this.constructVersion(version)._state;
+        const rebaseVersion = rebaseState.version;
+        clearBaseState(rebaseState);
+        
+        const defaultState = this._stateFactory.create();
+        clearBaseState(defaultState);
+        
+        this.applyEvent(rebasedEventFactoryFunc != null
+            ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
+            : new AggregateRebased({ defaultState, rebaseState, rebaseVersion })
+        );
     }
 
     public hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
