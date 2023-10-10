@@ -5,6 +5,7 @@ import { DomainContext } from "./domain-context";
 import { DomainEventData } from "./domain-event-data";
 import { AggregateStateFactory } from "./aggregate-state-factory";
 import { Serializable } from "@nivinjoseph/n-util";
+import { AggregateRebased } from "./aggregate-rebased";
 export declare abstract class AggregateRoot<T extends AggregateState> extends Serializable<AggregateRootData> {
     private readonly _domainContext;
     private readonly _stateFactory;
@@ -13,6 +14,8 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     private readonly _retroVersion;
     private readonly _currentEvents;
     private readonly _isNew;
+    private _isReconstructed;
+    private _reconstructedFromVersion;
     protected get state(): T;
     get context(): DomainContext;
     get id(): string;
@@ -26,12 +29,17 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     get updatedAt(): number;
     get isNew(): boolean;
     get hasChanges(): boolean;
+    get isReconstructed(): boolean;
+    get reconstructedFromVersion(): number;
+    get isRebased(): boolean;
+    get rebasedFromVersion(): number;
     protected constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, stateFactory: AggregateStateFactory<T>, currentState?: T);
     static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate;
     static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate;
     snapshot(...cloneKeys: Array<string>): T | object;
     constructVersion(version: number): this;
     constructBefore(dateTime: number): this;
+    rebase(version: number, rebasedEventFactoryFunc?: (defaultState: T, rebaseState: T, rebaseVersion: number) => AggregateRebased<T>): void;
     hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean;
     hasRetroEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean;
     hasCurrentEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean;

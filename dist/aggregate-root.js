@@ -3,17 +3,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AggregateRoot = void 0;
 const tslib_1 = require("tslib");
 const domain_event_1 = require("./domain-event");
+const aggregate_state_1 = require("./aggregate-state");
 const n_defensive_1 = require("@nivinjoseph/n-defensive");
 const n_exception_1 = require("@nivinjoseph/n-exception");
 const domain_object_1 = require("./domain-object");
 const n_util_1 = require("@nivinjoseph/n-util");
 const Crypto = require("crypto");
+const aggregate_rebased_1 = require("./aggregate-rebased");
 // public
 class AggregateRoot extends n_util_1.Serializable {
     constructor(domainContext, events, stateFactory, currentState) {
         super({});
         this._currentEvents = new Array(); // track unit of work stuff
         this._isNew = false;
+        this._isReconstructed = false;
+        this._reconstructedFromVersion = 0;
         (0, n_defensive_1.given)(domainContext, "domainContext").ensureHasValue()
             .ensureHasStructure({ userId: "string" });
         this._domainContext = domainContext;
@@ -56,6 +60,10 @@ class AggregateRoot extends n_util_1.Serializable {
     get updatedAt() { return this._state.updatedAt; }
     get isNew() { return this._isNew; } // this will always be false for anything that is reconstructed
     get hasChanges() { return this.currentVersion !== this.retroVersion; }
+    get isReconstructed() { return this._isReconstructed; }
+    get reconstructedFromVersion() { return this._reconstructedFromVersion; }
+    get isRebased() { return this._state.isRebased; }
+    get rebasedFromVersion() { return this._state.rebasedFromVersion; }
     static deserializeFromEvents(domainContext, aggregateType, eventData) {
         (0, n_defensive_1.given)(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         (0, n_defensive_1.given)(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
@@ -144,7 +152,10 @@ class AggregateRoot extends n_util_1.Serializable {
         (0, n_defensive_1.given)(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
         const ctor = this.constructor;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        return new ctor(this._domainContext, this.events.filter(t => t.version <= version));
+        const result = new ctor(this._domainContext, this.events.filter(t => t.version <= version));
+        result._isReconstructed = true;
+        result._reconstructedFromVersion = this.version;
+        return result;
     }
     constructBefore(dateTime) {
         (0, n_defensive_1.given)(dateTime, "dateTime").ensureHasValue().ensureIsNumber()
@@ -152,7 +163,23 @@ class AggregateRoot extends n_util_1.Serializable {
         (0, n_defensive_1.given)(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
         const ctor = this.constructor;
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        return new ctor(this._domainContext, this.events.filter(t => t.occurredAt < dateTime));
+        const result = new ctor(this._domainContext, this.events.filter(t => t.occurredAt < dateTime));
+        result._isReconstructed = true;
+        result._reconstructedFromVersion = this.version;
+        return this;
+    }
+    rebase(version, rebasedEventFactoryFunc) {
+        (0, n_defensive_1.given)(version, "version").ensureHasValue().ensureIsNumber()
+            .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
+        (0, n_defensive_1.given)(rebasedEventFactoryFunc, "rebasedEventFactoryFunc").ensureIsFunction();
+        const rebaseState = this.constructVersion(version)._state;
+        const rebaseVersion = rebaseState.version;
+        (0, aggregate_state_1.clearBaseState)(rebaseState);
+        const defaultState = this._stateFactory.create();
+        (0, aggregate_state_1.clearBaseState)(defaultState);
+        this.applyEvent(rebasedEventFactoryFunc != null
+            ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
+            : new aggregate_rebased_1.AggregateRebased({ defaultState, rebaseState, rebaseVersion }));
     }
     hasEventOfType(eventType) {
         (0, n_defensive_1.given)(eventType, "eventType").ensureHasValue().ensureIsFunction();

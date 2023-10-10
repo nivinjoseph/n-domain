@@ -38,7 +38,9 @@ class AggregateStateFactory {
             id: null,
             version: null,
             createdAt: null,
-            updatedAt: null
+            updatedAt: null,
+            isRebased: false,
+            rebasedFromVersion: 0
         };
     }
 }
