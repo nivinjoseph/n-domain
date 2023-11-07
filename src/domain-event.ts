@@ -47,6 +47,8 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     
     public get partitionKey(): string { return this.aggregateId; }
     
+    public get refId(): string { return this.aggregateId; }
+    
     @serialize("$occurredAt")
     public get occurredAt(): number { return this._occurredAt; }
     

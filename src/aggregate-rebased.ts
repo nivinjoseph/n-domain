@@ -24,7 +24,7 @@ export class AggregateRebased<T extends AggregateState> extends DomainEvent<T>
     
     
     
-    public constructor(data: DomainEventData & Pick<AggregateRebased<T>, "defaultState" | "rebaseState" | "rebaseVersion">)
+    public constructor(data: AggregateRebasedEventData)
     {
         super(data);
         
@@ -65,3 +65,6 @@ export class AggregateRebased<T extends AggregateState> extends DomainEvent<T>
         // console.dir(state);
     }
 }
+
+export type AggregateRebasedEventData = DomainEventData
+    & Pick<AggregateRebased<any>, "defaultState" | "rebaseState" | "rebaseVersion">;
