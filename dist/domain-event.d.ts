@@ -16,6 +16,7 @@ export declare abstract class DomainEvent<T extends AggregateState> extends Seri
     get userId(): string;
     get name(): string;
     get partitionKey(): string;
+    get refId(): string;
     get occurredAt(): number;
     get version(): number;
     get isCreatedEvent(): boolean;

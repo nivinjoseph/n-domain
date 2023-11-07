@@ -8,7 +8,8 @@ export declare class AggregateRebased<T extends AggregateState> extends DomainEv
     get defaultState(): object;
     get rebaseState(): object;
     get rebaseVersion(): number;
-    constructor(data: DomainEventData & Pick<AggregateRebased<T>, "defaultState" | "rebaseState" | "rebaseVersion">);
+    constructor(data: AggregateRebasedEventData);
     protected applyEvent(state: T): void;
 }
+export declare type AggregateRebasedEventData = DomainEventData & Pick<AggregateRebased<any>, "defaultState" | "rebaseState" | "rebaseVersion">;
 //# sourceMappingURL=aggregate-rebased.d.ts.map
