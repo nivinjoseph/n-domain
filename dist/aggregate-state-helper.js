@@ -52,6 +52,24 @@ class AggregateStateHelper {
         });
         return deserialized;
     }
+    static rebaseState(state, defaultState, rebaseState, rebaseVersion) {
+        (0, n_defensive_1.given)(state, "state").ensureHasValue().ensureIsObject();
+        (0, n_defensive_1.given)(defaultState, "defaultState").ensureHasValue().ensureIsObject();
+        (0, n_defensive_1.given)(rebaseState, "rebaseState").ensureHasValue().ensureIsObject();
+        (0, n_defensive_1.given)(rebaseVersion, "rebaseVersion").ensureHasValue().ensureIsNumber().ensure(t => t > 0);
+        // current factory generated default state
+        // layer rebaseState state on top of it
+        // layer the above result on top of current state
+        defaultState = AggregateStateHelper.deserializeSnapshotIntoState(defaultState);
+        rebaseState = AggregateStateHelper.deserializeSnapshotIntoState(rebaseState);
+        // console.dir(state);
+        // console.dir(defaultState);
+        // console.dir(rebaseState);
+        Object.assign(state, defaultState, rebaseState);
+        state.isRebased = true;
+        state.rebasedFromVersion = rebaseVersion;
+        // console.dir(state);
+    }
     static _serializeForSnapshot(value) {
         if (value instanceof domain_object_1.DomainObject)
             return value.serialize();

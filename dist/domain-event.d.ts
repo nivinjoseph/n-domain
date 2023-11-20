@@ -17,11 +17,12 @@ export declare abstract class DomainEvent<T extends AggregateState> extends Seri
     get name(): string;
     get partitionKey(): string;
     get refId(): string;
+    abstract get refType(): string;
     get occurredAt(): number;
     get version(): number;
     get isCreatedEvent(): boolean;
     constructor(data: DomainEventData);
-    apply(aggregate: AggregateRoot<T>, domainContext: DomainContext, state: T): void;
+    apply(aggregate: AggregateRoot<T, DomainEvent<T>>, domainContext: DomainContext, state: T): void;
     protected abstract applyEvent(state: T): void;
 }
 //# sourceMappingURL=domain-event.d.ts.map

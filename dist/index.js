@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AggregateRebased = exports.AggregateStateFactory = exports.DomainEntity = exports.DomainObject = exports.ConfigurableDomainContext = exports.DomainHelper = exports.DomainEvent = exports.AggregateRoot = void 0;
+exports.AggregateStateHelper = exports.AggregateStateFactory = exports.DomainEntity = exports.DomainObject = exports.ConfigurableDomainContext = exports.DomainHelper = exports.DomainEvent = exports.AggregateRoot = void 0;
 require("@nivinjoseph/n-ext");
 var aggregate_root_1 = require("./aggregate-root");
 Object.defineProperty(exports, "AggregateRoot", { enumerable: true, get: function () { return aggregate_root_1.AggregateRoot; } });
@@ -16,6 +16,7 @@ var domain_entity_1 = require("./domain-entity");
 Object.defineProperty(exports, "DomainEntity", { enumerable: true, get: function () { return domain_entity_1.DomainEntity; } });
 var aggregate_state_factory_1 = require("./aggregate-state-factory");
 Object.defineProperty(exports, "AggregateStateFactory", { enumerable: true, get: function () { return aggregate_state_factory_1.AggregateStateFactory; } });
-var aggregate_rebased_1 = require("./aggregate-rebased");
-Object.defineProperty(exports, "AggregateRebased", { enumerable: true, get: function () { return aggregate_rebased_1.AggregateRebased; } });
+var aggregate_state_helper_1 = require("./aggregate-state-helper");
+Object.defineProperty(exports, "AggregateStateHelper", { enumerable: true, get: function () { return aggregate_state_helper_1.AggregateStateHelper; } });
+// export { AggregateRebased, AggregateRebasedEventData } from "./aggregate-rebased";
 //# sourceMappingURL=index.js.map

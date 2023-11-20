@@ -5,8 +5,7 @@ import { DomainContext } from "./domain-context";
 import { DomainEventData } from "./domain-event-data";
 import { AggregateStateFactory } from "./aggregate-state-factory";
 import { Serializable } from "@nivinjoseph/n-util";
-import { AggregateRebased } from "./aggregate-rebased";
-export declare abstract class AggregateRoot<T extends AggregateState> extends Serializable<AggregateRootData> {
+export declare abstract class AggregateRoot<T extends AggregateState, TDomainEvent extends DomainEvent<T>> extends Serializable<AggregateRootData> {
     private readonly _domainContext;
     private readonly _stateFactory;
     private readonly _state;
@@ -34,8 +33,8 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
     get isRebased(): boolean;
     get rebasedFromVersion(): number;
     protected constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, stateFactory: AggregateStateFactory<T>, currentState?: T);
-    static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate;
-    static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>, TAggregateState extends AggregateState>(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate;
+    static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>, TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate;
+    static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>, TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate;
     snapshot(...cloneKeys: ReadonlyArray<string>): T | object;
     constructVersion(version: number): this;
     constructBefore(dateTime: number): this;
@@ -56,7 +55,7 @@ export declare abstract class AggregateRoot<T extends AggregateState> extends Se
         $name: string;
     }) => boolean): this;
     test(): void;
-    protected rebase(version: number, rebasedEventFactoryFunc?: (defaultState: object, rebaseState: object, rebaseVersion: number) => AggregateRebased<T>): void;
-    protected applyEvent(event: DomainEvent<T>): void;
+    protected rebase(version: number, rebasedEventFactoryFunc: (defaultState: object, rebaseState: object, rebaseVersion: number) => TDomainEvent): void;
+    protected applyEvent(event: TDomainEvent): void;
 }
 //# sourceMappingURL=aggregate-root.d.ts.map

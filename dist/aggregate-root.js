@@ -7,7 +7,7 @@ const aggregate_state_1 = require("./aggregate-state");
 const n_defensive_1 = require("@nivinjoseph/n-defensive");
 const n_util_1 = require("@nivinjoseph/n-util");
 const Crypto = require("crypto");
-const aggregate_rebased_1 = require("./aggregate-rebased");
+// import { AggregateRebased } from "./aggregate-rebased";
 const aggregate_state_helper_1 = require("./aggregate-state-helper");
 // public
 class AggregateRoot extends n_util_1.Serializable {
@@ -266,7 +266,7 @@ class AggregateRoot extends n_util_1.Serializable {
     rebase(version, rebasedEventFactoryFunc) {
         (0, n_defensive_1.given)(version, "version").ensureHasValue().ensureIsNumber()
             .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
-        (0, n_defensive_1.given)(rebasedEventFactoryFunc, "rebasedEventFactoryFunc").ensureIsFunction();
+        (0, n_defensive_1.given)(rebasedEventFactoryFunc, "rebasedEventFactoryFunc").ensureHasValue().ensureIsFunction();
         const rebaseVersionInstance = this.constructVersion(version);
         (0, n_defensive_1.given)(rebaseVersionInstance, "rebaseVersionInstance")
             .ensure(t => t.version === version, "could not reconstruct rebase version");
@@ -275,9 +275,10 @@ class AggregateRoot extends n_util_1.Serializable {
         (0, aggregate_state_1.clearBaseState)(rebaseState);
         const defaultState = aggregate_state_helper_1.AggregateStateHelper.serializeStateIntoSnapshot(this._stateFactory.create());
         (0, aggregate_state_1.clearBaseState)(defaultState);
-        const rebaseEvent = rebasedEventFactoryFunc != null
-            ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
-            : new aggregate_rebased_1.AggregateRebased({ defaultState, rebaseState, rebaseVersion });
+        // const rebaseEvent = rebasedEventFactoryFunc != null
+        //     ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
+        //     : new AggregateRebased({ defaultState, rebaseState, rebaseVersion });
+        const rebaseEvent = rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion);
         this.applyEvent(rebaseEvent);
         // console.log("rebaseEvent");
         // console.dir(rebaseEvent);
