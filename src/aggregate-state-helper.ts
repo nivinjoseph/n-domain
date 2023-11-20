@@ -1,6 +1,7 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
 import { Deserializer } from "@nivinjoseph/n-util";
+import { AggregateState } from "./aggregate-state";
 import { DomainObject } from "./domain-object";
 
 
@@ -71,6 +72,32 @@ export class AggregateStateHelper
         });
 
         return deserialized;
+    }
+    
+    public static rebaseState<T extends AggregateState>(state: T, defaultState: object, rebaseState: object, rebaseVersion: number): void
+    {
+        given(state, "state").ensureHasValue().ensureIsObject();
+        given(defaultState, "defaultState").ensureHasValue().ensureIsObject();
+        given(rebaseState, "rebaseState").ensureHasValue().ensureIsObject();
+        given(rebaseVersion, "rebaseVersion").ensureHasValue().ensureIsNumber().ensure(t => t > 0);
+
+        // current factory generated default state
+        // layer rebaseState state on top of it
+        // layer the above result on top of current state
+
+        defaultState = AggregateStateHelper.deserializeSnapshotIntoState(defaultState);
+        rebaseState = AggregateStateHelper.deserializeSnapshotIntoState(rebaseState);
+
+        // console.dir(state);
+        // console.dir(defaultState);
+        // console.dir(rebaseState);
+
+        Object.assign(state, defaultState, rebaseState);
+
+        state.isRebased = true;
+        state.rebasedFromVersion = rebaseVersion;
+
+        // console.dir(state);
     }
 
     private static _serializeForSnapshot(value: Object): object

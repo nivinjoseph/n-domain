@@ -6,9 +6,11 @@ import { TodoDescriptionUpdated } from "./events/todo-description-updated";
 import { TodoMarkedAsCompleted } from "./events/todo-marked-as-completed";
 import { given } from "@nivinjoseph/n-defensive";
 import { TodoDescription } from "./value-objects/todo-description";
+import { TodoDomainEvent } from "./events/todo-domain-event";
+import { TodoRebased } from "./events/todo-rebased";
 
 
-export class Todo extends AggregateRoot<TodoState>
+export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
 {
     public get title(): string { return this.state.title; }
     public get description(): string | null { return this.state.description?.description ?? null; }
@@ -79,7 +81,15 @@ export class Todo extends AggregateRoot<TodoState>
     
     public override rebase(version: number): void
     {
-        super.rebase(version);
+        super.rebase(version,
+            (defaultState: object, rebaseState: object, rebaseVersion: number) =>
+            {
+                return new TodoRebased({
+                    defaultState,
+                    rebaseState,
+                    rebaseVersion
+                });
+            });
     }
     
     

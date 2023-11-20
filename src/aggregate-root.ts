@@ -7,11 +7,11 @@ import { DomainEventData } from "./domain-event-data";
 import { AggregateStateFactory } from "./aggregate-state-factory";
 import { Deserializer, Serializable, serialize } from "@nivinjoseph/n-util";
 import * as Crypto from "crypto";
-import { AggregateRebased } from "./aggregate-rebased";
+// import { AggregateRebased } from "./aggregate-rebased";
 import { AggregateStateHelper } from "./aggregate-state-helper";
 
 // public
-export abstract class AggregateRoot<T extends AggregateState> extends Serializable<AggregateRootData>
+export abstract class AggregateRoot<T extends AggregateState, TDomainEvent extends DomainEvent<T>> extends Serializable<AggregateRootData>
 {
     private readonly _domainContext: DomainContext;
     private readonly _stateFactory: AggregateStateFactory<T>;
@@ -100,8 +100,8 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         this._retroVersion = this.currentVersion;
     }
 
-    public static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState>,
-        TAggregateState extends AggregateState>(domainContext: DomainContext,
+    public static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>,
+        TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext,
             aggregateType: new (...args: Array<any>) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
@@ -159,8 +159,8 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
     //     return super.serialize() as AggregateRootData;
     // }
     
-    public static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState>,
-        TAggregateState extends AggregateState>(domainContext: DomainContext,
+    public static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>,
+        TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext,
             aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>,
             stateSnapshot: TAggregateState | object): TAggregate
     {
@@ -382,12 +382,12 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
     }
     
-    protected rebase(version: number, rebasedEventFactoryFunc?: (defaultState: object, rebaseState: object, rebaseVersion: number) => AggregateRebased<T>): void
+    protected rebase(version: number, rebasedEventFactoryFunc: (defaultState: object, rebaseState: object, rebaseVersion: number) => TDomainEvent): void
     {
         given(version, "version").ensureHasValue().ensureIsNumber()
             .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
 
-        given(rebasedEventFactoryFunc, "rebasedEventFactoryFunc").ensureIsFunction();
+        given(rebasedEventFactoryFunc, "rebasedEventFactoryFunc").ensureHasValue().ensureIsFunction();
 
         const rebaseVersionInstance = this.constructVersion(version);
         given(rebaseVersionInstance, "rebaseVersionInstance")
@@ -399,9 +399,11 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         const defaultState = AggregateStateHelper.serializeStateIntoSnapshot(this._stateFactory.create());
         clearBaseState(defaultState);
 
-        const rebaseEvent = rebasedEventFactoryFunc != null
-            ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
-            : new AggregateRebased({ defaultState, rebaseState, rebaseVersion });
+        // const rebaseEvent = rebasedEventFactoryFunc != null
+        //     ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
+        //     : new AggregateRebased({ defaultState, rebaseState, rebaseVersion });
+        
+        const rebaseEvent = rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion);
 
         this.applyEvent(rebaseEvent);
 
@@ -415,7 +417,7 @@ export abstract class AggregateRoot<T extends AggregateState> extends Serializab
         // console.dir(Deserializer.deserialize(rebaseEvent.serialize()));
     }
     
-    protected applyEvent(event: DomainEvent<T>): void
+    protected applyEvent(event: TDomainEvent): void
     {
         given(event, "event").ensureHasValue().ensureIsObject().ensureIsInstanceOf(DomainEvent)
             .ensure(t => t.isCreatedEvent ? this._retroEvents.isEmpty && this._currentEvents.isEmpty : true,

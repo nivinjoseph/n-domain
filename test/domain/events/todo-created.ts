@@ -1,11 +1,12 @@
 import { TodoState } from "../todo-state";
 import { given } from "@nivinjoseph/n-defensive";
-import { DomainEvent, DomainEventData } from "../../../src";
+import { DomainEventData } from "../../../src";
 import { serialize } from "@nivinjoseph/n-util";
 import { TodoDescription } from "../value-objects/todo-description";
+import { TodoDomainEvent } from "./todo-domain-event";
 
 
-export class TodoCreated extends DomainEvent<TodoState>
+export class TodoCreated extends TodoDomainEvent
 {
     private readonly _todoId: string;
     private readonly _title: string;

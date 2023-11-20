@@ -45,9 +45,11 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     @serialize("$name")
     public get name(): string { return this._name; }
     
-    public get partitionKey(): string { return this.aggregateId; }
+    public get partitionKey(): string { return this.aggregateId; } // n-eda compatibility
     
-    public get refId(): string { return this.aggregateId; }
+    public get refId(): string { return this.aggregateId; } // n-eda compatibility
+    
+    public abstract get refType(): string; // n-eda compatibility
     
     @serialize("$occurredAt")
     public get occurredAt(): number { return this._occurredAt; }
@@ -97,7 +99,7 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     }
 
 
-    public apply(aggregate: AggregateRoot<T>, domainContext: DomainContext, state: T): void
+    public apply(aggregate: AggregateRoot<T, DomainEvent<T>>, domainContext: DomainContext, state: T): void
     {
         given(aggregate, "aggregate").ensureHasValue().ensureIsObject().ensure(t => t instanceof AggregateRoot);
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
