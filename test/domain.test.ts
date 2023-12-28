@@ -300,7 +300,7 @@ await describe("Domain tests", async () =>
         `,
             () =>
             {
-                const original = Todo.create(domainContext, "title", "descriptiozn");
+                const original = Todo.create(domainContext, "title", "description");
                 original.updateTitle("title update 1");
                 original.updateTitle("title update 2");
                 const serialized = original.serialize();

@@ -1,9 +1,9 @@
 import "@nivinjoseph/n-ext";
 import { Delay } from "@nivinjoseph/n-util";
 import assert from "node:assert";
-import Fs from "node:fs";
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { describe, test } from "node:test";
-import { URL } from "node:url";
+import { URL, fileURLToPath } from "node:url";
 import { DomainHelper } from "../src/index.js";
 
 
@@ -33,11 +33,17 @@ await describe("DomainHelper tests", async () =>
 
     await test("monotonic id", async () =>
     {
+        // console.log(import.meta.url);
+        // console.log(new URL("../src/aggregate-rebased.ts", import.meta.url));
+        // console.log(fileURLToPath(new URL("../src/aggregate-rebased.ts", import.meta.url)));
         // const pastIdsFilePath = path.join(path.dirname(fileURLToPath(import.meta.url)), "past-ids.json");
-        const pastIdsFilePath = new URL("./past-ids.json", import.meta.url);
+        const pastIdsFilePath = fileURLToPath(new URL("./past-ids.json", import.meta.url));
         let pastIds = new Array<string>();
-        if (Fs.existsSync(pastIdsFilePath))
-            pastIds = JSON.parse(Fs.readFileSync(pastIdsFilePath, "utf-8"));
+        if (existsSync(pastIdsFilePath))
+        {
+            const data = readFileSync(pastIdsFilePath, "utf-8");
+            pastIds = data.isEmptyOrWhiteSpace() ? [] : JSON.parse(data);
+        }
 
         const ids = new Array<string>();
 
@@ -59,7 +65,7 @@ await describe("DomainHelper tests", async () =>
                 isOrdered = false;
         }
 
-        Fs.writeFileSync(pastIdsFilePath, JSON.stringify(ids), "utf-8");
+        writeFileSync(pastIdsFilePath, JSON.stringify(ids), "utf-8");
 
         assert.ok(combinedIds.equals(combinedIds.orderBy()));
         assert.ok(isOrdered);
