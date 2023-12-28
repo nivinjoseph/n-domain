@@ -1,17 +1,18 @@
-import * as Assert from "assert";
-import { TestDomainObject } from "./domain/test-domain-object";
+import assert from "node:assert";
+import { describe, test } from "node:test";
+import { TestDomainObject } from "./domain/test-domain-object.js";
 
 
-suite("DomainObject tests", () =>
+await describe("DomainObject tests", async () =>
 {
-    test("equality check", () =>
+    await test("equality check", () =>
     {
-        const foo = new TestDomainObject({id: "foo", name: "i am foo"});
-        const bar = new TestDomainObject({id: "bar", name: "i am foo"});
-        const baz = new TestDomainObject({id: "bar", name: "i am foo"});
-        
-        Assert.ok(foo.equals(foo));
-        Assert.ok(!foo.equals(bar));
-        Assert.ok(bar.equals(baz));
+        const foo = new TestDomainObject({ id: "foo", name: "i am foo" });
+        const bar = new TestDomainObject({ id: "bar", name: "i am foo" });
+        const baz = new TestDomainObject({ id: "bar", name: "i am foo" });
+
+        assert.ok(foo.equals(foo));
+        assert.ok(!foo.equals(bar));
+        assert.ok(bar.equals(baz));
     });
 });

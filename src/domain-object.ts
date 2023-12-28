@@ -6,7 +6,7 @@ export abstract class DomainObject<TData extends object = {}> extends Serializab
     /**
      * @param value (the value to compare)
      */
-    public equals(value: DomainObject | null): boolean
+    public equals(value?: DomainObject | null): boolean
     {
         if (value == null)
             return false;
@@ -14,7 +14,7 @@ export abstract class DomainObject<TData extends object = {}> extends Serializab
         if (value === this)
             return true;
         
-        if ((<Object>value).getTypeName() !== (<Object>this).getTypeName())
+        if (value.getTypeName() !== this.getTypeName())
             return false;
         
         return JSON.stringify(this.serialize()) === JSON.stringify(value.serialize());

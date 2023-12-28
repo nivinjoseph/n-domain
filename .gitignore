@@ -69,3 +69,11 @@ src/**/*.js
 src/**/*.map
 test/**/*.js
 test/**/*.map
+
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions

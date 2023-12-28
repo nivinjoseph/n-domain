@@ -1,6 +1,6 @@
-import { AggregateState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
-import { AggregateStateHelper } from "./aggregate-state-helper";
+import { AggregateState } from "./aggregate-state.js";
+import { AggregateStateHelper } from "./aggregate-state-helper.js";
 
 
 export abstract class AggregateStateFactory<T extends AggregateState>

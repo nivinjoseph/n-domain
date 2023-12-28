@@ -1,18 +1,19 @@
 import "@nivinjoseph/n-ext";
-import * as Assert from "assert";
-import { Todo } from "./domain/todo";
-import { DomainContext, DomainHelper } from "../src";
-import { TodoCreated } from "./domain/events/todo-created";
 import { Delay, Schema } from "@nivinjoseph/n-util";
-import { TodoDescriptionUpdated } from "./domain/events/todo-description-updated";
-import { TodoDescription } from "./domain/value-objects/todo-description";
+import assert from "node:assert";
+import { describe, test } from "node:test";
+import { DomainContext, DomainHelper } from "../src/index.js";
+import { TodoCreated } from "./domain/events/todo-created.js";
+import { TodoDescriptionUpdated } from "./domain/events/todo-description-updated.js";
+import { Todo } from "./domain/todo.js";
+import { TodoDescription } from "./domain/value-objects/todo-description.js";
 
 
-suite("Domain tests", () =>
+await describe("Domain tests", async () =>
 {
-    const domainContext: DomainContext = {userId: "dev"};
+    const domainContext: DomainContext = { userId: "dev" };
 
-    // test("AggregateRoot", () =>
+    //await test("AggregateRoot", () =>
     // {
     //     const domainContext = new DevDomainContext();
 
@@ -21,81 +22,81 @@ suite("Domain tests", () =>
     //     original.updateTitle("First 2");
 
 
-    //     Assert.ok(original instanceof Todo);
-    //     Assert.strictEqual((<Object>original).getTypeName(), "Todo");
+    //     assert.ok(original instanceof Todo);
+    //     assert.strictEqual((<Object>original).getTypeName(), "Todo");
 
-    //     Assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
+    //     assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
 
-    //     Assert.strictEqual(original.retroEvents.length, 1);
-    //     Assert.strictEqual(original.retroVersion, 1);
+    //     assert.strictEqual(original.retroEvents.length, 1);
+    //     assert.strictEqual(original.retroVersion, 1);
 
-    //     Assert.strictEqual(original.currentEvents.length, 2);
-    //     Assert.strictEqual(original.currentVersion, 3);
+    //     assert.strictEqual(original.currentEvents.length, 2);
+    //     assert.strictEqual(original.currentVersion, 3);
 
-    //     Assert.strictEqual(original.events.length, 3);
-    //     Assert.strictEqual(original.version, 3);
+    //     assert.strictEqual(original.events.length, 3);
+    //     assert.strictEqual(original.version, 3);
 
-    //     Assert.ok(original.createdAt > 0);
-    //     Assert.ok(original.updatedAt > 0);
+    //     assert.ok(original.createdAt > 0);
+    //     assert.ok(original.updatedAt > 0);
 
-    //     Assert.strictEqual(original.hasChanges, true);
+    //     assert.strictEqual(original.hasChanges, true);
 
-    //     Assert.strictEqual(original.title, "First 2");
-    //     Assert.strictEqual(original.description, "This is the first.");
+    //     assert.strictEqual(original.title, "First 2");
+    //     assert.strictEqual(original.description, "This is the first.");
 
 
     //     const serialized = original.serialize();
     //     const deserialized = Todo.deserialize(domainContext, serialized);
 
-    //     Assert.ok(deserialized instanceof Todo);
-    //     Assert.strictEqual((<Object>deserialized).getTypeName(), "Todo");
+    //     assert.ok(deserialized instanceof Todo);
+    //     assert.strictEqual((<Object>deserialized).getTypeName(), "Todo");
 
-    //     Assert.strictEqual(deserialized.id, original.id);
+    //     assert.strictEqual(deserialized.id, original.id);
 
-    //     Assert.strictEqual(deserialized.retroEvents.length, 3);
-    //     Assert.strictEqual(deserialized.retroVersion, 3);
+    //     assert.strictEqual(deserialized.retroEvents.length, 3);
+    //     assert.strictEqual(deserialized.retroVersion, 3);
 
-    //     Assert.strictEqual(deserialized.currentEvents.length, 0);
-    //     Assert.strictEqual(deserialized.currentVersion, 3);
+    //     assert.strictEqual(deserialized.currentEvents.length, 0);
+    //     assert.strictEqual(deserialized.currentVersion, 3);
 
-    //     Assert.strictEqual(deserialized.events.length, 3);
-    //     Assert.strictEqual(deserialized.version, 3);
+    //     assert.strictEqual(deserialized.events.length, 3);
+    //     assert.strictEqual(deserialized.version, 3);
 
-    //     Assert.strictEqual(deserialized.createdAt, original.createdAt);
-    //     Assert.strictEqual(deserialized.updatedAt, original.updatedAt);
+    //     assert.strictEqual(deserialized.createdAt, original.createdAt);
+    //     assert.strictEqual(deserialized.updatedAt, original.updatedAt);
 
-    //     Assert.strictEqual(deserialized.hasChanges, false);
+    //     assert.strictEqual(deserialized.hasChanges, false);
 
-    //     Assert.strictEqual(deserialized.title, original.title);
-    //     Assert.strictEqual(deserialized.description, original.description);
+    //     assert.strictEqual(deserialized.title, original.title);
+    //     assert.strictEqual(deserialized.description, original.description);
 
 
     //     const reconstructed = deserialized.constructVersion(1);
 
-    //     Assert.ok(reconstructed instanceof Todo);
-    //     Assert.strictEqual((<Object>reconstructed).getTypeName(), "Todo");
+    //     assert.ok(reconstructed instanceof Todo);
+    //     assert.strictEqual((<Object>reconstructed).getTypeName(), "Todo");
 
-    //     Assert.strictEqual(reconstructed.id, original.id);
+    //     assert.strictEqual(reconstructed.id, original.id);
 
-    //     Assert.strictEqual(reconstructed.retroEvents.length, 1);
-    //     Assert.strictEqual(reconstructed.retroVersion, 1);
+    //     assert.strictEqual(reconstructed.retroEvents.length, 1);
+    //     assert.strictEqual(reconstructed.retroVersion, 1);
 
-    //     Assert.strictEqual(reconstructed.currentEvents.length, 0);
-    //     Assert.strictEqual(reconstructed.currentVersion, 1);
+    //     assert.strictEqual(reconstructed.currentEvents.length, 0);
+    //     assert.strictEqual(reconstructed.currentVersion, 1);
 
-    //     Assert.strictEqual(reconstructed.events.length, 1);
-    //     Assert.strictEqual(reconstructed.version, 1);
+    //     assert.strictEqual(reconstructed.events.length, 1);
+    //     assert.strictEqual(reconstructed.version, 1);
 
-    //     Assert.strictEqual(reconstructed.createdAt, original.createdAt);
-    //     Assert.strictEqual(reconstructed.updatedAt, original.createdAt);
+    //     assert.strictEqual(reconstructed.createdAt, original.createdAt);
+    //     assert.strictEqual(reconstructed.updatedAt, original.createdAt);
 
-    //     Assert.strictEqual(reconstructed.hasChanges, false);
+    //     assert.strictEqual(reconstructed.hasChanges, false);
 
-    //     Assert.strictEqual(reconstructed.title, "First");
-    //     Assert.strictEqual(reconstructed.description, original.description);
+    //     assert.strictEqual(reconstructed.title, "First");
+    //     assert.strictEqual(reconstructed.description, original.description);
     // });
 
-    // test("Trimming", () =>
+    //await test("Trimming", () =>
     // {
     //     const domainContext = new DevDomainContext();
 
@@ -116,9 +117,9 @@ suite("Domain tests", () =>
     // });
 
 
-    suite("Standard stuff", () =>
+    await describe("Standard stuff", async () =>
     {
-        test(`
+        await test(`
             Given an aggregate class of type Todo,
             When a new instance is created,
             Then its id should have value,
@@ -140,23 +141,23 @@ suite("Domain tests", () =>
                 const original = Todo.create(domainContext, "title", "description");
 
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                Assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
-                Assert.strictEqual(original.retroEvents.length, 1);
-                Assert.strictEqual(original.retroVersion, 1);
-                Assert.strictEqual(original.currentEvents.length, 0);
-                Assert.strictEqual(original.currentVersion, 1);
-                Assert.strictEqual(original.events.length, 1);
-                Assert.strictEqual(original.version, 1);
-                Assert.ok(original.createdAt > 0);
-                Assert.ok(original.updatedAt > 0);
-                Assert.strictEqual(original.createdAt, original.updatedAt);
-                Assert.strictEqual(original.isNew, true);
-                Assert.strictEqual(original.hasChanges, false);
-                Assert.strictEqual(original.title, "title");
-                Assert.strictEqual(original.description, "description");
+                assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
+                assert.strictEqual(original.retroEvents.length, 1);
+                assert.strictEqual(original.retroVersion, 1);
+                assert.strictEqual(original.currentEvents.length, 0);
+                assert.strictEqual(original.currentVersion, 1);
+                assert.strictEqual(original.events.length, 1);
+                assert.strictEqual(original.version, 1);
+                assert.ok(original.createdAt > 0);
+                assert.ok(original.updatedAt > 0);
+                assert.strictEqual(original.createdAt, original.updatedAt);
+                assert.strictEqual(original.isNew, true);
+                assert.strictEqual(original.hasChanges, false);
+                assert.strictEqual(original.title, "title");
+                assert.strictEqual(original.description, "description");
             });
 
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
             When the instance is updated once,
             Then its id should have value,
@@ -181,23 +182,23 @@ suite("Domain tests", () =>
                 original.updateTitle("title update 1");
 
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                Assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
-                Assert.strictEqual(original.retroEvents.length, 1);
-                Assert.strictEqual(original.retroVersion, 1);
-                Assert.strictEqual(original.currentEvents.length, 1);
-                Assert.strictEqual(original.currentVersion, 2);
-                Assert.strictEqual(original.events.length, 2);
-                Assert.strictEqual(original.version, 2);
-                Assert.ok(original.createdAt > 0);
-                Assert.ok(original.updatedAt > 0);
-                Assert.ok(original.createdAt <= original.updatedAt);
-                Assert.strictEqual(original.isNew, true);
-                Assert.strictEqual(original.hasChanges, true);
-                Assert.strictEqual(original.title, "title update 1");
-                Assert.strictEqual(original.description, "description");
+                assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
+                assert.strictEqual(original.retroEvents.length, 1);
+                assert.strictEqual(original.retroVersion, 1);
+                assert.strictEqual(original.currentEvents.length, 1);
+                assert.strictEqual(original.currentVersion, 2);
+                assert.strictEqual(original.events.length, 2);
+                assert.strictEqual(original.version, 2);
+                assert.ok(original.createdAt > 0);
+                assert.ok(original.updatedAt > 0);
+                assert.ok(original.createdAt <= original.updatedAt);
+                assert.strictEqual(original.isNew, true);
+                assert.strictEqual(original.hasChanges, true);
+                assert.strictEqual(original.title, "title update 1");
+                assert.strictEqual(original.description, "description");
             });
 
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
             When the instance is updated twice,
             Then its id should have value,
@@ -223,23 +224,23 @@ suite("Domain tests", () =>
                 original.updateTitle("title update 2");
 
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                Assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
-                Assert.strictEqual(original.retroEvents.length, 1);
-                Assert.strictEqual(original.retroVersion, 1);
-                Assert.strictEqual(original.currentEvents.length, 2);
-                Assert.strictEqual(original.currentVersion, 3);
-                Assert.strictEqual(original.events.length, 3);
-                Assert.strictEqual(original.version, 3);
-                Assert.ok(original.createdAt > 0);
-                Assert.ok(original.updatedAt > 0);
-                Assert.ok(original.createdAt <= original.updatedAt);
-                Assert.strictEqual(original.isNew, true);
-                Assert.strictEqual(original.hasChanges, true);
-                Assert.strictEqual(original.title, "title update 2");
-                Assert.strictEqual(original.description, "description");
+                assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
+                assert.strictEqual(original.retroEvents.length, 1);
+                assert.strictEqual(original.retroVersion, 1);
+                assert.strictEqual(original.currentEvents.length, 2);
+                assert.strictEqual(original.currentVersion, 3);
+                assert.strictEqual(original.events.length, 3);
+                assert.strictEqual(original.version, 3);
+                assert.ok(original.createdAt > 0);
+                assert.ok(original.updatedAt > 0);
+                assert.ok(original.createdAt <= original.updatedAt);
+                assert.strictEqual(original.isNew, true);
+                assert.strictEqual(original.hasChanges, true);
+                assert.strictEqual(original.title, "title update 2");
+                assert.strictEqual(original.description, "description");
             });
 
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has been updated twice,
             When the instance serialized and deserialized
@@ -265,22 +266,22 @@ suite("Domain tests", () =>
                 const serialized = original.serialize();
                 const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
 
-                Assert.strictEqual(deserialized.id, original.id);
-                Assert.strictEqual(deserialized.retroEvents.length, 3);
-                Assert.strictEqual(deserialized.retroVersion, 3);
-                Assert.strictEqual(deserialized.currentEvents.length, 0);
-                Assert.strictEqual(deserialized.currentVersion, 3);
-                Assert.strictEqual(deserialized.events.length, 3);
-                Assert.strictEqual(deserialized.version, 3);
-                Assert.strictEqual(deserialized.createdAt, original.createdAt);
-                Assert.strictEqual(deserialized.updatedAt, original.updatedAt);
-                Assert.strictEqual(deserialized.isNew, false);
-                Assert.strictEqual(deserialized.hasChanges, false);
-                Assert.strictEqual(deserialized.title, "title update 2");
-                Assert.strictEqual(deserialized.description, "description");
+                assert.strictEqual(deserialized.id, original.id);
+                assert.strictEqual(deserialized.retroEvents.length, 3);
+                assert.strictEqual(deserialized.retroVersion, 3);
+                assert.strictEqual(deserialized.currentEvents.length, 0);
+                assert.strictEqual(deserialized.currentVersion, 3);
+                assert.strictEqual(deserialized.events.length, 3);
+                assert.strictEqual(deserialized.version, 3);
+                assert.strictEqual(deserialized.createdAt, original.createdAt);
+                assert.strictEqual(deserialized.updatedAt, original.updatedAt);
+                assert.strictEqual(deserialized.isNew, false);
+                assert.strictEqual(deserialized.hasChanges, false);
+                assert.strictEqual(deserialized.title, "title update 2");
+                assert.strictEqual(deserialized.description, "description");
             });
 
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has been updated twice,
                 and serialized and deserialized
@@ -299,36 +300,36 @@ suite("Domain tests", () =>
         `,
             () =>
             {
-                const original = Todo.create(domainContext, "title", "description");
+                const original = Todo.create(domainContext, "title", "descriptiozn");
                 original.updateTitle("title update 1");
                 original.updateTitle("title update 2");
                 const serialized = original.serialize();
                 const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
-                
+
                 // console.log("Type version", (<any>deserialized).state.typeVersion);
 
                 deserialized.updateTitle("title update 3");
 
-                Assert.strictEqual(deserialized.id, original.id);
-                Assert.strictEqual(deserialized.retroEvents.length, 3);
-                Assert.strictEqual(deserialized.retroVersion, 3);
-                Assert.strictEqual(deserialized.currentEvents.length, 1);
-                Assert.strictEqual(deserialized.currentVersion, 4);
-                Assert.strictEqual(deserialized.events.length, 4);
-                Assert.strictEqual(deserialized.version, 4);
-                Assert.strictEqual(deserialized.createdAt, original.createdAt);
-                // Assert.ok(deserialized.updatedAt, original.updatedAt);
-                Assert.strictEqual(deserialized.isNew, false);
-                Assert.strictEqual(deserialized.hasChanges, true);
-                Assert.strictEqual(deserialized.title, "title update 3");
-                Assert.strictEqual(deserialized.description, "description");
+                assert.strictEqual(deserialized.id, original.id);
+                assert.strictEqual(deserialized.retroEvents.length, 3);
+                assert.strictEqual(deserialized.retroVersion, 3);
+                assert.strictEqual(deserialized.currentEvents.length, 1);
+                assert.strictEqual(deserialized.currentVersion, 4);
+                assert.strictEqual(deserialized.events.length, 4);
+                assert.strictEqual(deserialized.version, 4);
+                assert.strictEqual(deserialized.createdAt, original.createdAt);
+                // assert.ok(deserialized.updatedAt, original.updatedAt);
+                assert.strictEqual(deserialized.isNew, false);
+                assert.strictEqual(deserialized.hasChanges, true);
+                assert.strictEqual(deserialized.title, "title update 3");
+                assert.strictEqual(deserialized.description, "description");
             });
     });
 
 
-    suite("Reconstruction", () =>
+    await describe("Reconstruction", async () =>
     {
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has been updated twice,
             When the instance is reconstructed to version 2
@@ -356,25 +357,25 @@ suite("Domain tests", () =>
 
                 const reconstructed = original.constructVersion(2);
 
-                Assert.strictEqual(reconstructed.id, original.id);
-                Assert.strictEqual(reconstructed.retroEvents.length, 2);
-                Assert.strictEqual(reconstructed.retroVersion, 2);
-                Assert.strictEqual(reconstructed.currentEvents.length, 0);
-                Assert.strictEqual(reconstructed.currentVersion, 2);
-                Assert.strictEqual(reconstructed.events.length, 2);
-                Assert.strictEqual(reconstructed.version, 2);
-                Assert.strictEqual(reconstructed.createdAt, original.createdAt);
-                Assert.ok(reconstructed.updatedAt > 0);
-                Assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
-                Assert.strictEqual(reconstructed.isNew, false);
-                Assert.strictEqual(reconstructed.hasChanges, false);
-                Assert.strictEqual(reconstructed.isReconstructed, true);
-                Assert.strictEqual(reconstructed.reconstructedFromVersion, 3);
-                Assert.strictEqual(reconstructed.title, "title update 1");
-                Assert.strictEqual(reconstructed.description, "description");
+                assert.strictEqual(reconstructed.id, original.id);
+                assert.strictEqual(reconstructed.retroEvents.length, 2);
+                assert.strictEqual(reconstructed.retroVersion, 2);
+                assert.strictEqual(reconstructed.currentEvents.length, 0);
+                assert.strictEqual(reconstructed.currentVersion, 2);
+                assert.strictEqual(reconstructed.events.length, 2);
+                assert.strictEqual(reconstructed.version, 2);
+                assert.strictEqual(reconstructed.createdAt, original.createdAt);
+                assert.ok(reconstructed.updatedAt > 0);
+                assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
+                assert.strictEqual(reconstructed.isNew, false);
+                assert.strictEqual(reconstructed.hasChanges, false);
+                assert.strictEqual(reconstructed.isReconstructed, true);
+                assert.strictEqual(reconstructed.reconstructedFromVersion, 3);
+                assert.strictEqual(reconstructed.title, "title update 1");
+                assert.strictEqual(reconstructed.description, "description");
             });
 
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has been updated twice,
                 and serialized and deserialized
@@ -405,28 +406,28 @@ suite("Domain tests", () =>
 
                 const reconstructed = deserialized.constructVersion(2);
 
-                Assert.strictEqual(reconstructed.id, original.id);
-                Assert.strictEqual(reconstructed.retroEvents.length, 2);
-                Assert.strictEqual(reconstructed.retroVersion, 2);
-                Assert.strictEqual(reconstructed.currentEvents.length, 0);
-                Assert.strictEqual(reconstructed.currentVersion, 2);
-                Assert.strictEqual(reconstructed.events.length, 2);
-                Assert.strictEqual(reconstructed.version, 2);
-                Assert.strictEqual(reconstructed.createdAt, original.createdAt);
-                Assert.ok(reconstructed.updatedAt > 0);
-                Assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
-                Assert.strictEqual(reconstructed.isNew, false);
-                Assert.strictEqual(reconstructed.hasChanges, false);
-                Assert.strictEqual(reconstructed.isReconstructed, true);
-                Assert.strictEqual(reconstructed.reconstructedFromVersion, 3);
-                Assert.strictEqual(reconstructed.title, "title update 1");
-                Assert.strictEqual(reconstructed.description, "description");
+                assert.strictEqual(reconstructed.id, original.id);
+                assert.strictEqual(reconstructed.retroEvents.length, 2);
+                assert.strictEqual(reconstructed.retroVersion, 2);
+                assert.strictEqual(reconstructed.currentEvents.length, 0);
+                assert.strictEqual(reconstructed.currentVersion, 2);
+                assert.strictEqual(reconstructed.events.length, 2);
+                assert.strictEqual(reconstructed.version, 2);
+                assert.strictEqual(reconstructed.createdAt, original.createdAt);
+                assert.ok(reconstructed.updatedAt > 0);
+                assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
+                assert.strictEqual(reconstructed.isNew, false);
+                assert.strictEqual(reconstructed.hasChanges, false);
+                assert.strictEqual(reconstructed.isReconstructed, true);
+                assert.strictEqual(reconstructed.reconstructedFromVersion, 3);
+                assert.strictEqual(reconstructed.title, "title update 1");
+                assert.strictEqual(reconstructed.description, "description");
             });
     });
-    
-    suite("Cloning", () =>
+
+    await describe("Cloning", async () =>
     {
-        test(`
+        await test(`
             Given an aggregate,
             When it is cloned,
             Then the clone should be identical to the original except in identity and meta information
@@ -436,27 +437,27 @@ suite("Domain tests", () =>
             original.updateDescription("original description");
             original.markAsCompleted();
             // original = Todo.deserializeEvents(domainContext, original.serialize().$events);
-            
+
             await Delay.seconds(1);
-            
+
             const clone = original.clone(domainContext, new TodoCreated({
                 todoId: DomainHelper.generateId("tdo"),
                 title: "different title",
                 description: TodoDescription.create("different description")
             }));
-            
-            
-            Assert.notStrictEqual(clone.id, original.id, "id");
-            Assert.strictEqual(clone.version, original.version, "version");
-            Assert.notStrictEqual(clone.createdAt, original.createdAt, "createdAt");
-            Assert.notStrictEqual(clone.updatedAt, original.updatedAt, "updatedAt");
-            
-            Assert.notStrictEqual(clone.title, original.title, "title");
-            Assert.strictEqual(clone.description, original.description, "description");
-            Assert.strictEqual(clone.isCompleted, original.isCompleted, "isCompleted");
+
+
+            assert.notStrictEqual(clone.id, original.id, "id");
+            assert.strictEqual(clone.version, original.version, "version");
+            assert.notStrictEqual(clone.createdAt, original.createdAt, "createdAt");
+            assert.notStrictEqual(clone.updatedAt, original.updatedAt, "updatedAt");
+
+            assert.notStrictEqual(clone.title, original.title, "title");
+            assert.strictEqual(clone.description, original.description, "description");
+            assert.strictEqual(clone.isCompleted, original.isCompleted, "isCompleted");
         });
-        
-        test(`
+
+        await test(`
             Given an aggregate,
             When it is cloned and there is mutator involved,
             Then the clone should be identical to the original except in identity, meta information
@@ -483,20 +484,20 @@ suite("Domain tests", () =>
             });
 
 
-            Assert.notStrictEqual(clone.id, original.id, "id");
-            Assert.strictEqual(clone.version, original.version, "version");
-            Assert.notStrictEqual(clone.createdAt, original.createdAt, "createdAt");
-            Assert.notStrictEqual(clone.updatedAt, original.updatedAt, "updatedAt");
+            assert.notStrictEqual(clone.id, original.id, "id");
+            assert.strictEqual(clone.version, original.version, "version");
+            assert.notStrictEqual(clone.createdAt, original.createdAt, "createdAt");
+            assert.notStrictEqual(clone.updatedAt, original.updatedAt, "updatedAt");
 
-            Assert.notStrictEqual(clone.title, original.title, "title");
-            Assert.strictEqual(clone.description, "mutated description", "description");
-            Assert.strictEqual(clone.isCompleted, original.isCompleted, "isCompleted");
+            assert.notStrictEqual(clone.title, original.title, "title");
+            assert.strictEqual(clone.description, "mutated description", "description");
+            assert.strictEqual(clone.isCompleted, original.isCompleted, "isCompleted");
         });
     });
-    
-    suite("Rebasing", () =>
+
+    await describe("Rebasing", async () =>
     {
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has been updated twice,
             When the instance is rebased to version 2
@@ -525,25 +526,25 @@ suite("Domain tests", () =>
                 const rebased = original;
                 rebased.rebase(2);
 
-                Assert.strictEqual(rebased.id, original.id);
-                Assert.strictEqual(rebased.retroEvents.length, 1);
-                Assert.strictEqual(rebased.retroVersion, 1);
-                Assert.strictEqual(rebased.currentEvents.length, 3);
-                Assert.strictEqual(rebased.currentVersion, 4);
-                Assert.strictEqual(rebased.events.length, 4);
-                Assert.strictEqual(rebased.version, 4);
-                Assert.strictEqual(rebased.createdAt, original.createdAt);
-                Assert.ok(rebased.updatedAt >= original.updatedAt);
-                Assert.ok(rebased.createdAt <= rebased.updatedAt);
-                Assert.strictEqual(rebased.isNew, true);
-                Assert.strictEqual(rebased.hasChanges, true);
-                Assert.strictEqual(rebased.isRebased, true);
-                Assert.strictEqual(rebased.rebasedFromVersion, 2);
-                Assert.strictEqual(rebased.title, "title update 1");
-                Assert.strictEqual(rebased.description, "description");
+                assert.strictEqual(rebased.id, original.id);
+                assert.strictEqual(rebased.retroEvents.length, 1);
+                assert.strictEqual(rebased.retroVersion, 1);
+                assert.strictEqual(rebased.currentEvents.length, 3);
+                assert.strictEqual(rebased.currentVersion, 4);
+                assert.strictEqual(rebased.events.length, 4);
+                assert.strictEqual(rebased.version, 4);
+                assert.strictEqual(rebased.createdAt, original.createdAt);
+                assert.ok(rebased.updatedAt >= original.updatedAt);
+                assert.ok(rebased.createdAt <= rebased.updatedAt);
+                assert.strictEqual(rebased.isNew, true);
+                assert.strictEqual(rebased.hasChanges, true);
+                assert.strictEqual(rebased.isRebased, true);
+                assert.strictEqual(rebased.rebasedFromVersion, 2);
+                assert.strictEqual(rebased.title, "title update 1");
+                assert.strictEqual(rebased.description, "description");
             });
 
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has been updated twice,
                 and serialized and deserialized
@@ -575,25 +576,25 @@ suite("Domain tests", () =>
                 const rebased = deserialized;
                 rebased.rebase(2);
 
-                Assert.strictEqual(rebased.id, original.id);
-                Assert.strictEqual(rebased.retroEvents.length, 3);
-                Assert.strictEqual(rebased.retroVersion, 3);
-                Assert.strictEqual(rebased.currentEvents.length, 1);
-                Assert.strictEqual(rebased.currentVersion, 4);
-                Assert.strictEqual(rebased.events.length, 4);
-                Assert.strictEqual(rebased.version, 4);
-                Assert.strictEqual(rebased.createdAt, original.createdAt);
-                Assert.ok(rebased.updatedAt >= original.updatedAt);
-                Assert.ok(rebased.createdAt <= rebased.updatedAt);
-                Assert.strictEqual(rebased.isNew, false);
-                Assert.strictEqual(rebased.hasChanges, true);
-                Assert.strictEqual(rebased.isRebased, true);
-                Assert.strictEqual(rebased.rebasedFromVersion, 2);
-                Assert.strictEqual(rebased.title, "title update 1");
-                Assert.strictEqual(rebased.description, "description");
+                assert.strictEqual(rebased.id, original.id);
+                assert.strictEqual(rebased.retroEvents.length, 3);
+                assert.strictEqual(rebased.retroVersion, 3);
+                assert.strictEqual(rebased.currentEvents.length, 1);
+                assert.strictEqual(rebased.currentVersion, 4);
+                assert.strictEqual(rebased.events.length, 4);
+                assert.strictEqual(rebased.version, 4);
+                assert.strictEqual(rebased.createdAt, original.createdAt);
+                assert.ok(rebased.updatedAt >= original.updatedAt);
+                assert.ok(rebased.createdAt <= rebased.updatedAt);
+                assert.strictEqual(rebased.isNew, false);
+                assert.strictEqual(rebased.hasChanges, true);
+                assert.strictEqual(rebased.isRebased, true);
+                assert.strictEqual(rebased.rebasedFromVersion, 2);
+                assert.strictEqual(rebased.title, "title update 1");
+                assert.strictEqual(rebased.description, "description");
             });
-        
-        test(`
+
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has been updated twice,
                 and serialized and deserialized,
@@ -620,11 +621,11 @@ suite("Domain tests", () =>
             () =>
             {
                 const original = Todo.create(domainContext, "title", "description");
-                
+
                 const processSnapshot = (snapshot: object, details: string): object =>
                 {
                     console.log(details, snapshot);
-                    
+
                     // @ts-expect-error: deliberate
                     delete snapshot.version;
                     // @ts-expect-error: deliberate
@@ -633,54 +634,54 @@ suite("Domain tests", () =>
                     delete snapshot.rebasedFromVersion;
                     // @ts-expect-error: deliberate
                     delete snapshot.updatedAt;
-                    
+
                     return snapshot;
                 };
-                
+
                 original.updateTitle("title update 1");
                 const originalSnapshot = JSON.stringify(processSnapshot(original.snapshot(), "original"));
                 original.updateTitle("title update 2");
-                
+
                 let serialized = original.serialize();
                 let deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
 
                 let rebased = deserialized;
                 rebased.rebase(2);
                 const rebase1Snapshot = JSON.stringify(processSnapshot(rebased.snapshot(), "rebase1"));
-                
+
                 rebased.updateTitle("title update 3");
-                
+
                 serialized = rebased.serialize();
                 deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
-                
+
                 rebased = deserialized;
                 rebased.rebase(2);
                 const rebase2Snapshot = JSON.stringify(processSnapshot(rebased.snapshot(), "rebase2"));
 
-                Assert.strictEqual(rebased.id, original.id);
-                Assert.strictEqual(rebased.retroEvents.length, 5);
-                Assert.strictEqual(rebased.retroVersion, 5);
-                Assert.strictEqual(rebased.currentEvents.length, 1);
-                Assert.strictEqual(rebased.currentVersion, 6);
-                Assert.strictEqual(rebased.events.length, 6);
-                Assert.strictEqual(rebased.version, 6);
-                Assert.strictEqual(rebased.createdAt, original.createdAt);
-                Assert.ok(rebased.updatedAt >= original.updatedAt);
-                Assert.ok(rebased.createdAt <= rebased.updatedAt);
-                Assert.strictEqual(rebased.isNew, false);
-                Assert.strictEqual(rebased.hasChanges, true);
-                Assert.strictEqual(rebased.isRebased, true);
-                Assert.strictEqual(rebased.rebasedFromVersion, 2);
-                Assert.strictEqual(rebased.title, "title update 1");
-                Assert.strictEqual(rebased.description, "description");
-                Assert.strictEqual(originalSnapshot, rebase1Snapshot, "original vs rebase 1");
-                Assert.strictEqual(rebase1Snapshot, rebase2Snapshot, "rebase 1 vs rebase 2");
+                assert.strictEqual(rebased.id, original.id);
+                assert.strictEqual(rebased.retroEvents.length, 5);
+                assert.strictEqual(rebased.retroVersion, 5);
+                assert.strictEqual(rebased.currentEvents.length, 1);
+                assert.strictEqual(rebased.currentVersion, 6);
+                assert.strictEqual(rebased.events.length, 6);
+                assert.strictEqual(rebased.version, 6);
+                assert.strictEqual(rebased.createdAt, original.createdAt);
+                assert.ok(rebased.updatedAt >= original.updatedAt);
+                assert.ok(rebased.createdAt <= rebased.updatedAt);
+                assert.strictEqual(rebased.isNew, false);
+                assert.strictEqual(rebased.hasChanges, true);
+                assert.strictEqual(rebased.isRebased, true);
+                assert.strictEqual(rebased.rebasedFromVersion, 2);
+                assert.strictEqual(rebased.title, "title update 1");
+                assert.strictEqual(rebased.description, "description");
+                assert.strictEqual(originalSnapshot, rebase1Snapshot, "original vs rebase 1");
+                assert.strictEqual(rebase1Snapshot, rebase2Snapshot, "rebase 1 vs rebase 2");
             });
     });
 
-    suite.skip("Trimming", () =>
+    await describe.skip("Trimming", async () =>
     {
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has trimming rules,
             When the instance is updated once
@@ -705,23 +706,23 @@ suite("Domain tests", () =>
                 original.updateDescription("description update 1");
 
                 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                Assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
-                Assert.strictEqual(original.retroEvents.length, 1);
-                Assert.strictEqual(original.retroVersion, 1);
-                Assert.strictEqual(original.currentEvents.length, 1);
-                Assert.strictEqual(original.currentVersion, 2);
-                Assert.strictEqual(original.events.length, 2);
-                Assert.strictEqual(original.version, 2);
-                Assert.ok(original.createdAt > 0);
-                Assert.ok(original.updatedAt > 0);
-                Assert.ok(original.createdAt <= original.updatedAt);
-                Assert.strictEqual(original.isNew, true);
-                Assert.strictEqual(original.hasChanges, true);
-                Assert.strictEqual(original.description, "description update 1");
-                Assert.strictEqual(original.title, "title");
+                assert.ok(original.id != null && !original.id.isEmptyOrWhiteSpace());
+                assert.strictEqual(original.retroEvents.length, 1);
+                assert.strictEqual(original.retroVersion, 1);
+                assert.strictEqual(original.currentEvents.length, 1);
+                assert.strictEqual(original.currentVersion, 2);
+                assert.strictEqual(original.events.length, 2);
+                assert.strictEqual(original.version, 2);
+                assert.ok(original.createdAt > 0);
+                assert.ok(original.updatedAt > 0);
+                assert.ok(original.createdAt <= original.updatedAt);
+                assert.strictEqual(original.isNew, true);
+                assert.strictEqual(original.hasChanges, true);
+                assert.strictEqual(original.description, "description update 1");
+                assert.strictEqual(original.title, "title");
             });
 
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has trimming rules,
                 and it has been updated once,
@@ -750,23 +751,23 @@ suite("Domain tests", () =>
 
                 deserialized.updateDescription("description update 2");
 
-                Assert.strictEqual(deserialized.id, original.id);
-                Assert.strictEqual(deserialized.retroEvents.length, 1);
-                Assert.strictEqual(deserialized.retroVersion, 2);
-                Assert.strictEqual(deserialized.currentEvents.length, 1);
-                Assert.strictEqual(deserialized.currentVersion, 3);
-                Assert.strictEqual(deserialized.events.length, 2);
-                Assert.strictEqual(deserialized.version, 3);
-                Assert.strictEqual(deserialized.createdAt, original.createdAt);
-                Assert.ok(deserialized.updatedAt > 0);
-                Assert.ok(deserialized.createdAt <= deserialized.updatedAt);
-                Assert.strictEqual(deserialized.isNew, false);
-                Assert.strictEqual(deserialized.hasChanges, true);
-                Assert.strictEqual(deserialized.description, "description update 2");
-                Assert.strictEqual(deserialized.title, "title");
+                assert.strictEqual(deserialized.id, original.id);
+                assert.strictEqual(deserialized.retroEvents.length, 1);
+                assert.strictEqual(deserialized.retroVersion, 2);
+                assert.strictEqual(deserialized.currentEvents.length, 1);
+                assert.strictEqual(deserialized.currentVersion, 3);
+                assert.strictEqual(deserialized.events.length, 2);
+                assert.strictEqual(deserialized.version, 3);
+                assert.strictEqual(deserialized.createdAt, original.createdAt);
+                assert.ok(deserialized.updatedAt > 0);
+                assert.ok(deserialized.createdAt <= deserialized.updatedAt);
+                assert.strictEqual(deserialized.isNew, false);
+                assert.strictEqual(deserialized.hasChanges, true);
+                assert.strictEqual(deserialized.description, "description update 2");
+                assert.strictEqual(deserialized.title, "title");
             });
 
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has trimming rules,
                 and it has been updated twice,
@@ -796,23 +797,23 @@ suite("Domain tests", () =>
 
                 deserialized.updateDescription("description update 3");
 
-                Assert.strictEqual(deserialized.id, original.id);
-                Assert.strictEqual(deserialized.retroEvents.length, 1);
-                Assert.strictEqual(deserialized.retroVersion, 3);
-                Assert.strictEqual(deserialized.currentEvents.length, 1);
-                Assert.strictEqual(deserialized.currentVersion, 4);
-                Assert.strictEqual(deserialized.events.length, 2);
-                Assert.strictEqual(deserialized.version, 4);
-                Assert.strictEqual(deserialized.createdAt, original.createdAt);
-                Assert.ok(deserialized.updatedAt > 0);
-                Assert.ok(deserialized.createdAt <= deserialized.updatedAt);
-                Assert.strictEqual(deserialized.isNew, false);
-                Assert.strictEqual(deserialized.hasChanges, true);
-                Assert.strictEqual(deserialized.description, "description update 3");
-                Assert.strictEqual(deserialized.title, "title");
+                assert.strictEqual(deserialized.id, original.id);
+                assert.strictEqual(deserialized.retroEvents.length, 1);
+                assert.strictEqual(deserialized.retroVersion, 3);
+                assert.strictEqual(deserialized.currentEvents.length, 1);
+                assert.strictEqual(deserialized.currentVersion, 4);
+                assert.strictEqual(deserialized.events.length, 2);
+                assert.strictEqual(deserialized.version, 4);
+                assert.strictEqual(deserialized.createdAt, original.createdAt);
+                assert.ok(deserialized.updatedAt > 0);
+                assert.ok(deserialized.createdAt <= deserialized.updatedAt);
+                assert.strictEqual(deserialized.isNew, false);
+                assert.strictEqual(deserialized.hasChanges, true);
+                assert.strictEqual(deserialized.description, "description update 3");
+                assert.strictEqual(deserialized.title, "title");
             });
 
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has trimming rules,
                 and it has been updated twice,
@@ -843,26 +844,26 @@ suite("Domain tests", () =>
                 deserialized.updateDescription("description update 3");
                 deserialized.updateDescription("description update 4");
 
-                Assert.strictEqual(deserialized.id, original.id);
-                Assert.strictEqual(deserialized.retroEvents.length, 1);
-                Assert.strictEqual(deserialized.retroVersion, 3);
-                Assert.strictEqual(deserialized.currentEvents.length, 2);
-                Assert.strictEqual(deserialized.currentVersion, 5);
-                Assert.strictEqual(deserialized.events.length, 3);
-                Assert.strictEqual(deserialized.version, 5);
-                Assert.strictEqual(deserialized.createdAt, original.createdAt);
-                Assert.ok(deserialized.updatedAt > 0);
-                Assert.ok(deserialized.createdAt <= deserialized.updatedAt);
-                Assert.strictEqual(deserialized.isNew, false);
-                Assert.strictEqual(deserialized.hasChanges, true);
-                Assert.strictEqual(deserialized.description, "description update 4");
-                Assert.strictEqual(deserialized.title, "title");
+                assert.strictEqual(deserialized.id, original.id);
+                assert.strictEqual(deserialized.retroEvents.length, 1);
+                assert.strictEqual(deserialized.retroVersion, 3);
+                assert.strictEqual(deserialized.currentEvents.length, 2);
+                assert.strictEqual(deserialized.currentVersion, 5);
+                assert.strictEqual(deserialized.events.length, 3);
+                assert.strictEqual(deserialized.version, 5);
+                assert.strictEqual(deserialized.createdAt, original.createdAt);
+                assert.ok(deserialized.updatedAt > 0);
+                assert.ok(deserialized.createdAt <= deserialized.updatedAt);
+                assert.strictEqual(deserialized.isNew, false);
+                assert.strictEqual(deserialized.hasChanges, true);
+                assert.strictEqual(deserialized.description, "description update 4");
+                assert.strictEqual(deserialized.title, "title");
             });
     });
 
-    suite.skip("Reconstruction with Trimming", () =>
+    await describe.skip("Reconstruction with Trimming", async () =>
     {
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has trimming rules,
                 and it has been updated twice,
@@ -895,23 +896,23 @@ suite("Domain tests", () =>
 
                 const reconstructed = deserialized.constructVersion(3);
 
-                Assert.strictEqual(reconstructed.id, original.id);
-                Assert.strictEqual(reconstructed.retroEvents.length, 1);
-                Assert.strictEqual(reconstructed.retroVersion, 1);
-                Assert.strictEqual(reconstructed.currentEvents.length, 0);
-                Assert.strictEqual(reconstructed.currentVersion, 1);
-                Assert.strictEqual(reconstructed.events.length, 1);
-                Assert.strictEqual(reconstructed.version, 1);
-                Assert.strictEqual(reconstructed.createdAt, original.createdAt);
-                Assert.ok(reconstructed.updatedAt > 0);
-                Assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
-                Assert.strictEqual(reconstructed.isNew, false);
-                Assert.strictEqual(reconstructed.hasChanges, false);
-                Assert.strictEqual(reconstructed.title, "title");
-                Assert.strictEqual(reconstructed.description, "description");
+                assert.strictEqual(reconstructed.id, original.id);
+                assert.strictEqual(reconstructed.retroEvents.length, 1);
+                assert.strictEqual(reconstructed.retroVersion, 1);
+                assert.strictEqual(reconstructed.currentEvents.length, 0);
+                assert.strictEqual(reconstructed.currentVersion, 1);
+                assert.strictEqual(reconstructed.events.length, 1);
+                assert.strictEqual(reconstructed.version, 1);
+                assert.strictEqual(reconstructed.createdAt, original.createdAt);
+                assert.ok(reconstructed.updatedAt > 0);
+                assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
+                assert.strictEqual(reconstructed.isNew, false);
+                assert.strictEqual(reconstructed.hasChanges, false);
+                assert.strictEqual(reconstructed.title, "title");
+                assert.strictEqual(reconstructed.description, "description");
             });
 
-        test(`
+        await test(`
             Given an aggregate instance of Type Todo,
                 and it has trimming rules,
                 and it has been updated twice,
@@ -947,20 +948,20 @@ suite("Domain tests", () =>
 
                 const reconstructed = deserialized.constructVersion(3);
 
-                Assert.strictEqual(reconstructed.id, original.id);
-                Assert.strictEqual(reconstructed.retroEvents.length, 1);
-                Assert.strictEqual(reconstructed.retroVersion, 1);
-                Assert.strictEqual(reconstructed.currentEvents.length, 0);
-                Assert.strictEqual(reconstructed.currentVersion, 1);
-                Assert.strictEqual(reconstructed.events.length, 1);
-                Assert.strictEqual(reconstructed.version, 1);
-                Assert.strictEqual(reconstructed.createdAt, original.createdAt);
-                Assert.ok(reconstructed.updatedAt > 0);
-                Assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
-                Assert.strictEqual(reconstructed.isNew, false);
-                Assert.strictEqual(reconstructed.hasChanges, false);
-                Assert.strictEqual(reconstructed.title, "title");
-                Assert.strictEqual(reconstructed.description, "description");
+                assert.strictEqual(reconstructed.id, original.id);
+                assert.strictEqual(reconstructed.retroEvents.length, 1);
+                assert.strictEqual(reconstructed.retroVersion, 1);
+                assert.strictEqual(reconstructed.currentEvents.length, 0);
+                assert.strictEqual(reconstructed.currentVersion, 1);
+                assert.strictEqual(reconstructed.events.length, 1);
+                assert.strictEqual(reconstructed.version, 1);
+                assert.strictEqual(reconstructed.createdAt, original.createdAt);
+                assert.ok(reconstructed.updatedAt > 0);
+                assert.ok(reconstructed.createdAt <= reconstructed.updatedAt);
+                assert.strictEqual(reconstructed.isNew, false);
+                assert.strictEqual(reconstructed.hasChanges, false);
+                assert.strictEqual(reconstructed.title, "title");
+                assert.strictEqual(reconstructed.description, "description");
             });
     });
 });

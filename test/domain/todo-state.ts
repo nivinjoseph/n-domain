@@ -1,6 +1,6 @@
-import { AggregateStateFactory } from "../../src/aggregate-state-factory";
-import { AggregateState } from "../../src/aggregate-state";
-import { TodoDescription } from "./value-objects/todo-description";
+import { AggregateState } from "../../src/aggregate-state.js";
+import { AggregateStateFactory } from "../../src/aggregate-state-factory.js";
+import { TodoDescription } from "./value-objects/todo-description.js";
 
 
 export interface TodoState extends AggregateState

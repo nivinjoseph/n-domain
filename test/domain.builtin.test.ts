@@ -1,13 +1,13 @@
-import { DomainContext } from "../src/domain-context";
-import { Todo } from "./domain/todo";
-import * as Assert from "assert";
+import assert from "node:assert";
+import { describe, test } from "node:test";
+import { DomainContext } from "../src/domain-context.js";
+import { Todo } from "./domain/todo.js";
 
-
-suite("Domain Builtin test", () =>
+await describe("Domain Builtin test", async () =>
 {
     const domainContext: DomainContext = { userId: "dev" };
-    
-    test("Built in sanity check", () =>
+
+    await test("Built in sanity check", () =>
     {
         const todo = Todo.create(domainContext, "title", "description");
         todo.updateTitle("My title");
@@ -16,6 +16,6 @@ suite("Domain Builtin test", () =>
 
         todo.test();
 
-        Assert.ok(true);
+        assert.ok(true);
     });
 });

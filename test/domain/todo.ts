@@ -1,28 +1,30 @@
-import { AggregateRoot, DomainHelper, DomainContext, DomainEvent, DomainEventData} from "../../src";
-import { TodoState, TodoStateFactory } from "./todo-state";
-import { TodoCreated } from "./events/todo-created";
-import { TodoTitleUpdated } from "./events/todo-title-updated";
-import { TodoDescriptionUpdated } from "./events/todo-description-updated";
-import { TodoMarkedAsCompleted } from "./events/todo-marked-as-completed";
 import { given } from "@nivinjoseph/n-defensive";
-import { TodoDescription } from "./value-objects/todo-description";
-import { TodoDomainEvent } from "./events/todo-domain-event";
-import { TodoRebased } from "./events/todo-rebased";
+import { AggregateRoot, DomainContext, DomainEvent, DomainEventData, DomainHelper } from "../../src/index.js";
+import { TodoCreated } from "./events/todo-created.js";
+import { TodoDescriptionUpdated } from "./events/todo-description-updated.js";
+import { TodoDomainEvent } from "./events/todo-domain-event.js";
+import { TodoMarkedAsCompleted } from "./events/todo-marked-as-completed.js";
+import { TodoRebased } from "./events/todo-rebased.js";
+import { TodoTitleUpdated } from "./events/todo-title-updated.js";
+import { TodoState, TodoStateFactory } from "./todo-state.js";
+import { TodoDescription } from "./value-objects/todo-description.js";
+import { serialize } from "@nivinjoseph/n-util";
 
 
+@serialize()
 export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
 {
     public get title(): string { return this.state.title; }
     public get description(): string | null { return this.state.description?.description ?? null; }
     public get isCompleted(): boolean { return this.state.isCompleted; }
 
-    
+
     public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<TodoState>>, state?: TodoState)
     {
         super(domainContext, events, new TodoStateFactory(), state);
     }
-    
-    
+
+
     public static create(domainContext: DomainContext, title: string, description: string | null): Todo
     {
         given(domainContext, "domainContext").ensureHasValue().ensureIsObject();
@@ -47,7 +49,7 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
 
         return AggregateRoot.deserializeFromEvents(domainContext, Todo, eventData);
     }
-    
+
     public static deserializeSnapshot(domainContext: DomainContext, snapshot: object): Todo
     {
         return AggregateRoot.deserializeFromSnapshot(domainContext, Todo, new TodoStateFactory(), snapshot);
@@ -59,8 +61,8 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
         given(title, "title").ensureHasValue().ensureIsString();
 
         title = title.trim();
-        
-        this.applyEvent(new TodoTitleUpdated({title}));
+
+        this.applyEvent(new TodoTitleUpdated({ title }));
     }
 
     public updateDescription(description: string | null): void
@@ -78,7 +80,7 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
     {
         this.applyEvent(new TodoMarkedAsCompleted({}));
     }
-    
+
     public override rebase(version: number): void
     {
         super.rebase(version,
@@ -91,15 +93,15 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
                 });
             });
     }
-    
-    
+
+
     // protected trim(retroEvents: ReadonlyArray<DomainEvent<TodoState>>): ReadonlyArray<DomainEvent<TodoState>>
     // {
     //     const result = [...super.trim(retroEvents)];
-        
+
     //     if (this.hasCurrentEventOfType(TodoDescriptionUpdated))
     //         this.getRetroEventsOfType(TodoDescriptionUpdated).forEach(t => result.remove(t));
-        
+
     //     return result;
     // }
 }

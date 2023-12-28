@@ -1,16 +1,17 @@
-import { TodoState } from "../todo-state";
 import { given } from "@nivinjoseph/n-defensive";
-import { DomainEventData } from "../../../src";
 import { serialize } from "@nivinjoseph/n-util";
-import { TodoDescription } from "../value-objects/todo-description";
-import { TodoDomainEvent } from "./todo-domain-event";
+import { DomainEventData } from "../../../src/index.js";
+import { TodoState } from "../todo-state.js";
+import { TodoDescription } from "../value-objects/todo-description.js";
+import { TodoDomainEvent } from "./todo-domain-event.js";
 
 
+ @serialize()
 export class TodoDescriptionUpdated extends TodoDomainEvent
 {
     private readonly _description: TodoDescription | null;
     
-    @serialize
+    @serialize()
     public get description(): TodoDescription | null { return this._description; }
 
 

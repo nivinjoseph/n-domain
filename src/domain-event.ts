@@ -1,10 +1,8 @@
-import { AggregateState } from "./aggregate-state";
 import { given } from "@nivinjoseph/n-defensive";
-import { DomainEventData } from "./domain-event-data";
-import { DomainHelper, AggregateRoot } from ".";
-import { DomainContext } from "./domain-context";
 import { ApplicationException } from "@nivinjoseph/n-exception";
-import { serialize, Serializable } from "@nivinjoseph/n-util";
+import { Serializable, serialize } from "@nivinjoseph/n-util";
+import { AggregateRoot, AggregateState, DomainContext, DomainEventData, DomainHelper } from "./index.js";
+
 
 // public
 export abstract class DomainEvent<T extends AggregateState> extends Serializable<DomainEventData>
@@ -17,46 +15,46 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     private _version: number;
     private readonly _isCreatedEvent: boolean;
 
-    
+
     @serialize("$aggregateId")
     public get aggregateId(): string
     {
         given(this, "this").ensure(t => t._aggregateId != null, "accessing property before apply");
-        
+
         return this._aggregateId as string;
     }
-    
+
     @serialize("$id")
     public get id(): string
     {
         given(this, "this").ensure(t => t._id != null, "accessing property before apply");
-        
+
         return this._id as string;
     }
-    
+
     @serialize("$userId")
     public get userId(): string
     {
         given(this, "this").ensure(t => t._userId != null, "accessing property before apply");
-        
+
         return this._userId as string;
     }
-    
+
     @serialize("$name")
     public get name(): string { return this._name; }
-    
+
     public get partitionKey(): string { return this.aggregateId; } // n-eda compatibility
-    
+
     public get refId(): string { return this.aggregateId; } // n-eda compatibility
-    
+
     public abstract get refType(): string; // n-eda compatibility
-    
+
     @serialize("$occurredAt")
     public get occurredAt(): number { return this._occurredAt; }
-    
+
     @serialize("$version")
     public get version(): number { return this._version; }
-    
+
     @serialize("$isCreatedEvent")
     public get isCreatedEvent(): boolean { return this._isCreatedEvent; }
 
@@ -64,7 +62,7 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     public constructor(data: DomainEventData)
     {
         super(data);
-        
+
         const {
             $aggregateId,
             $id,
@@ -74,7 +72,7 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
             $version,
             $isCreatedEvent
         } = data;
-        
+
         given($aggregateId as string, "$aggregateId").ensureIsString();
         this._aggregateId = $aggregateId || null;
 

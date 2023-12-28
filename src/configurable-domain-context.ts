@@ -1,5 +1,5 @@
 import { given } from "@nivinjoseph/n-defensive";
-import { DomainContext } from "./domain-context";
+import { DomainContext } from "./domain-context.js";
 
 
 export class ConfigurableDomainContext implements DomainContext
