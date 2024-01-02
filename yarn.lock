@@ -131,7 +131,7 @@ __metadata:
 
 "@nivinjoseph/n-util@git+https://github.com/shreymahendru/n-util.git#migration-test":
   version: 1.1.1
-  resolution: "@nivinjoseph/n-util@https://github.com/shreymahendru/n-util.git#commit=cff10ca86a17e47e3126ca7e641caadc095670b4"
+  resolution: "@nivinjoseph/n-util@https://github.com/shreymahendru/n-util.git#commit=07f3b40bdaad3a8d4a6d7bdd3a83c1851b1bd15e"
   dependencies:
     "@nivinjoseph/n-defensive": "npm:^2.0.1"
     "@nivinjoseph/n-exception": "npm:^2.0.1"
@@ -141,7 +141,7 @@ __metadata:
     sanitize-html: "npm:^2.11.0"
     tslib: "npm:^2.6.2"
     uuid: "npm:^9.0.1"
-  checksum: 9b8c601397f6023db8f46c63256d9163327f95eb33c8733c9d1238f8745db3f459339a189a09b3f75ed3e58814440960baef96a9568cceb792edbf16cfef26eb
+  checksum: 4b7ccf2b1397a23af5398b5f92f1c32e4320907a96a330c76ac01ef884099613243a8de909ae769914c0c865ed4693a89e22da22564d53113da14beeee94c3b2
   languageName: node
   linkType: hard
 

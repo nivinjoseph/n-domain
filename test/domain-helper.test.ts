@@ -1,8 +1,8 @@
 import "@nivinjoseph/n-ext";
 import { Delay } from "@nivinjoseph/n-util";
 import assert from "node:assert";
-import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { describe, test } from "node:test";
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { URL, fileURLToPath } from "node:url";
 import { DomainHelper } from "../src/index.js";
 

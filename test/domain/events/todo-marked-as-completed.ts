@@ -3,7 +3,7 @@ import { TodoState } from "../todo-state.js";
 import { TodoDomainEvent } from "./todo-domain-event.js";
 
 
-@serialize()
+@serialize
 export class TodoMarkedAsCompleted extends TodoDomainEvent
 {
     // public static deserializeEvent(data: DomainEventData): TodoMarkedAsCompleted

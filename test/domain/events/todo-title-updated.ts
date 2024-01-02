@@ -4,13 +4,13 @@ import { DomainEventData } from "../../../src/index.js";
 import { TodoState } from "../todo-state.js";
 import { TodoDomainEvent } from "./todo-domain-event.js";
 
-@serialize()
+@serialize
 export class TodoTitleUpdated extends TodoDomainEvent
 {
     private readonly _title: string;
 
 
-    @serialize()
+    @serialize
     public get title(): string { return this._title; }
 
 

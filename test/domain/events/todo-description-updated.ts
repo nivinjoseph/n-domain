@@ -6,12 +6,12 @@ import { TodoDescription } from "../value-objects/todo-description.js";
 import { TodoDomainEvent } from "./todo-domain-event.js";
 
 
- @serialize()
+ @serialize
 export class TodoDescriptionUpdated extends TodoDomainEvent
 {
     private readonly _description: TodoDescription | null;
     
-    @serialize()
+    @serialize
     public get description(): TodoDescription | null { return this._description; }
 
 

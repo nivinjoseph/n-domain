@@ -3,17 +3,17 @@ import { serialize } from "@nivinjoseph/n-util";
 import { DomainObject } from "../../../src/index.js";
 
 
-@serialize()
+@serialize
 export class TodoDescription extends DomainObject
 {
     private readonly _description: string;
     private readonly _descriptionSummary: string;
 
 
-    @serialize()
+    @serialize
     public get description(): string { return this._description; }
 
-    @serialize()
+    @serialize
     public get descriptionSummary(): string { return this._descriptionSummary; }
 
 

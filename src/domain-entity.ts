@@ -8,7 +8,7 @@ export abstract class DomainEntity<TData extends object = {}> extends DomainObje
     private readonly _id: string;
 
 
-    @serialize()
+    @serialize
     public get id(): string { return this._id; }
 
 

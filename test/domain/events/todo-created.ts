@@ -7,7 +7,7 @@ import { TodoDomainEvent } from "./todo-domain-event.js";
 import { Todo } from "../todo.js";
 
 
-@serialize()
+@serialize
 export class TodoCreated extends DomainEvent<TodoState> implements TodoDomainEvent
 {
     private readonly _todoId: string;
@@ -15,13 +15,13 @@ export class TodoCreated extends DomainEvent<TodoState> implements TodoDomainEve
     private readonly _description: TodoDescription | null;
 
 
-    @serialize()
+    @serialize
     public get todoId(): string { return this._todoId; }
 
-    @serialize()
+    @serialize
     public get title(): string { return this._title; }
 
-    @serialize()
+    @serialize
     public get description(): TodoDescription | null { return this._description; }
 
     public override get refType(): string
