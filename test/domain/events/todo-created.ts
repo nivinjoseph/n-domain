@@ -1,14 +1,13 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { serialize } from "@nivinjoseph/n-util";
-import { DomainEvent, DomainEventData } from "../../../src/index.js";
+import { DomainEventData } from "../../../src/index.js";
 import { TodoState } from "../todo-state.js";
 import { TodoDescription } from "../value-objects/todo-description.js";
 import { TodoDomainEvent } from "./todo-domain-event.js";
-import { Todo } from "../todo.js";
 
 
 @serialize
-export class TodoCreated extends DomainEvent<TodoState> implements TodoDomainEvent
+export class TodoCreated extends TodoDomainEvent
 {
     private readonly _todoId: string;
     private readonly _title: string;
@@ -23,11 +22,6 @@ export class TodoCreated extends DomainEvent<TodoState> implements TodoDomainEve
 
     @serialize
     public get description(): TodoDescription | null { return this._description; }
-
-    public override get refType(): string
-    {
-        return Todo.getTypeName();
-    }
 
 
     public constructor(data: EventData)

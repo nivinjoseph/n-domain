@@ -34,7 +34,6 @@
     },
     "homepage": "https://github.com/nivinjoseph/n-domain#readme",
     "devDependencies": {
-        "@types/luxon": "^3.3.6",
         "@types/node": "^20.10",
         "@typescript-eslint/eslint-plugin": "^6.15.0",
         "@typescript-eslint/parser": "^6.15.0",

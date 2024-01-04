@@ -1,7 +1,11 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
 import { Serializable, serialize } from "@nivinjoseph/n-util";
-import { AggregateRoot, AggregateState, DomainContext, DomainEventData, DomainHelper } from "./index.js";
+import { AggregateState } from "./aggregate-state.js";
+import { DomainEventData } from "./domain-event-data.js";
+import { DomainHelper } from "./domain-helper.js";
+import { AggregateRoot } from "./aggregate-root.js";
+import { DomainContext } from "./domain-context.js";
 
 
 // public

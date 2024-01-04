@@ -98,7 +98,6 @@ __metadata:
     "@nivinjoseph/n-exception": "npm:^2.0.1"
     "@nivinjoseph/n-ext": "npm:^2.0.1"
     "@nivinjoseph/n-util": "git+https://github.com/shreymahendru/n-util.git#migration-test"
-    "@types/luxon": "npm:^3.3.6"
     "@types/node": "npm:^20.10"
     "@typescript-eslint/eslint-plugin": "npm:^6.15.0"
     "@typescript-eslint/parser": "npm:^6.15.0"
@@ -176,13 +175,6 @@ __metadata:
   version: 7.0.15
   resolution: "@types/json-schema@npm:7.0.15"
   checksum: a996a745e6c5d60292f36731dd41341339d4eeed8180bb09226e5c8d23759067692b1d88e5d91d72ee83dfc00d3aca8e7bd43ea120516c17922cbcb7c3e252db
-  languageName: node
-  linkType: hard
-
-"@types/luxon@npm:^3.3.6":
-  version: 3.3.7
-  resolution: "@types/luxon@npm:3.3.7"
-  checksum: ff6ba3fd83636c23c077fea7b2841ad5365ae22872a250baef2a99885123f0d5e997cfbc1ac0afccf89c70ff24b1517b2cc0ebadb2bee27559c670574620bed1
   languageName: node
   linkType: hard
 
