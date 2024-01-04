@@ -23,7 +23,7 @@
         "noEmitHelpers": true,
         "noImplicitOverride": true,
         "pretty": true,
-        "esModuleInterop": false,
+        "esModuleInterop": true,
         "allowSyntheticDefaultImports": true
     }
 }
