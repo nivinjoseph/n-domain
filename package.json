@@ -12,6 +12,10 @@
         "ts-build": "yarn ts-compile && yarn ts-lint",
         "ts-build-dist": "yarn ts-build && tsc -p ./dist",
         "test": "yarn ts-build && node --test --enable-source-maps ./test",
+        "clean-src": "find ./src -name '*.js' -delete -o -name '*.map' -delete",
+        "clean-test": "find ./test -name '*.js' -delete -o -name '*.map' -delete",
+        "clean-dist": "find ./dist -name '*.js' -delete -o -name '*.map' -delete -o -name '*.ts' -delete",
+        "clean-all": "yarn clean-src && yarn clean-test && yarn clean-dist",
         "publish-package": "yarn ts-build-dist && git add . && git commit -m 'preparing to publish new version' && npm version patch && git push && npm publish --access=public"
     },
     "repository": {
