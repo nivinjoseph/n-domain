@@ -1,4 +1,4 @@
-import { DomainEventData } from "./domain-event-data";
+import { DomainEventData } from "./domain-event-data.js";
 
 // public
 export interface AggregateRootData

@@ -1,8 +1,8 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
 import { Deserializer } from "@nivinjoseph/n-util";
-import { AggregateState } from "./aggregate-state";
-import { DomainObject } from "./domain-object";
+import { AggregateState } from "./aggregate-state.js";
+import { DomainObject } from "./domain-object.js";
 
 
 export class AggregateStateHelper
@@ -73,7 +73,7 @@ export class AggregateStateHelper
 
         return deserialized;
     }
-    
+
     public static rebaseState<T extends AggregateState>(state: T, defaultState: object, rebaseState: object, rebaseVersion: number): void
     {
         given(state, "state").ensureHasValue().ensureIsObject();

@@ -1,15 +1,15 @@
 import { given } from "@nivinjoseph/n-defensive";
-import { TodoState } from "../todo-state";
-import { DomainEventData } from "../../../src";
 import { serialize } from "@nivinjoseph/n-util";
-import { TodoDomainEvent } from "./todo-domain-event";
+import { DomainEventData } from "../../../src/index.js";
+import { TodoState } from "../todo-state.js";
+import { TodoDomainEvent } from "./todo-domain-event.js";
 
-
+@serialize
 export class TodoTitleUpdated extends TodoDomainEvent
 {
     private readonly _title: string;
-    
-    
+
+
     @serialize
     public get title(): string { return this._title; }
 
@@ -17,14 +17,14 @@ export class TodoTitleUpdated extends TodoDomainEvent
     public constructor(data: EventData)
     {
         super(data);
-        
+
         const { title } = data;
 
         given(title, "title").ensureHasValue().ensureIsString();
         this._title = title;
     }
 
-    
+
     // public static deserializeEvent(data: DomainEventData & Serialized): TodoTitleUpdated
     // {
     //     given(data, "data").ensureHasValue().ensureIsObject();
@@ -32,7 +32,7 @@ export class TodoTitleUpdated extends TodoDomainEvent
     //     return new TodoTitleUpdated(data, data.title);
     // }
 
-    
+
     // protected serializeEvent(): Serialized
     // {
     //     return {

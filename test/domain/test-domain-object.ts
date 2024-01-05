@@ -1,8 +1,9 @@
-import { DomainObject } from "../../src";
 import { given } from "@nivinjoseph/n-defensive";
 import { serialize } from "@nivinjoseph/n-util";
+import { DomainObject } from "../../src/index.js";
 
 
+@serialize
 export class TestDomainObject extends DomainObject
 {
     private readonly _id: string;

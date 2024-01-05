@@ -1,10 +1,12 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { serialize } from "@nivinjoseph/n-util";
-import { AggregateStateHelper, DomainEventData } from "../../../src";
-import { TodoState } from "../todo-state";
-import { TodoDomainEvent } from "./todo-domain-event";
+import { AggregateStateHelper, DomainEventData } from "../../../src/index.js";
+import { TodoState } from "../todo-state.js";
+import { TodoDomainEvent } from "./todo-domain-event.js";
 
 
+
+@serialize
 export class TodoRebased extends TodoDomainEvent
 {
     private readonly _defaultState: object;
@@ -21,7 +23,7 @@ export class TodoRebased extends TodoDomainEvent
     @serialize
     public get rebaseVersion(): number { return this._rebaseVersion; }
 
-    
+
     public constructor(data: DomainEventData & Pick<TodoRebased, "defaultState" | "rebaseState" | "rebaseVersion">)
     {
         super(data);

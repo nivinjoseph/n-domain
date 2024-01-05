@@ -2,17 +2,27 @@
     "root": true,
     "parser": "@typescript-eslint/parser",
     "plugins": [
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "require-extensions"
     ],
     "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/eslint-recommended",
-        "plugin:@typescript-eslint/recommended"
+        "plugin:@typescript-eslint/recommended",
+        "plugin:require-extensions/recommended"
     ],
     "parserOptions": {
         "project": "tsconfig.json"
     },
     "rules": {
+        "quotes": "off",
+        "@typescript-eslint/quotes": [
+            "error",
+            "double",
+            {
+                "allowTemplateLiterals": true
+            }
+        ],
         "no-eval": "error",
         "no-void": "error",
         "no-with": "error",
@@ -253,8 +263,7 @@
         "no-dupe-class-members": "off",
         "@typescript-eslint/no-dupe-class-members": "error",
         "@typescript-eslint/no-duplicate-enum-values": "error",
-        "no-duplicate-imports": "off",
-        "@typescript-eslint/no-duplicate-imports": "error",
+        "no-duplicate-imports": "error",
         "no-empty-function": "off",
         "@typescript-eslint/no-empty-function": [
             "error",
