@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AggregateStateFactory = void 0;
-const n_defensive_1 = require("@nivinjoseph/n-defensive");
-const aggregate_state_helper_1 = require("./aggregate-state-helper");
-class AggregateStateFactory {
+import { given } from "@nivinjoseph/n-defensive";
+import { AggregateStateHelper } from "./aggregate-state-helper.js";
+export class AggregateStateFactory {
     update(state) {
-        (0, n_defensive_1.given)(state, "state").ensureHasValue().ensureIsObject();
+        given(state, "state").ensureHasValue().ensureIsObject();
         return state;
     }
     deserializeSnapshot(snapshot) {
@@ -36,7 +33,7 @@ class AggregateStateFactory {
         //     }
         // });
         // return deserialized as T;
-        return aggregate_state_helper_1.AggregateStateHelper.deserializeSnapshotIntoState(snapshot);
+        return AggregateStateHelper.deserializeSnapshotIntoState(snapshot);
     }
     createDefaultAggregateState() {
         return {
@@ -50,5 +47,4 @@ class AggregateStateFactory {
         };
     }
 }
-exports.AggregateStateFactory = AggregateStateFactory;
 //# sourceMappingURL=aggregate-state-factory.js.map

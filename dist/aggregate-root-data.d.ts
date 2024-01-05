@@ -1,4 +1,4 @@
-import { DomainEventData } from "./domain-event-data";
+import { DomainEventData } from "./domain-event-data.js";
 export interface AggregateRootData {
     $id: string;
     $version: number;

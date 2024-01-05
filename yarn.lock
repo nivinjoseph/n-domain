@@ -97,7 +97,7 @@ __metadata:
     "@nivinjoseph/n-defensive": "npm:^2.0.1"
     "@nivinjoseph/n-exception": "npm:^2.0.1"
     "@nivinjoseph/n-ext": "npm:^2.0.1"
-    "@nivinjoseph/n-util": "git+https://github.com/shreymahendru/n-util.git#migration-test"
+    "@nivinjoseph/n-util": "npm:2.0.1"
     "@types/node": "npm:^20.10"
     "@typescript-eslint/eslint-plugin": "npm:^6.15.0"
     "@typescript-eslint/parser": "npm:^6.15.0"
@@ -128,9 +128,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nivinjoseph/n-util@git+https://github.com/shreymahendru/n-util.git#migration-test":
-  version: 1.1.1
-  resolution: "@nivinjoseph/n-util@https://github.com/shreymahendru/n-util.git#commit=07f3b40bdaad3a8d4a6d7bdd3a83c1851b1bd15e"
+"@nivinjoseph/n-util@npm:2.0.1":
+  version: 2.0.1
+  resolution: "@nivinjoseph/n-util@npm:2.0.1"
   dependencies:
     "@nivinjoseph/n-defensive": "npm:^2.0.1"
     "@nivinjoseph/n-exception": "npm:^2.0.1"
@@ -140,7 +140,7 @@ __metadata:
     sanitize-html: "npm:^2.11.0"
     tslib: "npm:^2.6.2"
     uuid: "npm:^9.0.1"
-  checksum: 4b7ccf2b1397a23af5398b5f92f1c32e4320907a96a330c76ac01ef884099613243a8de909ae769914c0c865ed4693a89e22da22564d53113da14beeee94c3b2
+  checksum: 4215d057c7337abcde90fe9292edf3400a5d5c44c6fb44051e93f0a47edd2d78ff47b08f2bade8cd899fc645444d2e7c6065cdcb0d56d99206cf3aeaa2b323d0
   languageName: node
   linkType: hard
 

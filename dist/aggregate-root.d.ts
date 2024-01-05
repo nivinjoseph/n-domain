@@ -1,10 +1,10 @@
-import { DomainEvent } from "./domain-event";
-import { AggregateState } from "./aggregate-state";
-import { AggregateRootData } from "./aggregate-root-data";
-import { DomainContext } from "./domain-context";
-import { DomainEventData } from "./domain-event-data";
-import { AggregateStateFactory } from "./aggregate-state-factory";
 import { Serializable } from "@nivinjoseph/n-util";
+import { AggregateRootData } from "./aggregate-root-data.js";
+import { AggregateStateFactory } from "./aggregate-state-factory.js";
+import { AggregateState } from "./aggregate-state.js";
+import { DomainContext } from "./domain-context.js";
+import { DomainEventData } from "./domain-event-data.js";
+import { DomainEvent } from "./domain-event.js";
 export declare abstract class AggregateRoot<T extends AggregateState, TDomainEvent extends DomainEvent<T>> extends Serializable<AggregateRootData> {
     private readonly _domainContext;
     private readonly _stateFactory;

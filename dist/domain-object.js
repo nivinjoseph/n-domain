@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DomainObject = void 0;
-const n_util_1 = require("@nivinjoseph/n-util");
+import { Serializable } from "@nivinjoseph/n-util";
 // public
-class DomainObject extends n_util_1.Serializable {
+export class DomainObject extends Serializable {
     /**
      * @param value (the value to compare)
      */
@@ -17,5 +14,4 @@ class DomainObject extends n_util_1.Serializable {
         return JSON.stringify(this.serialize()) === JSON.stringify(value.serialize());
     }
 }
-exports.DomainObject = DomainObject;
 //# sourceMappingURL=domain-object.js.map

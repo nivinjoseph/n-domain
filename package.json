@@ -1,6 +1,6 @@
 {
     "name": "@nivinjoseph/n-domain",
-    "version": "2.0.1",
+    "version": "3.0.0",
     "description": "Domain Driven Design and Event Sourcing based framework for business layer implementation",
     "packageManager": "yarn@4.0.2",
     "type": "module",
@@ -45,7 +45,7 @@
         "@nivinjoseph/n-defensive": "^2.0.1",
         "@nivinjoseph/n-exception": "^2.0.1",
         "@nivinjoseph/n-ext": "^2.0.1",
-        "@nivinjoseph/n-util": "git+https://github.com/shreymahendru/n-util.git#migration-test",
+        "@nivinjoseph/n-util": "2.0.1",
         "ulid": "^2.3.0"
     },
     "engineStrict": true,

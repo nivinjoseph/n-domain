@@ -1,10 +1,10 @@
-"use strict";
 // import { given } from "@nivinjoseph/n-defensive";
 // import { ClassHierarchy, serialize } from "@nivinjoseph/n-util";
 // import { AggregateState } from "./aggregate-state";
 // import { AggregateStateHelper } from "./aggregate-state-helper";
 // import { DomainEvent } from "./domain-event";
 // import { DomainEventData } from "./domain-event-data";
+export {};
 // export abstract class AggregateRebased<T extends AggregateState> extends DomainEvent<T>
 // {
 //     private readonly _defaultState: object;

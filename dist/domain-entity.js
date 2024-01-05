@@ -1,24 +1,31 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DomainEntity = void 0;
-const tslib_1 = require("tslib");
-const domain_object_1 = require("./domain-object");
-const n_defensive_1 = require("@nivinjoseph/n-defensive");
-const n_util_1 = require("@nivinjoseph/n-util");
+import { __esDecorate, __runInitializers } from "tslib";
+import { given } from "@nivinjoseph/n-defensive";
+import { serialize } from "@nivinjoseph/n-util";
+import { DomainObject } from "./domain-object.js";
 // public
-class DomainEntity extends domain_object_1.DomainObject {
-    constructor(data) {
-        super(data);
-        const { id } = data;
-        (0, n_defensive_1.given)(id, "id").ensureHasValue().ensureIsString();
-        this._id = id;
-    }
-    get id() { return this._id; }
-}
-tslib_1.__decorate([
-    n_util_1.serialize,
-    tslib_1.__metadata("design:type", String),
-    tslib_1.__metadata("design:paramtypes", [])
-], DomainEntity.prototype, "id", null);
-exports.DomainEntity = DomainEntity;
+let DomainEntity = (() => {
+    var _a;
+    let _classSuper = DomainObject;
+    let _instanceExtraInitializers = [];
+    let _get_id_decorators;
+    return _a = class DomainEntity extends _classSuper {
+            get id() { return this._id; }
+            constructor(data) {
+                super(data);
+                this._id = (__runInitializers(this, _instanceExtraInitializers), void 0);
+                const { id } = data;
+                given(id, "id").ensureHasValue().ensureIsString();
+                this._id = id;
+            }
+        },
+        (() => {
+            var _b;
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create((_b = _classSuper[Symbol.metadata]) !== null && _b !== void 0 ? _b : null) : void 0;
+            _get_id_decorators = [serialize];
+            __esDecorate(_a, null, _get_id_decorators, { kind: "getter", name: "id", static: false, private: false, access: { has: obj => "id" in obj, get: obj => obj.id }, metadata: _metadata }, null, _instanceExtraInitializers);
+            if (_metadata) Object.defineProperty(_a, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+        })(),
+        _a;
+})();
+export { DomainEntity };
 //# sourceMappingURL=domain-entity.js.map

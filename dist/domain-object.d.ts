@@ -3,6 +3,6 @@ export declare abstract class DomainObject<TData extends object = {}> extends Se
     /**
      * @param value (the value to compare)
      */
-    equals(value: DomainObject | null): boolean;
+    equals(value: DomainObject | null | undefined): boolean;
 }
 //# sourceMappingURL=domain-object.d.ts.map

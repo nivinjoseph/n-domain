@@ -1,4 +1,4 @@
-import { AggregateState } from "./aggregate-state";
+import { AggregateState } from "./aggregate-state.js";
 export declare class AggregateStateHelper {
     static serializeStateIntoSnapshot(state: object, ...cloneKeys: ReadonlyArray<string>): object;
     static deserializeSnapshotIntoState(snapshot: object): object;

@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AggregateStateHelper = void 0;
-const n_defensive_1 = require("@nivinjoseph/n-defensive");
-const n_exception_1 = require("@nivinjoseph/n-exception");
-const n_util_1 = require("@nivinjoseph/n-util");
-const domain_object_1 = require("./domain-object");
-class AggregateStateHelper {
+import { given } from "@nivinjoseph/n-defensive";
+import { ApplicationException } from "@nivinjoseph/n-exception";
+import { Deserializer } from "@nivinjoseph/n-util";
+import { DomainObject } from "./domain-object.js";
+export class AggregateStateHelper {
     static serializeStateIntoSnapshot(state, ...cloneKeys) {
         const snapshot = Object.assign({}, state);
         Object.keys(snapshot).forEach(key => {
@@ -29,7 +26,7 @@ class AggregateStateHelper {
         return snapshot;
     }
     static deserializeSnapshotIntoState(snapshot) {
-        (0, n_defensive_1.given)(snapshot, "snapshot").ensureHasValue().ensureIsObject();
+        given(snapshot, "snapshot").ensureHasValue().ensureIsObject();
         const deserialized = {};
         Object.keys(snapshot).forEach(key => {
             const value = snapshot[key];
@@ -39,24 +36,24 @@ class AggregateStateHelper {
             }
             if (Array.isArray(value)) {
                 deserialized[key] = value.map(v => {
-                    if (v == null || typeof v !== "object" || !n_util_1.Deserializer.hasType(v.$typename))
+                    if (v == null || typeof v !== "object" || !Deserializer.hasType(v.$typename))
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         return v;
-                    return n_util_1.Deserializer.deserialize(v);
+                    return Deserializer.deserialize(v);
                 });
             }
             else {
-                deserialized[key] = n_util_1.Deserializer.hasType(value.$typename)
-                    ? n_util_1.Deserializer.deserialize(value) : value;
+                deserialized[key] = Deserializer.hasType(value.$typename)
+                    ? Deserializer.deserialize(value) : value;
             }
         });
         return deserialized;
     }
     static rebaseState(state, defaultState, rebaseState, rebaseVersion) {
-        (0, n_defensive_1.given)(state, "state").ensureHasValue().ensureIsObject();
-        (0, n_defensive_1.given)(defaultState, "defaultState").ensureHasValue().ensureIsObject();
-        (0, n_defensive_1.given)(rebaseState, "rebaseState").ensureHasValue().ensureIsObject();
-        (0, n_defensive_1.given)(rebaseVersion, "rebaseVersion").ensureHasValue().ensureIsNumber().ensure(t => t > 0);
+        given(state, "state").ensureHasValue().ensureIsObject();
+        given(defaultState, "defaultState").ensureHasValue().ensureIsObject();
+        given(rebaseState, "rebaseState").ensureHasValue().ensureIsObject();
+        given(rebaseVersion, "rebaseVersion").ensureHasValue().ensureIsNumber().ensure(t => t > 0);
         // current factory generated default state
         // layer rebaseState state on top of it
         // layer the above result on top of current state
@@ -71,10 +68,10 @@ class AggregateStateHelper {
         // console.dir(state);
     }
     static _serializeForSnapshot(value) {
-        if (value instanceof domain_object_1.DomainObject)
+        if (value instanceof DomainObject)
             return value.serialize();
         if (Object.keys(value).some(t => t.startsWith("_")))
-            throw new n_exception_1.ApplicationException(`attempting to serialize an object [${value.getTypeName()}] with private fields but does not extend DomainObject for the purposes of snapshot`);
+            throw new ApplicationException(`attempting to serialize an object [${value.getTypeName()}] with private fields but does not extend DomainObject for the purposes of snapshot`);
         return JSON.parse(JSON.stringify(value));
         // given(value, "value").ensureHasValue().ensureIsObject()
         //     .ensure(t => !!(<any>t).serialize, `serialize method is missing on type ${value.getTypeName()}`)
@@ -82,5 +79,4 @@ class AggregateStateHelper {
         // return (<any>value).serialize();
     }
 }
-exports.AggregateStateHelper = AggregateStateHelper;
 //# sourceMappingURL=aggregate-state-helper.js.map

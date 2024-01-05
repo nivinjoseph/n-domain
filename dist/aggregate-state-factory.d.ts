@@ -1,4 +1,4 @@
-import { AggregateState } from "./aggregate-state";
+import { AggregateState } from "./aggregate-state.js";
 export declare abstract class AggregateStateFactory<T extends AggregateState> {
     abstract create(): T;
     update(state: T): T;

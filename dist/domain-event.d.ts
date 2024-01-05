@@ -1,8 +1,8 @@
-import { AggregateState } from "./aggregate-state";
-import { DomainEventData } from "./domain-event-data";
-import { AggregateRoot } from ".";
-import { DomainContext } from "./domain-context";
 import { Serializable } from "@nivinjoseph/n-util";
+import { AggregateState } from "./aggregate-state.js";
+import { DomainEventData } from "./domain-event-data.js";
+import { AggregateRoot } from "./aggregate-root.js";
+import { DomainContext } from "./domain-context.js";
 export declare abstract class DomainEvent<T extends AggregateState> extends Serializable<DomainEventData> {
     private _aggregateId;
     private _id;

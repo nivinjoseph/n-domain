@@ -1,4 +1,4 @@
-import { DomainContext } from "./domain-context";
+import { DomainContext } from "./domain-context.js";
 export declare class ConfigurableDomainContext implements DomainContext {
     private _userId;
     get userId(): string;
