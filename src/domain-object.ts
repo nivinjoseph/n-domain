@@ -6,7 +6,7 @@ export abstract class DomainObject<TData extends object = {}> extends Serializab
     /**
      * @param value (the value to compare)
      */
-    public equals(value?: DomainObject | null): boolean
+    public equals(value: DomainObject | null | undefined): boolean
     {
         if (value == null)
             return false;
