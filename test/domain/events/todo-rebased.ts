@@ -6,7 +6,7 @@ import { TodoDomainEvent } from "./todo-domain-event.js";
 
 
 
-@serialize
+@serialize("Test")
 export class TodoRebased extends TodoDomainEvent
 {
     private readonly _defaultState: object;

@@ -11,7 +11,7 @@ import { TodoDescription } from "./value-objects/todo-description.js";
 import { serialize } from "@nivinjoseph/n-util";
 
 
-@serialize
+@serialize("Test")
 export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
 {
     public get title(): string { return this.state.title; }

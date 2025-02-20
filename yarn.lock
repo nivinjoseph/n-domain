@@ -97,7 +97,7 @@ __metadata:
     "@nivinjoseph/n-defensive": "npm:^2.0.1"
     "@nivinjoseph/n-exception": "npm:^2.0.1"
     "@nivinjoseph/n-ext": "npm:^2.0.1"
-    "@nivinjoseph/n-util": "npm:2.0.1"
+    "@nivinjoseph/n-util": "npm:3.0.1"
     "@types/node": "npm:^20.10"
     "@typescript-eslint/eslint-plugin": "npm:^6.15.0"
     "@typescript-eslint/parser": "npm:^6.15.0"
@@ -128,9 +128,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nivinjoseph/n-util@npm:2.0.1":
-  version: 2.0.1
-  resolution: "@nivinjoseph/n-util@npm:2.0.1"
+"@nivinjoseph/n-util@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@nivinjoseph/n-util@npm:3.0.1"
   dependencies:
     "@nivinjoseph/n-defensive": "npm:^2.0.1"
     "@nivinjoseph/n-exception": "npm:^2.0.1"
@@ -140,7 +140,7 @@ __metadata:
     sanitize-html: "npm:^2.11.0"
     tslib: "npm:^2.6.2"
     uuid: "npm:^9.0.1"
-  checksum: 4215d057c7337abcde90fe9292edf3400a5d5c44c6fb44051e93f0a47edd2d78ff47b08f2bade8cd899fc645444d2e7c6065cdcb0d56d99206cf3aeaa2b323d0
+  checksum: 0fbf6f3072d0827feaddf605fbd90c8ceb0899fec1fb9c6c8e42ead8bf32083e974335c3537f0d041eb94547495bebd3abd1a92cf8c6497b07c9f851eac311c1
   languageName: node
   linkType: hard
 

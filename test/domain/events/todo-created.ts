@@ -6,7 +6,7 @@ import { TodoDescription } from "../value-objects/todo-description.js";
 import { TodoDomainEvent } from "./todo-domain-event.js";
 
 
-@serialize
+@serialize("Test")
 export class TodoCreated extends TodoDomainEvent
 {
     private readonly _todoId: string;

@@ -3,7 +3,7 @@ import { serialize } from "@nivinjoseph/n-util";
 import { DomainObject } from "../../../src/index.js";
 
 
-@serialize
+@serialize("Test")
 export class TodoDescription extends DomainObject
 {
     private readonly _description: string;
