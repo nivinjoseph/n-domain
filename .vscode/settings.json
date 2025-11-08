@@ -38,6 +38,14 @@
         "editor.defaultFormatter": "vscode.css-language-features"
     },
     "scss.format.braceStyle": "expand",
+    "eslint.enable": true,
+    "eslint.validate": [
+        "typescript"
+    ],
+    "eslint.options": {
+        "overrideConfigFile": "eslint.config.js"
+    },
+    "eslint.useFlatConfig": true,
     "cSpell.words": [
         "acumin",
         "arrowless",

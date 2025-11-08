@@ -287,6 +287,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         given(createdEvent, "createdEvent").ensureHasValue().ensureIsInstanceOf(DomainEvent)
             .ensure(t => t.isCreatedEvent, "must be created event");
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
         given(serializedEventMutatorAndFilter as Function, "serializedEventMutator").ensureIsFunction();
 
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
@@ -333,6 +334,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
             .ensure(t => JSON.stringify(t) === JSON.stringify(this._stateFactory.create()), "multiple default state creations are not consistent");
 
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
         const deserializeEvents: Function = (<any>type).deserializeEvents;
         given(deserializeEvents, "deserializeEvents").ensureHasValue().ensureIsFunction();
 
@@ -366,6 +368,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         given(eventsDeserializedAggregateStateHash, "eventsDeserializedAggregateStateHash").ensureHasValue().ensureIsString()
             .ensure(t => t === originalStateHash, "state is not consistent with original state");
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
         const deserializeSnapshot: Function = (<any>type).deserializeSnapshot;
         given(deserializeSnapshot, "deserializeSnapshot").ensureHasValue().ensureIsFunction();
 

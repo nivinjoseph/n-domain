@@ -3,7 +3,7 @@ import { serialize } from "@nivinjoseph/n-util";
 import { DomainObject } from "./domain-object.js";
 
 // public
-export abstract class DomainEntity<TData extends object = {}> extends DomainObject<TData>
+export abstract class DomainEntity<TData extends object = object> extends DomainObject<TData>
 {
     private readonly _id: string;
 

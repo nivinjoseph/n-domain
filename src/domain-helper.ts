@@ -37,6 +37,7 @@ export class DomainHelper
         return `${prefix.trim().toLowerCase()}_${dateValue}${ulid(date.valueOf())}`.toLowerCase();
     }
     
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     public static aggregateTypeToSnakeCase(aggregateType: Function): string
     {
         let aggregateName = (<Object>aggregateType).getTypeName();

@@ -1,7 +1,7 @@
 import { Serializable } from "@nivinjoseph/n-util";
 
 // public
-export abstract class DomainObject<TData extends object = {}> extends Serializable<TData>
+export abstract class DomainObject<TData extends object = object> extends Serializable<TData>
 {
     /**
      * @param value (the value to compare)
