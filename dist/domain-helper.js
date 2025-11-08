@@ -26,6 +26,7 @@ export class DomainHelper {
         // 4 + 32 = 36
         return `${prefix.trim().toLowerCase()}_${dateValue}${ulid(date.valueOf())}`.toLowerCase();
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     static aggregateTypeToSnakeCase(aggregateType) {
         let aggregateName = aggregateType.getTypeName();
         const re = /[A-Z]/g;

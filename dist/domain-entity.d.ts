@@ -1,5 +1,5 @@
 import { DomainObject } from "./domain-object.js";
-export declare abstract class DomainEntity<TData extends object = {}> extends DomainObject<TData> {
+export declare abstract class DomainEntity<TData extends object = object> extends DomainObject<TData> {
     private readonly _id;
     get id(): string;
     protected constructor(data: Pick<DomainEntity, "id">);

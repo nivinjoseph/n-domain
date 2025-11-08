@@ -38,7 +38,7 @@ let DomainEvent = (() => {
             // occurredAt is epoch milliseconds
             constructor(data) {
                 super(data);
-                this._aggregateId = (__runInitializers(this, _instanceExtraInitializers), void 0);
+                this._aggregateId = __runInitializers(this, _instanceExtraInitializers);
                 const { $aggregateId, $id, $userId, $name, $occurredAt, $version, $isCreatedEvent } = data;
                 given($aggregateId, "$aggregateId").ensureIsString();
                 this._aggregateId = $aggregateId || null;

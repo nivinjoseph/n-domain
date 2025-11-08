@@ -36,7 +36,7 @@ let AggregateRoot = (() => {
             get rebasedFromVersion() { return this._state.rebasedFromVersion; }
             constructor(domainContext, events, stateFactory, currentState) {
                 super({});
-                this._domainContext = (__runInitializers(this, _instanceExtraInitializers), void 0);
+                this._domainContext = __runInitializers(this, _instanceExtraInitializers);
                 this._currentEvents = new Array(); // track unit of work stuff
                 this._isNew = false;
                 this._isReconstructed = false;
@@ -201,6 +201,7 @@ let AggregateRoot = (() => {
                     .ensureHasStructure({ userId: "string" });
                 given(createdEvent, "createdEvent").ensureHasValue().ensureIsInstanceOf(DomainEvent)
                     .ensure(t => t.isCreatedEvent, "must be created event");
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
                 given(serializedEventMutatorAndFilter, "serializedEventMutator").ensureIsFunction();
                 given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -232,6 +233,7 @@ let AggregateRoot = (() => {
                 const defaultState = this._stateFactory.create();
                 given(defaultState, "defaultState").ensureHasValue().ensureIsObject()
                     .ensure(t => JSON.stringify(t) === JSON.stringify(this._stateFactory.create()), "multiple default state creations are not consistent");
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
                 const deserializeEvents = type.deserializeEvents;
                 given(deserializeEvents, "deserializeEvents").ensureHasValue().ensureIsFunction();
                 const eventsSerialized = this.serialize();
@@ -258,6 +260,7 @@ let AggregateRoot = (() => {
                     .digest("hex").toUpperCase();
                 given(eventsDeserializedAggregateStateHash, "eventsDeserializedAggregateStateHash").ensureHasValue().ensureIsString()
                     .ensure(t => t === originalStateHash, "state is not consistent with original state");
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
                 const deserializeSnapshot = type.deserializeSnapshot;
                 given(deserializeSnapshot, "deserializeSnapshot").ensureHasValue().ensureIsFunction();
                 const snapshot = this.snapshot();
