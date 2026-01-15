@@ -189,7 +189,7 @@ __metadata:
     "@nivinjoseph/n-defensive": "npm:^2.0.2"
     "@nivinjoseph/n-exception": "npm:^2.0.2"
     "@nivinjoseph/n-ext": "npm:^2.0.2"
-    "@nivinjoseph/n-util": "npm:3.0.2"
+    "@nivinjoseph/n-util": "npm:3.2.0"
     "@stylistic/eslint-plugin": "npm:^5.5.0"
     "@types/node": "npm:^24.10"
     eslint: "npm:^9.39.1"
@@ -197,7 +197,7 @@ __metadata:
     eslint-plugin-import: "npm:^2.32.0"
     typescript: "npm:^5.9.3"
     typescript-eslint: "npm:^8.46.3"
-    ulid: "npm:^3.0.1"
+    ulid: "npm:^3.0.2"
   languageName: unknown
   linkType: soft
 
@@ -221,9 +221,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nivinjoseph/n-util@npm:3.0.2":
-  version: 3.0.2
-  resolution: "@nivinjoseph/n-util@npm:3.0.2"
+"@nivinjoseph/n-util@npm:3.2.0":
+  version: 3.2.0
+  resolution: "@nivinjoseph/n-util@npm:3.2.0"
   dependencies:
     "@nivinjoseph/n-defensive": "npm:^2.0.2"
     "@nivinjoseph/n-exception": "npm:^2.0.2"
@@ -233,7 +233,7 @@ __metadata:
     sanitize-html: "npm:^2.17.0"
     tslib: "npm:^2.8.1"
     uuid: "npm:^13.0.0"
-  checksum: de94158f56764214a5ab8631856b73f67f648ee2f5e39fbb0dda01a515804d642d0b73850b11beec5c32bebf1a1226de350b9fb9e89918b24fa5424fd1c3ae8f
+  checksum: 096af07ad311575eb9fa3aefe9d7a4154211e25e41a5c82fb736faa18ccf2d039ef881d79c157706642919b6da9138d8c2fef77282d6e14fb4d649da832cbf94
   languageName: node
   linkType: hard
 
@@ -2879,12 +2879,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ulid@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "ulid@npm:3.0.1"
+"ulid@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "ulid@npm:3.0.2"
   bin:
     ulid: dist/cli.js
-  checksum: 3b3eba4bea0d22fee7a7465d1d239f0bb20f604325a72fdb273085f18a2eeecf4391a967e8446f6d4eaa39f32fabe320a6d87846bd6313aacd2cd294d6d2b858
+  checksum: 3993499f0cb3f322e46a8da7144b184d9b12d2cc1976dd7eeb35fc2b4e153c547e8963db4d5a320995c481b0e0294289ba8260e0f69dce99ded3c647c33ac574
   languageName: node
   linkType: hard
 

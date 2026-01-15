@@ -1,6 +1,6 @@
 {
     "name": "@nivinjoseph/n-domain",
-    "version": "3.0.3",
+    "version": "3.0.4",
     "description": "Domain Driven Design and Event Sourcing based framework for business layer implementation",
     "packageManager": "yarn@4.0.2",
     "type": "module",
@@ -16,7 +16,7 @@
         "clean-test": "find ./test -name '*.js' -delete -o -name '*.map' -delete",
         "clean-dist": "find ./dist -name '*.js' -delete -o -name '*.map' -delete -o -name '*.ts' -delete",
         "clean-all": "yarn clean-src && yarn clean-test && yarn clean-dist",
-        "publish-package": "yarn ts-build-dist && git add . && git commit -m 'preparing to publish new version' && npm version patch && git push && npm publish --access=public"
+        "publish-package": "yarn ts-build-dist && git add . && git commit -m 'preparing to publish new version' && git push && npm publish --access=public"
     },
     "repository": {
         "type": "git",
@@ -47,8 +47,8 @@
         "@nivinjoseph/n-defensive": "^2.0.2",
         "@nivinjoseph/n-exception": "^2.0.2",
         "@nivinjoseph/n-ext": "^2.0.2",
-        "@nivinjoseph/n-util": "3.0.2",
-        "ulid": "^3.0.1"
+        "@nivinjoseph/n-util": "3.2.0",
+        "ulid": "^3.0.2"
     },
     "engines": {
         "node": ">=24.10"
