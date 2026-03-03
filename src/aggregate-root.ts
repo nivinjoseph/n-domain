@@ -202,7 +202,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
     public constructBefore(dateTime: number): this
     {
         given(dateTime, "dateTime").ensureHasValue().ensureIsNumber()
-            .ensure(t => t > this.createdAt, "dateTime must be before createdAt");
+            .ensure(t => t > this.createdAt, "dateTime must be after createdAt");
 
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
@@ -212,7 +212,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         result._isReconstructed = true;
         result._reconstructedFromVersion = this.version;
 
-        return this;
+        return result;
     }
 
     public hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
