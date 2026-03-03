@@ -146,14 +146,14 @@ let AggregateRoot = (() => {
             }
             constructBefore(dateTime) {
                 given(dateTime, "dateTime").ensureHasValue().ensureIsNumber()
-                    .ensure(t => t > this.createdAt, "dateTime must be before createdAt");
+                    .ensure(t => t > this.createdAt, "dateTime must be after createdAt");
                 given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
                 const ctor = this.constructor;
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
                 const result = new ctor(this._domainContext, this.events.filter(t => t.occurredAt < dateTime));
                 result._isReconstructed = true;
                 result._reconstructedFromVersion = this.version;
-                return this;
+                return result;
             }
             hasEventOfType(eventType) {
                 given(eventType, "eventType").ensureHasValue().ensureIsFunction();
