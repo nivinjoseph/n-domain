@@ -1,5 +1,6 @@
 import { given } from "@nivinjoseph/n-defensive";
 export class ConfigurableDomainContext {
+    _userId;
     get userId() { return this._userId; }
     set userId(value) { this._userId = value; }
     constructor(userId) {
