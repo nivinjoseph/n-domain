@@ -121,7 +121,7 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (aggregate.id == null)
-            throw new ApplicationException("Created event is not setting the id of the aggregate");
+            throw new ApplicationException("Created event did not set the id of the aggregate");
 
         if (this._aggregateId != null && this._aggregateId !== aggregate.id)
             throw new ApplicationException(`Event of type '${this._name}' with id ${this._id} and aggregateId '${this._aggregateId}' is being applied on Aggregate of type '${(<Object>aggregate).getTypeName()}' with id '${aggregate.id}'`);

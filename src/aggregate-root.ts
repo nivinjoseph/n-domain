@@ -88,7 +88,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
                 .ensure(t => t.length > 0, "no events passed")
                 .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
                 .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
-            this._retroEvents = events;
+            this._retroEvents = [...events];
             if (this._retroEvents.some(t => (<any>t)._aggregateId == null)) // Deliberate workaround to access aggregateId
                 this._isNew = true;
             if (this._isNew)
