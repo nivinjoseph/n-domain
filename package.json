@@ -47,7 +47,7 @@
         "@nivinjoseph/n-defensive": "2.0.3",
         "@nivinjoseph/n-exception": "2.0.3",
         "@nivinjoseph/n-ext": "2.0.5",
-        "@nivinjoseph/n-util": "4.0.1",
+        "@nivinjoseph/n-util": "4.0.2",
         "ulid": "3.0.2"
     },
     "engines": {
