@@ -33,7 +33,7 @@ export abstract class OrgDomainEvent<T extends OrgAggregateState> extends Domain
     }
 
 
-    public override apply(aggregate: OrgAggregateRoot<T>, domainContext: OrgDomainContext, state: T): void
+    public override apply(aggregate: OrgAggregateRoot<T, OrgDomainEvent<T>>, domainContext: OrgDomainContext, state: T): void
     {
         given(aggregate, "aggregate").ensureHasValue().ensureIsObject().ensureIsInstanceOf(OrgAggregateRoot);
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({
