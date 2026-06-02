@@ -7,6 +7,6 @@ export declare abstract class OrgDomainEvent<T extends OrgAggregateState> extend
     private _organizationId;
     get organizationId(): string;
     constructor(data: OrgDomainEventData);
-    apply(aggregate: OrgAggregateRoot<T>, domainContext: OrgDomainContext, state: T): void;
+    apply(aggregate: OrgAggregateRoot<T, OrgDomainEvent<T>>, domainContext: OrgDomainContext, state: T): void;
 }
 //# sourceMappingURL=org-domain-event.d.ts.map
