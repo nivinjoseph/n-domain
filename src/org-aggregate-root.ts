@@ -5,7 +5,7 @@ import { OrgAggregateState } from "./org-aggregate-state.js";
 import { OrgDomainContext } from "./org-domain-context.js";
 import { OrgDomainEvent } from "./org-domain-event.js";
 
-export abstract class OrgAggregateRoot<T extends OrgAggregateState> extends AggregateRoot<T, OrgDomainEvent<T>>
+export abstract class OrgAggregateRoot<T extends OrgAggregateState, TDomainEvent extends OrgDomainEvent<T>> extends AggregateRoot<T, TDomainEvent>
 {
     public get organizationId(): string { return this.state.organizationId; }
 
@@ -17,7 +17,7 @@ export abstract class OrgAggregateRoot<T extends OrgAggregateState> extends Aggr
     }
 
 
-    protected override applyEvent(event: OrgDomainEvent<T>): void
+    protected override applyEvent(event: TDomainEvent): void
     {
         given(event, "event").ensureHasValue().ensureIsObject().ensureIsInstanceOf(OrgDomainEvent);
 
