@@ -18,6 +18,7 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     private readonly _occurredAt: number; // when
     private _version: number;
     private readonly _isCreatedEvent: boolean;
+    private _organizationId: string | null;
 
 
     @serialize("$aggregateId")
@@ -61,6 +62,14 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
 
     @serialize("$isCreatedEvent")
     public get isCreatedEvent(): boolean { return this._isCreatedEvent; }
+    
+    @serialize("$organizationId")
+    public get organizationId(): string
+    {
+        given(this, "this").ensure(t => t._organizationId != null, "accessing property before apply");
+
+        return this._organizationId!;
+    }
 
     // occurredAt is epoch milliseconds
     public constructor(data: DomainEventData)
@@ -74,7 +83,8 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
             $name,
             $occurredAt,
             $version,
-            $isCreatedEvent
+            $isCreatedEvent,
+            $organizationId
         } = data;
 
         given($aggregateId as string, "$aggregateId").ensureIsString();
@@ -98,17 +108,26 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
 
         given($isCreatedEvent as boolean, "$isCreatedEvent").ensureIsBoolean();
         this._isCreatedEvent = !!$isCreatedEvent;
+        
+        given($organizationId as string, "$organizationId").ensureIsString();
+        this._organizationId = $organizationId && !$organizationId.isEmptyOrWhiteSpace() ? $organizationId.trim() : null;
     }
 
 
     public apply(aggregate: AggregateRoot<T, DomainEvent<T>>, domainContext: DomainContext, state: T): void
     {
         given(aggregate, "aggregate").ensureHasValue().ensureIsObject().ensure(t => t instanceof AggregateRoot);
-        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
+        given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({
+            userId: "string",
+            organizationId: "string"
+        });
         given(state, "state").ensureHasValue().ensureIsObject();
 
         if (this._userId == null)
             this._userId = domainContext.userId || "UNKNOWN";
+        
+        if (this._organizationId == null)
+            this._organizationId = domainContext.organizationId || "UNKNOWN";
 
         const version = this._version || (state.version + 1) || 1;
 
@@ -122,6 +141,9 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (aggregate.id == null)
             throw new ApplicationException("Created event did not set the id of the aggregate");
+        
+        if (this._organizationId !== state.organizationId)
+            throw new ApplicationException(`${this.name} organizationId '${this._organizationId}' does not match state organizationId '${state.organizationId}'`);
 
         if (this._aggregateId != null && this._aggregateId !== aggregate.id)
             throw new ApplicationException(`Event of type '${this._name}' with id ${this._id} and aggregateId '${this._aggregateId}' is being applied on Aggregate of type '${(<Object>aggregate).getTypeName()}' with id '${aggregate.id}'`);
@@ -144,7 +166,8 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     //         $name: this._name,
     //         $occurredAt: this._occurredAt,
     //         $version: this._version,
-    //         $isCreatedEvent: this._isCreatedEvent
+    //         $isCreatedEvent: this.,
+    //         $organizationId: this._organizationId
     //     } as any);
     // }
 

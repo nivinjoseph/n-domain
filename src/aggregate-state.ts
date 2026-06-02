@@ -10,6 +10,7 @@ export interface AggregateState
     updatedAt: number;
     isRebased: boolean;
     rebasedFromVersion: number;
+    organizationId: string;
     
     // ^^^^^ any change to this should also affect the clearBaseState function below
 }
@@ -32,4 +33,6 @@ export function clearBaseState(state: object): void
     delete state.isRebased;
     // @ts-expect-error: deliberate
     delete state.rebasedFromVersion;
+    // @ts-expect-error: deliberate
+    delete state.organizationId;
 }

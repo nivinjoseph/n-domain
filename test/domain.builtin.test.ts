@@ -5,7 +5,7 @@ import { Todo } from "./domain/todo.js";
 
 await describe("Domain Builtin test", async () =>
 {
-    const domainContext: DomainContext = { userId: "dev" };
+    const domainContext: DomainContext = { userId: "dev", organizationId: "devOrg" };
 
     await test("Built in sanity check", () =>
     {

@@ -11,7 +11,7 @@ import { TodoDescription } from "./domain/value-objects/todo-description.js";
 
 await describe("Domain tests", async () =>
 {
-    const domainContext: DomainContext = { userId: "dev" };
+    const domainContext: DomainContext = { userId: "dev", organizationId: "devOrg" };
 
     //await test("AggregateRoot", () =>
     // {

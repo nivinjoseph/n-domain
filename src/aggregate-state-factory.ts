@@ -1,10 +1,21 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { AggregateState } from "./aggregate-state.js";
 import { AggregateStateHelper } from "./aggregate-state-helper.js";
+import { DomainContext } from "./domain-context.js";
 
 
 export abstract class AggregateStateFactory<T extends AggregateState>
 {
+    private readonly _domainContext: DomainContext;
+
+
+    public constructor(domainContext: DomainContext)
+    {
+        given(domainContext, "domainContext").ensureHasValue().ensureIsObject();
+        this._domainContext = domainContext;
+    }
+    
+    
     public abstract create(): T;
     
     public update(state: T): T
@@ -61,7 +72,8 @@ export abstract class AggregateStateFactory<T extends AggregateState>
             createdAt: null as any,
             updatedAt: null as any,
             isRebased: false,
-            rebasedFromVersion: 0
+            rebasedFromVersion: 0,
+            organizationId: this._domainContext.organizationId
         };
     }
 }

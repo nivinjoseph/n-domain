@@ -21,7 +21,7 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
 
     public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<TodoState>>, state?: TodoState)
     {
-        super(domainContext, events, new TodoStateFactory(), state);
+        super(domainContext, events, new TodoStateFactory(domainContext), state);
     }
 
 
@@ -52,7 +52,7 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
 
     public static deserializeSnapshot(domainContext: DomainContext, snapshot: object): Todo
     {
-        return AggregateRoot.deserializeFromSnapshot(domainContext, Todo, new TodoStateFactory(), snapshot);
+        return AggregateRoot.deserializeFromSnapshot(domainContext, Todo, new TodoStateFactory(domainContext), snapshot);
     }
 
 

@@ -8,4 +8,5 @@ export interface DomainEventData
     $occurredAt?: number | null;
     $version?: number | null;
     $isCreatedEvent?: boolean | null;
+    $organizationId?: string | null;
 }

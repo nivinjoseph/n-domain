@@ -58,6 +58,8 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
 
     public get isRebased(): boolean { return this._state.isRebased; }
     public get rebasedFromVersion(): number { return this._state.rebasedFromVersion; }
+    
+    public get organizationId(): string { return this.state.organizationId; }
 
 
     protected constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
@@ -122,7 +124,8 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         //             $name: "string",
         //             $occurredAt: "number",
         //             $version: "number",
-        //             $isCreatedEvent: "boolean"
+        //             $isCreatedEvent: "boolean",
+        //             $organizationId: "string",
         //         }]
         //     });
 
@@ -315,6 +318,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
                 serializedEvent.$occurredAt = null;
                 serializedEvent.$version = null;
                 // serializedEvent.$isCreatedEvent = null; // we dont need to touch this
+                serializedEvent.$organizationId = null;
 
                 clone.applyEvent(Deserializer.deserialize(serializedEvent));
             });
