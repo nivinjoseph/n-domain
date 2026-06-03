@@ -1,5 +1,5 @@
 import { given } from "@nivinjoseph/n-defensive";
-import { AggregateRoot, DomainContext, DomainEvent, DomainEventData, DomainHelper } from "../../src/index.js";
+import { AggregateRoot, DomainContext, DomainHelper } from "../../src/index.js";
 import { TodoCreated } from "./events/todo-created.js";
 import { TodoDescriptionUpdated } from "./events/todo-description-updated.js";
 import { TodoDomainEvent } from "./events/todo-domain-event.js";
@@ -9,6 +9,7 @@ import { TodoTitleUpdated } from "./events/todo-title-updated.js";
 import { TodoState, TodoStateFactory } from "./todo-state.js";
 import { TodoDescription } from "./value-objects/todo-description.js";
 import { serialize } from "@nivinjoseph/n-util";
+import { AggregateFactory } from "../../src/aggregate-factory.js";
 
 
 @serialize("Test")
@@ -19,10 +20,10 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
     public get isCompleted(): boolean { return this.state.isCompleted; }
 
 
-    public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<TodoState>>, state?: TodoState)
-    {
-        super(domainContext, events, new TodoStateFactory(), state);
-    }
+    // public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<TodoState>>, state?: TodoState)
+    // {
+    //     super(domainContext, events, new TodoStateFactory(), state);
+    // }
 
 
     public static create(domainContext: DomainContext, title: string, description: string | null): Todo
@@ -31,29 +32,32 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
         given(title, "title").ensureHasValue().ensureIsString();
         given(description as string, "description").ensureIsString();
 
-        return new Todo(domainContext, [new TodoCreated({
+        const createdEvent = new TodoCreated({
             todoId: DomainHelper.generateId("tdo"),
             title,
             description: description != null ? TodoDescription.create(description) : null
-        })]);
+        });
+        
+        return new AggregateFactory(Todo, domainContext, new TodoStateFactory())
+            .createFromEvents([createdEvent]);
     }
 
-    public static deserializeEvents(domainContext: DomainContext, eventData: ReadonlyArray<DomainEventData>): Todo
-    {
-        // const eventTypes = [
-        //     TodoCreated,
-        //     TodoTitleUpdated,
-        //     TodoDescriptionUpdated,
-        //     TodoMarkedAsCompleted
-        // ];
+    // public static deserializeEvents(domainContext: DomainContext, eventData: ReadonlyArray<DomainEventData>): Todo
+    // {
+    //     // const eventTypes = [
+    //     //     TodoCreated,
+    //     //     TodoTitleUpdated,
+    //     //     TodoDescriptionUpdated,
+    //     //     TodoMarkedAsCompleted
+    //     // ];
 
-        return AggregateRoot.deserializeFromEvents(domainContext, Todo, eventData);
-    }
+    //     return AggregateRoot.deserializeFromEvents(domainContext, Todo, eventData);
+    // }
 
-    public static deserializeSnapshot(domainContext: DomainContext, snapshot: object): Todo
-    {
-        return AggregateRoot.deserializeFromSnapshot(domainContext, Todo, new TodoStateFactory(), snapshot);
-    }
+    // public static deserializeSnapshot(domainContext: DomainContext, snapshot: object): Todo
+    // {
+    //     return AggregateRoot.deserializeFromSnapshot(domainContext, Todo, new TodoStateFactory(), snapshot);
+    // }
 
 
     public updateTitle(title: string): void

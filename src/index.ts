@@ -18,4 +18,5 @@ export { OrgConfigurableDomainContext } from "./org-configurable-domain-context.
 export { OrgDomainContext } from "./org-domain-context.js";
 export { OrgDomainEvent } from "./org-domain-event.js";
 export { OrgDomainEventData } from "./org-domain-event-data.js";
+export { AggregateFactory } from "./aggregate-factory.js";
 // export { AggregateRebased, AggregateRebasedEventData } from "./aggregate-rebased";

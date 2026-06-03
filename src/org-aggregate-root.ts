@@ -10,9 +10,14 @@ export abstract class OrgAggregateRoot<T extends OrgAggregateState, TDomainEvent
     public get organizationId(): string { return this.state.organizationId; }
 
 
-    protected constructor(domainContext: OrgDomainContext, events: ReadonlyArray<OrgDomainEvent<T>>,
+    public constructor(domainContext: OrgDomainContext, events: ReadonlyArray<OrgDomainEvent<T>>,
         stateFactory: OrgAggregateStateFactory<T>, state?: T)
     {
+        given(domainContext, "domainContext").ensureHasValue().ensureIsObject()
+            .ensureHasStructure({
+                organizationId: "string"
+            });
+
         super(domainContext, events, stateFactory, state);
     }
 

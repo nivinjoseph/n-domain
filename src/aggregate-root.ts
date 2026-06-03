@@ -9,6 +9,7 @@ import { DomainEventData } from "./domain-event-data.js";
 import { DomainEvent } from "./domain-event.js";
 // import { AggregateRebased } from "./aggregate-rebased";
 import { AggregateStateHelper } from "./aggregate-state-helper.js";
+import { AggregateFactory } from "./aggregate-factory.js";
 
 // public
 export abstract class AggregateRoot<T extends AggregateState, TDomainEvent extends DomainEvent<T>> extends Serializable<AggregateRootData>
@@ -60,7 +61,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
     public get rebasedFromVersion(): number { return this._state.rebasedFromVersion; }
 
 
-    protected constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
+    public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
         stateFactory: AggregateStateFactory<T>, currentState?: T)
     {
         super({} as any);
@@ -102,10 +103,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
 
     public static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>,
         TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext,
-            aggregateType: new (...args: Array<any>) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate
+            aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, eventData: ReadonlyArray<DomainEventData>): TAggregate
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
+        given(stateFactory, "stateFactory").ensureHasValue().ensureIsObject();
         given(eventData, "eventData").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
 
 
@@ -128,7 +130,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
 
         const deserializedEvents = eventData.map((eventData) =>
         {
-            return Deserializer.deserialize(eventData);
+            return Deserializer.deserialize<DomainEvent<any>>(eventData);
 
             // const name = eventData.$name;
             // const event = eventTypes.find(t => (<Object>t).getTypeName() === name);
@@ -139,8 +141,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
             // return (<any>event).deserializeEvent(eventData);
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        return new (<any>aggregateType)(domainContext, deserializedEvents) as TAggregate;
+        
+        // return new aggregateType(domainContext, deserializedEvents);
+        
+        return new AggregateFactory(aggregateType, domainContext, stateFactory)
+            .createFromEvents(deserializedEvents);
     }
 
     // public serialize(): AggregateRootData
@@ -162,7 +167,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
     public static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>,
         TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext,
             aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>,
-            stateSnapshot: TAggregateState | object): TAggregate
+            stateSnapshot: TAggregateState): TAggregate
     {
         given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
         given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
@@ -175,7 +180,12 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
                 updatedAt: "number"
             });
 
-        return new aggregateType(domainContext, [], stateFactory.deserializeSnapshot(stateSnapshot as any));
+        const deserializedSnapshot = stateFactory.deserializeSnapshot(stateSnapshot);
+        
+        // return new aggregateType(domainContext, [], deserializedSnapshot);
+        
+        return new AggregateFactory(aggregateType, domainContext, stateFactory)
+            .createFromState(deserializedSnapshot);
     }
 
     public snapshot(...cloneKeys: ReadonlyArray<string>): T | object
@@ -190,13 +200,14 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
 
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
-        const ctor = (<Object>this).constructor;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        const result = new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version)) as this;
+        // const ctor = (<Object>this).constructor;
+        // // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        // const result = new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version)) as this;
+        const result = new AggregateFactory((<Object>this).constructor as any, this._domainContext, this._stateFactory)
+            .createFromEvents(this.events.filter(t => t.version <= version));
         result._isReconstructed = true;
         result._reconstructedFromVersion = this.version;
-
-        return result;
+        return result as this;
     }
 
     public constructBefore(dateTime: number): this
@@ -206,13 +217,14 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
 
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
-        const ctor = (<Object>this).constructor;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        const result = new (<any>ctor)(this._domainContext, this.events.filter(t => t.occurredAt < dateTime)) as this;
+        // const ctor = (<Object>this).constructor;
+        // // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        // const result = new (<any>ctor)(this._domainContext, this.events.filter(t => t.occurredAt < dateTime)) as this;
+        const result = new AggregateFactory((<Object>this).constructor as any, this._domainContext, this._stateFactory)
+            .createFromEvents(this.events.filter(t => t.occurredAt < dateTime));
         result._isReconstructed = true;
         result._reconstructedFromVersion = this.version;
-
-        return result;
+        return result as this;
     }
 
     public hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
@@ -273,17 +285,13 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
 
     /**
      * 
-     * @param domainContext - provide the Domain Context
      * @param createdEvent - provide a new created event to be used by the clone
      * @param serializedEventMutatorAndFilter - provide a function that can mutate the serialized event if required and returns a boolean indicating whether to include the event or not.
      * @returns - cloned Aggregate
      */
-    public clone(domainContext: DomainContext, createdEvent: DomainEvent<T>,
+    public clone(createdEvent: DomainEvent<T>,
         serializedEventMutatorAndFilter?: (event: { $name: string; }) => boolean): this
     {
-        given(domainContext, "domainContext").ensureHasValue()
-            .ensureHasStructure({ userId: "string" });
-
         given(createdEvent, "createdEvent").ensureHasValue().ensureIsInstanceOf(DomainEvent)
             .ensure(t => t.isCreatedEvent, "must be created event");
 
@@ -292,8 +300,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
 
         given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        const clone: this = new (<any>this.constructor)(domainContext, [createdEvent]);
+        // // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        // const clone: this = new (<any>this.constructor)(domainContext, [createdEvent]);
+        const clone = new AggregateFactory((<Object>this).constructor as any, this._domainContext, this._stateFactory)
+            .createFromEvents([createdEvent]);
+        
 
         this.events
             .where(t => !t.isCreatedEvent)
@@ -319,7 +330,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
                 clone.applyEvent(Deserializer.deserialize(serializedEvent));
             });
 
-        return clone;
+        return clone as this;
     }
 
     public test(): void
@@ -334,9 +345,9 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
             .ensure(t => JSON.stringify(t) === JSON.stringify(this._stateFactory.create()), "multiple default state creations are not consistent");
 
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-        const deserializeEvents: Function = (<any>type).deserializeEvents;
-        given(deserializeEvents, "deserializeEvents").ensureHasValue().ensureIsFunction();
+        // // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+        // const deserializeEvents: Function = (<any>type).deserializeEvents;
+        // given(deserializeEvents, "deserializeEvents").ensureHasValue().ensureIsFunction();
 
         const eventsSerialized = this.serialize();
         given(eventsSerialized, "eventsSerialized").ensureHasValue().ensureIsObject()
@@ -349,8 +360,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
             })
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.serialize()), "multiple serializations are not consistent");
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        const eventsDeserializedAggregate: this = (<any>type).deserializeEvents(this._domainContext, eventsSerialized.$events);
+        const eventsDeserializedAggregate: this = AggregateRoot.deserializeFromEvents(this._domainContext, type, this._stateFactory, eventsSerialized.$events);
         given(eventsDeserializedAggregate, "eventsDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
 
         const eventsDeserializedAggregateState = eventsDeserializedAggregate.state;
@@ -368,16 +378,15 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         given(eventsDeserializedAggregateStateHash, "eventsDeserializedAggregateStateHash").ensureHasValue().ensureIsString()
             .ensure(t => t === originalStateHash, "state is not consistent with original state");
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-        const deserializeSnapshot: Function = (<any>type).deserializeSnapshot;
-        given(deserializeSnapshot, "deserializeSnapshot").ensureHasValue().ensureIsFunction();
+        // // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+        // const deserializeSnapshot: Function = (<any>type).deserializeSnapshot;
+        // given(deserializeSnapshot, "deserializeSnapshot").ensureHasValue().ensureIsFunction();
 
         const snapshot = this.snapshot();
         given(snapshot, "snapshot").ensureHasValue().ensureIsObject()
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.snapshot()), "multiple snapshots are not consistent");
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        const snapshotDeserializedAggregate: this = (<any>type).deserializeSnapshot(this._domainContext, snapshot);
+        const snapshotDeserializedAggregate: this = AggregateRoot.deserializeFromSnapshot(this._domainContext, type, this._stateFactory, snapshot as AggregateState);
         given(snapshotDeserializedAggregate, "snapshotDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
 
         const snapshotDeserializedAggregateState = snapshotDeserializedAggregate.state;

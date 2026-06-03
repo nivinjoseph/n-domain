@@ -7,6 +7,7 @@ import { TodoCreated } from "./domain/events/todo-created.js";
 import { TodoDescriptionUpdated } from "./domain/events/todo-description-updated.js";
 import { Todo } from "./domain/todo.js";
 import { TodoDescription } from "./domain/value-objects/todo-description.js";
+import { TodoStateFactory } from "./domain/todo-state.js";
 
 
 await describe("Domain tests", async () =>
@@ -264,7 +265,7 @@ await describe("Domain tests", async () =>
                 original.updateTitle("title update 2");
 
                 const serialized = original.serialize();
-                const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                const deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
 
                 assert.strictEqual(deserialized.id, original.id);
                 assert.strictEqual(deserialized.retroEvents.length, 3);
@@ -304,7 +305,7 @@ await describe("Domain tests", async () =>
                 original.updateTitle("title update 1");
                 original.updateTitle("title update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                const deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
 
                 // console.log("Type version", (<any>deserialized).state.typeVersion);
 
@@ -402,7 +403,7 @@ await describe("Domain tests", async () =>
                 original.updateTitle("title update 1");
                 original.updateTitle("title update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                const deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
 
                 const reconstructed = deserialized.constructVersion(2);
 
@@ -440,7 +441,7 @@ await describe("Domain tests", async () =>
 
             await Delay.seconds(1);
 
-            const clone = original.clone(domainContext, new TodoCreated({
+            const clone = original.clone(new TodoCreated({
                 todoId: DomainHelper.generateId("tdo"),
                 title: "different title",
                 description: TodoDescription.create("different description")
@@ -471,7 +472,7 @@ await describe("Domain tests", async () =>
 
             await Delay.seconds(1);
 
-            const clone = original.clone(domainContext, new TodoCreated({
+            const clone = original.clone(new TodoCreated({
                 todoId: DomainHelper.generateId("tdo"),
                 title: "different title",
                 description: TodoDescription.create("different description")
@@ -571,7 +572,7 @@ await describe("Domain tests", async () =>
                 original.updateTitle("title update 1");
                 original.updateTitle("title update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                const deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
 
                 const rebased = deserialized;
                 rebased.rebase(2);
@@ -643,7 +644,7 @@ await describe("Domain tests", async () =>
                 original.updateTitle("title update 2");
 
                 let serialized = original.serialize();
-                let deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                let deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
 
                 let rebased = deserialized;
                 rebased.rebase(2);
@@ -652,7 +653,7 @@ await describe("Domain tests", async () =>
                 rebased.updateTitle("title update 3");
 
                 serialized = rebased.serialize();
-                deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
 
                 rebased = deserialized;
                 rebased.rebase(2);
@@ -747,7 +748,7 @@ await describe("Domain tests", async () =>
                 const original = Todo.create(domainContext, "title", "description");
                 original.updateDescription("description update 1");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                const deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
 
                 deserialized.updateDescription("description update 2");
 
@@ -793,7 +794,7 @@ await describe("Domain tests", async () =>
                 original.updateDescription("description update 1");
                 original.updateDescription("description update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                const deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
 
                 deserialized.updateDescription("description update 3");
 
@@ -839,7 +840,7 @@ await describe("Domain tests", async () =>
                 original.updateDescription("description update 1");
                 original.updateDescription("description update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                const deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
 
                 deserialized.updateDescription("description update 3");
                 deserialized.updateDescription("description update 4");
@@ -890,7 +891,7 @@ await describe("Domain tests", async () =>
                 original.updateDescription("description update 1");
                 original.updateDescription("description update 2");
                 const serialized = original.serialize();
-                const deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                const deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
                 deserialized.updateDescription("description update 3");
                 deserialized.updateDescription("description update 4");
 
@@ -940,11 +941,11 @@ await describe("Domain tests", async () =>
                 original.updateDescription("description update 1");
                 original.updateDescription("description update 2");
                 let serialized = original.serialize();
-                let deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                let deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
                 deserialized.updateDescription("description update 3");
                 deserialized.updateDescription("description update 4");
                 serialized = deserialized.serialize();
-                deserialized = Todo.deserializeEvents(domainContext, serialized.$events);
+                deserialized = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events);
 
                 const reconstructed = deserialized.constructVersion(3);
 
