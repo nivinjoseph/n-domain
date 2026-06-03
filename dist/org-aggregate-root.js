@@ -4,6 +4,10 @@ import { OrgDomainEvent } from "./org-domain-event.js";
 export class OrgAggregateRoot extends AggregateRoot {
     get organizationId() { return this.state.organizationId; }
     constructor(domainContext, events, stateFactory, state) {
+        given(domainContext, "domainContext").ensureHasValue().ensureIsObject()
+            .ensureHasStructure({
+            organizationId: "string"
+        });
         super(domainContext, events, stateFactory, state);
     }
     applyEvent(event) {

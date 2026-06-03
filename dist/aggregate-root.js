@@ -6,6 +6,7 @@ import { clearBaseState } from "./aggregate-state.js";
 import { DomainEvent } from "./domain-event.js";
 // import { AggregateRebased } from "./aggregate-rebased";
 import { AggregateStateHelper } from "./aggregate-state-helper.js";
+import { AggregateFactory } from "./aggregate-factory.js";
 // public
 let AggregateRoot = (() => {
     let _classSuper = Serializable;
@@ -87,9 +88,10 @@ let AggregateRoot = (() => {
             this._state = this._stateFactory.update(this._state);
             this._retroVersion = this.currentVersion;
         }
-        static deserializeFromEvents(domainContext, aggregateType, eventData) {
+        static deserializeFromEvents(domainContext, aggregateType, stateFactory, eventData) {
             given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });
             given(aggregateType, "aggregateType").ensureHasValue().ensureIsFunction();
+            given(stateFactory, "stateFactory").ensureHasValue().ensureIsObject();
             given(eventData, "eventData").ensureHasValue().ensureIsArray().ensure(t => t.length > 0);
             // given(data, "data").ensureHasValue().ensureIsObject()
             //     .ensureHasStructure({
@@ -117,8 +119,9 @@ let AggregateRoot = (() => {
                 //     throw new ApplicationException(`Event type '${name}' does not have a static deserializeEvent method defined.`);
                 // return (<any>event).deserializeEvent(eventData);
             });
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            return new aggregateType(domainContext, deserializedEvents);
+            // return new aggregateType(domainContext, deserializedEvents);
+            return new AggregateFactory(aggregateType, domainContext, stateFactory)
+                .createFromEvents(deserializedEvents);
         }
         // public serialize(): AggregateRootData
         // {
@@ -145,7 +148,10 @@ let AggregateRoot = (() => {
                 createdAt: "number",
                 updatedAt: "number"
             });
-            return new aggregateType(domainContext, [], stateFactory.deserializeSnapshot(stateSnapshot));
+            const deserializedSnapshot = stateFactory.deserializeSnapshot(stateSnapshot);
+            // return new aggregateType(domainContext, [], deserializedSnapshot);
+            return new AggregateFactory(aggregateType, domainContext, stateFactory)
+                .createFromState(deserializedSnapshot);
         }
         snapshot(...cloneKeys) {
             return AggregateStateHelper.serializeStateIntoSnapshot(this.state, ...cloneKeys);
@@ -154,9 +160,11 @@ let AggregateRoot = (() => {
             given(version, "version").ensureHasValue().ensureIsNumber()
                 .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
             given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
-            const ctor = this.constructor;
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            const result = new ctor(this._domainContext, this.events.filter(t => t.version <= version));
+            // const ctor = (<Object>this).constructor;
+            // // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            // const result = new (<any>ctor)(this._domainContext, this.events.filter(t => t.version <= version)) as this;
+            const result = new AggregateFactory(this.constructor, this._domainContext, this._stateFactory)
+                .createFromEvents(this.events.filter(t => t.version <= version));
             result._isReconstructed = true;
             result._reconstructedFromVersion = this.version;
             return result;
@@ -165,9 +173,11 @@ let AggregateRoot = (() => {
             given(dateTime, "dateTime").ensureHasValue().ensureIsNumber()
                 .ensure(t => t > this.createdAt, "dateTime must be after createdAt");
             given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
-            const ctor = this.constructor;
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            const result = new ctor(this._domainContext, this.events.filter(t => t.occurredAt < dateTime));
+            // const ctor = (<Object>this).constructor;
+            // // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            // const result = new (<any>ctor)(this._domainContext, this.events.filter(t => t.occurredAt < dateTime)) as this;
+            const result = new AggregateFactory(this.constructor, this._domainContext, this._stateFactory)
+                .createFromEvents(this.events.filter(t => t.occurredAt < dateTime));
             result._isReconstructed = true;
             result._reconstructedFromVersion = this.version;
             return result;
@@ -208,21 +218,20 @@ let AggregateRoot = (() => {
         }
         /**
          *
-         * @param domainContext - provide the Domain Context
          * @param createdEvent - provide a new created event to be used by the clone
          * @param serializedEventMutatorAndFilter - provide a function that can mutate the serialized event if required and returns a boolean indicating whether to include the event or not.
          * @returns - cloned Aggregate
          */
-        clone(domainContext, createdEvent, serializedEventMutatorAndFilter) {
-            given(domainContext, "domainContext").ensureHasValue()
-                .ensureHasStructure({ userId: "string" });
+        clone(createdEvent, serializedEventMutatorAndFilter) {
             given(createdEvent, "createdEvent").ensureHasValue().ensureIsInstanceOf(DomainEvent)
                 .ensure(t => t.isCreatedEvent, "must be created event");
             // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
             given(serializedEventMutatorAndFilter, "serializedEventMutator").ensureIsFunction();
             given(this, "this").ensure(t => t.retroEvents.length > 0, "invoking method on object without retro events");
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            const clone = new this.constructor(domainContext, [createdEvent]);
+            // // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            // const clone: this = new (<any>this.constructor)(domainContext, [createdEvent]);
+            const clone = new AggregateFactory(this.constructor, this._domainContext, this._stateFactory)
+                .createFromEvents([createdEvent]);
             this.events
                 .where(t => !t.isCreatedEvent)
                 .forEach(t => {
@@ -250,9 +259,9 @@ let AggregateRoot = (() => {
             const defaultState = this._stateFactory.create();
             given(defaultState, "defaultState").ensureHasValue().ensureIsObject()
                 .ensure(t => JSON.stringify(t) === JSON.stringify(this._stateFactory.create()), "multiple default state creations are not consistent");
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-            const deserializeEvents = type.deserializeEvents;
-            given(deserializeEvents, "deserializeEvents").ensureHasValue().ensureIsFunction();
+            // // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+            // const deserializeEvents: Function = (<any>type).deserializeEvents;
+            // given(deserializeEvents, "deserializeEvents").ensureHasValue().ensureIsFunction();
             const eventsSerialized = this.serialize();
             given(eventsSerialized, "eventsSerialized").ensureHasValue().ensureIsObject()
                 .ensureHasStructure({
@@ -263,8 +272,7 @@ let AggregateRoot = (() => {
                 $events: ["object"]
             })
                 .ensure(t => JSON.stringify(t) === JSON.stringify(this.serialize()), "multiple serializations are not consistent");
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            const eventsDeserializedAggregate = type.deserializeEvents(this._domainContext, eventsSerialized.$events);
+            const eventsDeserializedAggregate = AggregateRoot.deserializeFromEvents(this._domainContext, type, this._stateFactory, eventsSerialized.$events);
             given(eventsDeserializedAggregate, "eventsDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
             const eventsDeserializedAggregateState = eventsDeserializedAggregate.state;
             console.log("eventsDeserializedAggregateState", JSON.stringify(eventsDeserializedAggregateState));
@@ -277,14 +285,13 @@ let AggregateRoot = (() => {
                 .digest("hex").toUpperCase();
             given(eventsDeserializedAggregateStateHash, "eventsDeserializedAggregateStateHash").ensureHasValue().ensureIsString()
                 .ensure(t => t === originalStateHash, "state is not consistent with original state");
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-            const deserializeSnapshot = type.deserializeSnapshot;
-            given(deserializeSnapshot, "deserializeSnapshot").ensureHasValue().ensureIsFunction();
+            // // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+            // const deserializeSnapshot: Function = (<any>type).deserializeSnapshot;
+            // given(deserializeSnapshot, "deserializeSnapshot").ensureHasValue().ensureIsFunction();
             const snapshot = this.snapshot();
             given(snapshot, "snapshot").ensureHasValue().ensureIsObject()
                 .ensure(t => JSON.stringify(t) === JSON.stringify(this.snapshot()), "multiple snapshots are not consistent");
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            const snapshotDeserializedAggregate = type.deserializeSnapshot(this._domainContext, snapshot);
+            const snapshotDeserializedAggregate = AggregateRoot.deserializeFromSnapshot(this._domainContext, type, this._stateFactory, snapshot);
             given(snapshotDeserializedAggregate, "snapshotDeserializedAggregate").ensureHasValue().ensureIsObject().ensureIsType(type);
             const snapshotDeserializedAggregateState = snapshotDeserializedAggregate.state;
             given(snapshotDeserializedAggregateState, "snapshotDeserializedAggregateState").ensureHasValue().ensureIsObject()

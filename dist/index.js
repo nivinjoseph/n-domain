@@ -11,5 +11,6 @@ export { OrgAggregateRoot } from "./org-aggregate-root.js";
 export { OrgAggregateStateFactory } from "./org-aggregate-state-factory.js";
 export { OrgConfigurableDomainContext } from "./org-configurable-domain-context.js";
 export { OrgDomainEvent } from "./org-domain-event.js";
+export { AggregateFactory } from "./aggregate-factory.js";
 // export { AggregateRebased, AggregateRebasedEventData } from "./aggregate-rebased";
 //# sourceMappingURL=index.js.map

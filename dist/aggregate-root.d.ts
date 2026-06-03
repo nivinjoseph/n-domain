@@ -32,9 +32,9 @@ export declare abstract class AggregateRoot<T extends AggregateState, TDomainEve
     get reconstructedFromVersion(): number;
     get isRebased(): boolean;
     get rebasedFromVersion(): number;
-    protected constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, stateFactory: AggregateStateFactory<T>, currentState?: T);
-    static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>, TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, eventData: ReadonlyArray<DomainEventData>): TAggregate;
-    static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>, TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object): TAggregate;
+    constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, stateFactory: AggregateStateFactory<T>, currentState?: T);
+    static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>, TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, eventData: ReadonlyArray<DomainEventData>): TAggregate;
+    static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>, TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState): TAggregate;
     snapshot(...cloneKeys: ReadonlyArray<string>): T | object;
     constructVersion(version: number): this;
     constructBefore(dateTime: number): this;
@@ -46,12 +46,11 @@ export declare abstract class AggregateRoot<T extends AggregateState, TDomainEve
     getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType>;
     /**
      *
-     * @param domainContext - provide the Domain Context
      * @param createdEvent - provide a new created event to be used by the clone
      * @param serializedEventMutatorAndFilter - provide a function that can mutate the serialized event if required and returns a boolean indicating whether to include the event or not.
      * @returns - cloned Aggregate
      */
-    clone(domainContext: DomainContext, createdEvent: DomainEvent<T>, serializedEventMutatorAndFilter?: (event: {
+    clone(createdEvent: DomainEvent<T>, serializedEventMutatorAndFilter?: (event: {
         $name: string;
     }) => boolean): this;
     test(): void;
