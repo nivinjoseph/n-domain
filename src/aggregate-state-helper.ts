@@ -1,8 +1,7 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
-import { Deserializer } from "@nivinjoseph/n-util";
+import { Deserializer, Serializable } from "@nivinjoseph/n-util";
 import { AggregateState } from "./aggregate-state.js";
-import { DomainObject } from "./domain-object.js";
 
 
 export class AggregateStateHelper
@@ -102,7 +101,8 @@ export class AggregateStateHelper
 
     private static _serializeForSnapshot(value: Object): object
     {
-        if (value instanceof DomainObject)
+        // DomainObject extends Serializable
+        if (value instanceof Serializable)
             return value.serialize() as object;
 
         if (Object.keys(value).some(t => t.startsWith("_")))
