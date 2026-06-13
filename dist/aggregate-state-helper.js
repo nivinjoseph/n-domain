@@ -1,7 +1,6 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
-import { Deserializer } from "@nivinjoseph/n-util";
-import { DomainObject } from "./domain-object.js";
+import { Deserializer, Serializable } from "@nivinjoseph/n-util";
 export class AggregateStateHelper {
     static serializeStateIntoSnapshot(state, ...cloneKeys) {
         const snapshot = Object.assign({}, state);
@@ -68,7 +67,8 @@ export class AggregateStateHelper {
         // console.dir(state);
     }
     static _serializeForSnapshot(value) {
-        if (value instanceof DomainObject)
+        // DomainObject extends Serializable
+        if (value instanceof Serializable)
             return value.serialize();
         if (Object.keys(value).some(t => t.startsWith("_")))
             throw new ApplicationException(`attempting to serialize an object [${value.getTypeName()}] with private fields but does not extend DomainObject for the purposes of snapshot`);
