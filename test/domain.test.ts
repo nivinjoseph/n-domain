@@ -2,12 +2,12 @@ import "@nivinjoseph/n-ext";
 import { Delay, Schema } from "@nivinjoseph/n-util";
 import assert from "node:assert";
 import { describe, test } from "node:test";
-import { DomainContext, DomainHelper } from "../src/index.js";
+import { AggregateRoot, DomainContext, DomainHelper } from "../src/index.js";
 import { TodoCreated } from "./domain/events/todo-created.js";
 import { TodoDescriptionUpdated } from "./domain/events/todo-description-updated.js";
 import { Todo } from "./domain/todo.js";
 import { TodoDescription } from "./domain/value-objects/todo-description.js";
-import { TodoStateFactory } from "./domain/todo-state.js";
+import { MigratedTodoStateFactory, TodoState, TodoStateFactory, UnmigratedTodoStateFactory } from "./domain/todo-state.js";
 
 
 await describe("Domain tests", async () =>
@@ -324,6 +324,50 @@ await describe("Domain tests", async () =>
                 assert.strictEqual(deserialized.hasChanges, true);
                 assert.strictEqual(deserialized.title, "title update 3");
                 assert.strictEqual(deserialized.description, "description");
+            });
+    });
+
+
+    await describe("Type version", async () =>
+    {
+        await test(`
+            Given a snapshot persisted at typeVersion 1,
+            When it is deserialized through a factory whose create() is at typeVersion 2
+                but whose update() does not migrate the state,
+            Then deserialization should throw
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", null);
+                const snapshot = original.snapshot() as { typeVersion: number; };
+                assert.strictEqual(snapshot.typeVersion, 1);
+
+                assert.throws(
+                    () => AggregateRoot.deserializeFromSnapshot(
+                        domainContext, Todo, new UnmigratedTodoStateFactory(), snapshot as TodoState),
+                    /typeVersion/);
+            });
+
+        await test(`
+            Given a snapshot persisted at typeVersion 1,
+            When it is deserialized through a factory whose create() is at typeVersion 2
+                and whose update() migrates the state from 1 to 2,
+            Then deserialization should succeed,
+                and the resulting id should equal the original id,
+                and the resulting title should equal the original title,
+                and the resulting state typeVersion should be 2
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", null);
+                const snapshot = original.snapshot() as TodoState;
+
+                const migrated = AggregateRoot.deserializeFromSnapshot(
+                    domainContext, Todo, new MigratedTodoStateFactory(), snapshot);
+
+                assert.strictEqual(migrated.id, original.id);
+                assert.strictEqual(migrated.title, "title");
+                assert.strictEqual((migrated as unknown as { state: TodoState; }).state.typeVersion, 2);
             });
     });
 

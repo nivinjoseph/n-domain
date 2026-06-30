@@ -75,7 +75,9 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         this._stateFactory = stateFactory;
 
         given(currentState as object, "currentState").ensureIsObject();
-        this._state = Object.assign(this._stateFactory.create(), currentState);
+        const defaultState = this._stateFactory.create();
+        const currentTypeVersion = defaultState.typeVersion;
+        this._state = Object.assign(defaultState, currentState);
 
         if (this._state.version)
         {
@@ -98,6 +100,12 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
                 this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         }
         this._state = this._stateFactory.update(this._state);
+
+        given(this._state, "state").ensure(
+            t => t.typeVersion === currentTypeVersion,
+            `loaded state has typeVersion ${this._state.typeVersion} but the current type version is ${currentTypeVersion}; `
+            + "migrate it forward in the state factory's update() method (and bump state.typeVersion)");
+
         this._retroVersion = this.currentVersion;
     }
 
