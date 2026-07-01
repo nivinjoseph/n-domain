@@ -2,6 +2,7 @@ import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
 import { Serializable, serialize } from "@nivinjoseph/n-util";
 import { AggregateState } from "./aggregate-state.js";
+import { AggregateStateHelper } from "./aggregate-state-helper.js";
 import { DomainEventData } from "./domain-event-data.js";
 import { DomainHelper } from "./domain-helper.js";
 import { AggregateRoot } from "./aggregate-root.js";
@@ -18,6 +19,11 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     private readonly _occurredAt: number; // when
     private _version: number;
     private readonly _isCreatedEvent: boolean;
+    // serialized create() defaults (base fields stripped); created events only. set on deserialize via the
+    // constructor, and on the new-aggregate path by the AggregateRoot constructor through an `any` cast (the
+    // same idiom used for _aggregateId), so this stamping stays off DomainEvent's public surface — hence not readonly.
+    // eslint-disable-next-line @typescript-eslint/prefer-readonly
+    private _frozenDefaultState: object | null;
 
 
     @serialize("$aggregateId")
@@ -74,7 +80,8 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
             $name,
             $occurredAt,
             $version,
-            $isCreatedEvent
+            $isCreatedEvent,
+            $frozenDefaultState
         } = data;
 
         given($aggregateId as string, "$aggregateId").ensureIsString();
@@ -98,6 +105,9 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
 
         given($isCreatedEvent as boolean, "$isCreatedEvent").ensureIsBoolean();
         this._isCreatedEvent = !!$isCreatedEvent;
+
+        given($frozenDefaultState as object, "$frozenDefaultState").ensureIsObject();
+        this._frozenDefaultState = $frozenDefaultState ?? null;
     }
 
 
@@ -111,6 +121,12 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
             this._userId = domainContext.userId || "UNKNOWN";
 
         const version = this._version || (state.version + 1) || 1;
+
+        // a created event carrying frozen default state overlays the historical create() defaults
+        // (base fields stripped) onto the current-code base before its own applyEvent sets real values.
+        // this isolates replay from future create() default changes for fields no event writes.
+        if (this._isCreatedEvent && this._frozenDefaultState != null)
+            Object.assign(state, AggregateStateHelper.deserializeSnapshotIntoState(this._frozenDefaultState));
 
         this.applyEvent(state);
 
@@ -133,6 +149,17 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
         if (this._id != null && this._id !== id)
             throw new ApplicationException(`Deserialized id '${this._id}' does not match computed id ${id}`);
         this._id = id;
+    }
+
+    public override serialize(): DomainEventData
+    {
+        const data = super.serialize();
+
+        // only created events carry frozen default state; keep every other event's serialized shape unchanged
+        if (this._isCreatedEvent && this._frozenDefaultState != null)
+            data.$frozenDefaultState = this._frozenDefaultState;
+
+        return data;
     }
 
     // public serialize(): DomainEventData

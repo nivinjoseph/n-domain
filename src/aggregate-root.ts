@@ -95,7 +95,22 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
             if (this._retroEvents.some(t => (<any>t)._aggregateId == null)) // Deliberate workaround to access aggregateId
                 this._isNew = true;
             if (this._isNew)
+            {
+                // freeze the pristine default state (current create() output, captured here before any event
+                // mutates this._state) into the created event, with base fields stripped. on every future
+                // replay this is overlaid as the base layer so fields no event writes are sourced from the
+                // stream rather than from a (possibly changed) future create().
+                const frozenDefaultState = AggregateStateHelper.serializeStateIntoSnapshot(this._state);
+                clearBaseState(frozenDefaultState);
+                const createdEvent = this._retroEvents.find(t => t.isCreatedEvent)!;
+                // stamp the frozen defaults onto the created event's internal field via cast (same workaround as
+                // _aggregateId above), keeping this framework detail off DomainEvent's public surface.
+                given(createdEvent, "createdEvent")
+                    .ensure(t => (<any>t)._frozenDefaultState == null, "created event already has frozen default state");
+                (<any>createdEvent)._frozenDefaultState = frozenDefaultState;
+
                 this._retroEvents.forEach(t => t.apply(this, this._domainContext, this._state));
+            }
             else
                 this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
         }

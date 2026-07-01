@@ -1,6 +1,7 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
 import { Deserializer, Serializable } from "@nivinjoseph/n-util";
+import { createHash } from "node:crypto";
 import { AggregateState } from "./aggregate-state.js";
 
 
@@ -97,6 +98,39 @@ export class AggregateStateHelper
         state.rebasedFromVersion = rebaseVersion;
 
         // console.dir(state);
+    }
+
+    /**
+     * Produces a stable SHA-512 fingerprint of a state object (typically a factory's create() output).
+     * The state is serialized into snapshot form and its keys are canonically (recursively) sorted before
+     * hashing, so benign source-order changes do not trip the guard — only key-set or value changes do.
+     * Intended for a drift guard: persist the fingerprint of create() in source control and fail a test when
+     * it changes unexpectedly, since changing a create() default silently rewrites historical state on replay.
+     */
+    public static fingerprintState(state: object): string
+    {
+        given(state, "state").ensureHasValue().ensureIsObject();
+
+        const snapshot = AggregateStateHelper.serializeStateIntoSnapshot(state);
+        const canonical = AggregateStateHelper._canonicalize(snapshot);
+        return createHash("sha512").update(JSON.stringify(canonical)).digest("hex").toUpperCase();
+    }
+
+    private static _canonicalize(value: unknown): unknown
+    {
+        if (value == null || typeof value !== "object")
+            return value;
+
+        if (Array.isArray(value))
+            return (value as Array<unknown>).map(t => AggregateStateHelper._canonicalize(t));
+
+        const obj = value as Record<string, unknown>;
+        const result: Record<string, unknown> = {};
+        Object.keys(obj).sort().forEach(key =>
+        {
+            result[key] = AggregateStateHelper._canonicalize(obj[key]);
+        });
+        return result;
     }
 
     private static _serializeForSnapshot(value: Object): object
