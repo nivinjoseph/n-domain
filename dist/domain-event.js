@@ -2,6 +2,7 @@ import { __esDecorate, __runInitializers } from "tslib";
 import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
 import { Serializable, serialize } from "@nivinjoseph/n-util";
+import { AggregateStateHelper } from "./aggregate-state-helper.js";
 import { DomainHelper } from "./domain-helper.js";
 import { AggregateRoot } from "./aggregate-root.js";
 // public
@@ -41,6 +42,11 @@ let DomainEvent = (() => {
         _occurredAt; // when
         _version;
         _isCreatedEvent;
+        // serialized create() defaults (base fields stripped); created events only. set on deserialize via the
+        // constructor, and on the new-aggregate path by the AggregateRoot constructor through an `any` cast (the
+        // same idiom used for _aggregateId), so this stamping stays off DomainEvent's public surface — hence not readonly.
+        // eslint-disable-next-line @typescript-eslint/prefer-readonly
+        _frozenDefaultState;
         get aggregateId() {
             given(this, "this").ensure(t => t._aggregateId != null, "accessing property before apply");
             return this._aggregateId;
@@ -62,7 +68,7 @@ let DomainEvent = (() => {
         // occurredAt is epoch milliseconds
         constructor(data) {
             super(data);
-            const { $aggregateId, $id, $userId, $name, $occurredAt, $version, $isCreatedEvent } = data;
+            const { $aggregateId, $id, $userId, $name, $occurredAt, $version, $isCreatedEvent, $frozenDefaultState } = data;
             given($aggregateId, "$aggregateId").ensureIsString();
             this._aggregateId = $aggregateId || null;
             given($id, "$id").ensureIsString();
@@ -78,6 +84,8 @@ let DomainEvent = (() => {
             this._version = $version || 0;
             given($isCreatedEvent, "$isCreatedEvent").ensureIsBoolean();
             this._isCreatedEvent = !!$isCreatedEvent;
+            given($frozenDefaultState, "$frozenDefaultState").ensureIsObject();
+            this._frozenDefaultState = $frozenDefaultState ?? null;
         }
         apply(aggregate, domainContext, state) {
             given(aggregate, "aggregate").ensureHasValue().ensureIsObject().ensure(t => t instanceof AggregateRoot);
@@ -86,6 +94,11 @@ let DomainEvent = (() => {
             if (this._userId == null)
                 this._userId = domainContext.userId || "UNKNOWN";
             const version = this._version || (state.version + 1) || 1;
+            // a created event carrying frozen default state overlays the historical create() defaults
+            // (base fields stripped) onto the current-code base before its own applyEvent sets real values.
+            // this isolates replay from future create() default changes for fields no event writes.
+            if (this._isCreatedEvent && this._frozenDefaultState != null)
+                Object.assign(state, AggregateStateHelper.deserializeSnapshotIntoState(this._frozenDefaultState));
             this.applyEvent(state);
             if (this._isCreatedEvent)
                 state.createdAt = this._occurredAt;
@@ -101,6 +114,13 @@ let DomainEvent = (() => {
             if (this._id != null && this._id !== id)
                 throw new ApplicationException(`Deserialized id '${this._id}' does not match computed id ${id}`);
             this._id = id;
+        }
+        serialize() {
+            const data = super.serialize();
+            // only created events carry frozen default state; keep every other event's serialized shape unchanged
+            if (this._isCreatedEvent && this._frozenDefaultState != null)
+                data.$frozenDefaultState = this._frozenDefaultState;
+            return data;
         }
     };
 })();

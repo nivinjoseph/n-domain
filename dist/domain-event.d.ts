@@ -11,6 +11,7 @@ export declare abstract class DomainEvent<T extends AggregateState> extends Seri
     private readonly _occurredAt;
     private _version;
     private readonly _isCreatedEvent;
+    private _frozenDefaultState;
     get aggregateId(): string;
     get id(): string;
     get userId(): string;
@@ -23,6 +24,7 @@ export declare abstract class DomainEvent<T extends AggregateState> extends Seri
     get isCreatedEvent(): boolean;
     constructor(data: DomainEventData);
     apply(aggregate: AggregateRoot<T, DomainEvent<T>>, domainContext: DomainContext, state: T): void;
+    serialize(): DomainEventData;
     protected abstract applyEvent(state: T): void;
 }
 //# sourceMappingURL=domain-event.d.ts.map

@@ -66,7 +66,9 @@ let AggregateRoot = (() => {
             given(stateFactory, "stateFactory").ensureHasValue().ensureIsObject();
             this._stateFactory = stateFactory;
             given(currentState, "currentState").ensureIsObject();
-            this._state = Object.assign(this._stateFactory.create(), currentState);
+            const defaultState = this._stateFactory.create();
+            const currentTypeVersion = defaultState.typeVersion;
+            this._state = Object.assign(defaultState, currentState);
             if (this._state.version) {
                 given(events, "events")
                     .ensure(t => t.length === 0, "no events should be passed when constructing from snapshot");
@@ -80,12 +82,27 @@ let AggregateRoot = (() => {
                 this._retroEvents = [...events];
                 if (this._retroEvents.some(t => t._aggregateId == null)) // Deliberate workaround to access aggregateId
                     this._isNew = true;
-                if (this._isNew)
+                if (this._isNew) {
+                    // freeze the pristine default state (current create() output, captured here before any event
+                    // mutates this._state) into the created event, with base fields stripped. on every future
+                    // replay this is overlaid as the base layer so fields no event writes are sourced from the
+                    // stream rather than from a (possibly changed) future create().
+                    const frozenDefaultState = AggregateStateHelper.serializeStateIntoSnapshot(this._state);
+                    clearBaseState(frozenDefaultState);
+                    const createdEvent = this._retroEvents.find(t => t.isCreatedEvent);
+                    // stamp the frozen defaults onto the created event's internal field via cast (same workaround as
+                    // _aggregateId above), keeping this framework detail off DomainEvent's public surface.
+                    given(createdEvent, "createdEvent")
+                        .ensure(t => t._frozenDefaultState == null, "created event already has frozen default state");
+                    createdEvent._frozenDefaultState = frozenDefaultState;
                     this._retroEvents.forEach(t => t.apply(this, this._domainContext, this._state));
+                }
                 else
                     this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
             }
             this._state = this._stateFactory.update(this._state);
+            given(this._state, "state").ensure(t => t.typeVersion === currentTypeVersion, `loaded state has typeVersion ${this._state.typeVersion} but the current type version is ${currentTypeVersion}; `
+                + "migrate it forward in the state factory's update() method (and bump state.typeVersion)");
             this._retroVersion = this.currentVersion;
         }
         static deserializeFromEvents(domainContext, aggregateType, stateFactory, eventData) {

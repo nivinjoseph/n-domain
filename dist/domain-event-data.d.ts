@@ -6,5 +6,6 @@ export interface DomainEventData {
     $occurredAt?: number | null;
     $version?: number | null;
     $isCreatedEvent?: boolean | null;
+    $frozenDefaultState?: object | null;
 }
 //# sourceMappingURL=domain-event-data.d.ts.map
