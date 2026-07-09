@@ -10,6 +10,5 @@ export declare class AggregateFactory<T extends AggregateRoot<TState, TDomainEve
     private readonly _stateFactory;
     constructor(aggregateType: ClassDefinition<T>, domainContext: DomainContext, stateFactory: AggregateStateFactory<TState>);
     createFromEvents(events: ReadonlyArray<TDomainEvent>): T;
-    createFromState(state: object): T;
 }
 //# sourceMappingURL=aggregate-factory.d.ts.map

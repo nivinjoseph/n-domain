@@ -15,9 +15,5 @@ export class AggregateFactory {
         given(events, "events").ensureHasValue().ensureIsArray().ensureIsNotEmpty();
         return new this._aggregateType(this._domainContext, events, this._stateFactory);
     }
-    createFromState(state) {
-        given(state, "state").ensureHasValue().ensureIsObject();
-        return new this._aggregateType(this._domainContext, [], this._stateFactory, state);
-    }
 }
 //# sourceMappingURL=aggregate-factory.js.map

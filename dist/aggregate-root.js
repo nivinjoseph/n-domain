@@ -166,9 +166,7 @@ let AggregateRoot = (() => {
                 updatedAt: "number"
             });
             const deserializedSnapshot = stateFactory.deserializeSnapshot(stateSnapshot);
-            // return new aggregateType(domainContext, [], deserializedSnapshot);
-            return new AggregateFactory(aggregateType, domainContext, stateFactory)
-                .createFromState(deserializedSnapshot);
+            return new aggregateType(domainContext, [], stateFactory, deserializedSnapshot);
         }
         snapshot(...cloneKeys) {
             return AggregateStateHelper.serializeStateIntoSnapshot(this.state, ...cloneKeys);
