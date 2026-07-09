@@ -32,11 +32,4 @@ export class AggregateFactory<T extends AggregateRoot<TState, TDomainEvent>, TSt
         
         return new this._aggregateType(this._domainContext, events, this._stateFactory);
     }
-    
-    public createFromState(state: object): T
-    {
-        given(state, "state").ensureHasValue().ensureIsObject();
-        
-        return new this._aggregateType(this._domainContext, [], this._stateFactory, state);
-    }
 }
