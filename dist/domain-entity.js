@@ -22,6 +22,19 @@ let DomainEntity = (() => {
             given(id, "id").ensureHasValue().ensureIsString();
             this._id = id;
         }
+        /**
+         * Entities are compared by identity, not state.
+         * @param value (the value to compare)
+         */
+        equals(value) {
+            if (value == null)
+                return false;
+            if (value === this)
+                return true;
+            if (value.getTypeName() !== this.getTypeName())
+                return false;
+            return value.id === this._id;
+        }
     };
 })();
 export { DomainEntity };
