@@ -6,11 +6,12 @@ n-domain is a TypeScript framework that provides a robust foundation for impleme
 
 ## Features
 
-- **Domain-Driven Design Support**: Built-in abstractions for DDD concepts like Aggregates, Entities, and Domain Events
-- **Event Sourcing**: Native support for event-sourced aggregates and state management
+- **Domain-Driven Design Support**: Built-in abstractions for DDD concepts like Aggregates, Entities, Value Objects, and Domain Events
+- **Event Sourcing**: Native support for event-sourced aggregates, snapshots, rebasing, and point-in-time reconstruction
+- **Replay Safety**: Created events freeze the aggregate's initial defaults so replays are isolated from future code changes; a fingerprint helper supports drift-guard tests
+- **State Versioning**: `typeVersion`-based state migration with a built-in guard against loading unmigrated state
+- **Multi-Tenancy**: `Org*` variants of the core types that scope aggregates to an organization
 - **Type Safety**: Written in TypeScript with strong typing support
-- **Flexible Configuration**: Configurable domain contexts and state management
-- **Clean Architecture**: Promotes separation of concerns and clean architecture principles
 
 ## Installation
 
@@ -28,66 +29,59 @@ The framework encourages a clean and organized domain structure. Here's how to o
 
 ```
 domain/
-├── aggregate.ts           # Main aggregate root implementation
-├── aggregate-state.ts     # State interface and factory
+├── todo.ts                # Aggregate root implementation
+├── todo-state.ts          # State interface and state factory
 ├── events/                # Domain events
-│   ├── aggregate-created.ts
-│   ├── aggregate-updated.ts
-│   └── aggregate-deleted.ts
-└── value-objects/        # Value objects
-    ├── description.ts
-    └── other-value-objects.ts
+│   ├── todo-domain-event.ts   # Abstract event base for this aggregate
+│   ├── todo-created.ts
+│   ├── todo-title-updated.ts
+│   └── todo-rebased.ts
+└── value-objects/         # Value objects
+    └── todo-description.ts
 ```
 
 ### Key Components
 
-1. **Aggregate Root** (`aggregate.ts`)
-   - Main business entity
-   - Handles business logic
-   - Manages state changes through events
-   - Example: `Todo` aggregate
+1. **Aggregate Root** (`todo.ts`)
+   - Main business entity; handles business logic
+   - Manages state changes exclusively through events
 
-2. **State Management** (`aggregate-state.ts`)
-   - Defines the state interface
-   - Implements state factory
-   - Handles state transitions
-   - Example: `TodoState` and `TodoStateFactory`
+2. **State** (`todo-state.ts`)
+   - Defines the state interface (extends `AggregateState`)
+   - Implements the state factory (`AggregateStateFactory`) which owns defaults, migrations, and snapshot deserialization
 
 3. **Domain Events** (`events/`)
-   - Represent state changes
-   - Immutable and serializable
-   - Follow naming convention: `AggregateActionEvent`
-   - Examples: `TodoCreated`, `TodoUpdated`, `TodoDeleted`
+   - Represent state changes; immutable and serializable
+   - Each aggregate defines an abstract event base class that implements `refType`
 
 4. **Value Objects** (`value-objects/`)
-   - Immutable objects
-   - No identity
-   - Represent domain concepts
-   - Examples: `TodoDescription`, `Address`, `Money`
+   - Immutable, no identity; extend `DomainObject`
 
 ## Core Concepts
 
 ### Aggregate Roots
 
-Aggregate roots are the main building blocks of your domain model. They encapsulate business logic and ensure consistency boundaries. Example:
+Aggregate roots are the main building blocks of your domain model. They encapsulate business logic and ensure consistency boundaries. Use `AggregateFactory` to instantiate aggregates:
 
 ```typescript
 import { given } from "@nivinjoseph/n-defensive";
-import { AggregateRoot, DomainContext, DomainEvent } from "@nivinjoseph/n-domain";
-import { TodoCreated } from "./events/todo-created";
-import { TodoState, TodoStateFactory } from "./todo-state";
+import { serialize } from "@nivinjoseph/n-util";
+import { AggregateFactory, AggregateRoot, DomainContext, DomainHelper } from "@nivinjoseph/n-domain";
+import { TodoCreated } from "./events/todo-created.js";
+import { TodoDomainEvent } from "./events/todo-domain-event.js";
+import { TodoRebased } from "./events/todo-rebased.js";
+import { TodoTitleUpdated } from "./events/todo-title-updated.js";
+import { TodoState, TodoStateFactory } from "./todo-state.js";
+import { TodoDescription } from "./value-objects/todo-description.js";
 
-@serialize("Test")
+
+@serialize("App") // your app's serialization namespace
 export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
 {
     public get title(): string { return this.state.title; }
     public get description(): string | null { return this.state.description?.description ?? null; }
     public get isCompleted(): boolean { return this.state.isCompleted; }
 
-    public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<TodoState>>, state?: TodoState)
-    {
-        super(domainContext, events, new TodoStateFactory(), state);
-    }
 
     public static create(domainContext: DomainContext, title: string, description: string | null): Todo
     {
@@ -95,11 +89,14 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
         given(title, "title").ensureHasValue().ensureIsString();
         given(description as string, "description").ensureIsString();
 
-        return new Todo(domainContext, [new TodoCreated({
+        const createdEvent = new TodoCreated({
             todoId: DomainHelper.generateId("tdo"),
             title,
             description: description != null ? TodoDescription.create(description) : null
-        })]);
+        });
+
+        return new AggregateFactory(Todo, domainContext, new TodoStateFactory())
+            .createFromEvents([createdEvent]);
     }
 
     public updateTitle(title: string): void
@@ -108,25 +105,50 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
         title = title.trim();
         this.applyEvent(new TodoTitleUpdated({ title }));
     }
+
+    // rebase() is protected on AggregateRoot; expose it by overriding with your rebased event
+    public override rebase(version: number): void
+    {
+        super.rebase(version, (defaultState, rebaseState, rebaseVersion) =>
+            new TodoRebased({ defaultState, rebaseState, rebaseVersion }));
+    }
 }
 ```
 
 ### Domain Events
 
-Domain events represent state changes in your aggregates. They are immutable and carry the data necessary to modify the aggregate state:
+Every aggregate defines an abstract event base class that implements `refType` (used for n-eda compatibility). Concrete events extend it:
+
+```typescript
+import { DomainEvent } from "@nivinjoseph/n-domain";
+import { TodoState } from "../todo-state.js";
+
+
+export abstract class TodoDomainEvent extends DomainEvent<TodoState>
+{
+    // Return the aggregate's type name as a string literal.
+    // Do NOT import the aggregate class here — that creates a circular dependency that blows up at runtime.
+    public get refType(): string { return "Todo"; }
+}
+```
+
+Concrete events carry the data necessary to modify the aggregate state and implement `applyEvent`:
 
 ```typescript
 import { given } from "@nivinjoseph/n-defensive";
 import { serialize } from "@nivinjoseph/n-util";
 import { DomainEventData } from "@nivinjoseph/n-domain";
-import { TodoState } from "../todo-state";
+import { TodoState } from "../todo-state.js";
+import { TodoDescription } from "../value-objects/todo-description.js";
+import { TodoDomainEvent } from "./todo-domain-event.js";
 
 
-@serialize("Test")
+@serialize("App")
 export class TodoCreated extends TodoDomainEvent
 {
     private readonly _todoId: string;
     private readonly _title: string;
+    private readonly _description: TodoDescription | null;
 
     @serialize
     public get todoId(): string { return this._todoId; }
@@ -140,23 +162,27 @@ export class TodoCreated extends TodoDomainEvent
     public constructor(data: EventData)
     {
         given(data, "data").ensureHasValue().ensureIsObject();
-        data.$isCreatedEvent = true;
+        data.$isCreatedEvent = true; // only on the creation event
         super(data);
 
-        const { todoId, title } = data;
+        const { todoId, title, description } = data;
 
         given(todoId, "todoId").ensureHasValue().ensureIsString();
         this._todoId = todoId;
 
         given(title, "title").ensureHasValue().ensureIsString();
         this._title = title;
+
+        given(description, "description").ensureIsType(TodoDescription);
+        this._description = description;
     }
 
     protected applyEvent(state: TodoState): void
     {
         given(state, "state").ensureHasValue().ensureIsObject();
-        state.id = this._todoId;
+        state.id = this._todoId; // the created event MUST set the aggregate id
         state.title = this._title;
+        state.description = this._description;
     }
 }
 
@@ -164,17 +190,17 @@ interface EventData extends DomainEventData
 {
     todoId: string;
     title: string;
+    description: TodoDescription | null;
 }
 ```
 
 ### State Management
 
-State management is handled through state interfaces and factories:
+State is defined by an interface extending `AggregateState` and produced by a factory extending `AggregateStateFactory`:
 
 ```typescript
-import { AggregateState } from "@nivinjoseph/n-domain";
-import { AggregateStateFactory } from "@nivinjoseph/n-domain";
-import { TodoDescription } from "./value-objects/todo-description";
+import { AggregateState, AggregateStateFactory } from "@nivinjoseph/n-domain";
+import { TodoDescription } from "./value-objects/todo-description.js";
 
 export interface TodoState extends AggregateState
 {
@@ -197,123 +223,276 @@ export class TodoStateFactory extends AggregateStateFactory<TodoState>
 }
 ```
 
+#### State migrations (`typeVersion`)
+
+`createDefaultAggregateState()` initializes `typeVersion` to `1`. When you make a breaking change to the state shape:
+
+1. Bump `typeVersion` in your factory's `create()`.
+2. Override `update(state)` to migrate older state forward (and set its `typeVersion` accordingly).
+
+The `AggregateRoot` constructor runs every loaded state through `update()` and **throws** if the resulting `typeVersion` doesn't match the current `create()` output — so an unmigrated snapshot or stream fails fast instead of loading silently corrupted state.
+
+```typescript
+export class TodoStateFactory extends AggregateStateFactory<TodoState>
+{
+    public create(): TodoState
+    {
+        return {
+            ...this.createDefaultAggregateState(),
+            typeVersion: 2, // bumped due to shape change
+            title: null as any,
+            description: null,
+            isCompleted: false
+        } as TodoState;
+    }
+
+    public override update(state: TodoState): TodoState
+    {
+        if (state.typeVersion === 1)
+        {
+            // migrate v1 -> v2 here
+            (state as { typeVersion: number; }).typeVersion = 2;
+        }
+        return state;
+    }
+}
+```
+
+### Replay safety: frozen created-event defaults
+
+When a new aggregate is created, the pristine output of the state factory's `create()` (with base fields stripped) is frozen into the created event and serialized as `$frozenDefaultState`. On every future replay, this frozen snapshot is overlaid as the base layer before events apply.
+
+This means fields that no event ever writes are sourced from the **stream** rather than from a possibly-changed future `create()` — changing a default in `create()` no longer silently rewrites historical aggregates on replay. Brand-new fields added to `create()` later still fall through to the current default (additive evolution is preserved). Only created events carry this payload; other events' serialized shape is unchanged.
+
+#### Drift guard
+
+Because changing an *existing* default in `create()` is a meaningful (and easy-to-miss) act, `AggregateStateHelper.fingerprintState()` produces a stable, canonically-sorted SHA-512 fingerprint of a state object. The intended pattern is a drift-guard test: persist the fingerprint of `create()` in source control and fail the test when it changes unexpectedly.
+
+```typescript
+import { AggregateStateHelper } from "@nivinjoseph/n-domain";
+
+const EXPECTED_FINGERPRINT = "..."; // checked into source control
+
+test("TodoStateFactory.create() output has not drifted", () =>
+{
+    const fingerprint = AggregateStateHelper.fingerprintState(new TodoStateFactory().create());
+    assert.strictEqual(fingerprint, EXPECTED_FINGERPRINT);
+});
+```
+
+### Domain Objects and Entities
+
+- **`DomainObject`** — base class for value objects. `equals()` is **structural**: two instances are equal if they have the same type and identical serialized state.
+- **`DomainEntity`** — base class for entities (has an `id`). `equals()` is **identity-based**: two instances are equal if they have the same type and the same `id`, regardless of state.
+
+```typescript
+import { given } from "@nivinjoseph/n-defensive";
+import { serialize } from "@nivinjoseph/n-util";
+import { DomainObject } from "@nivinjoseph/n-domain";
+
+
+@serialize("App")
+export class TodoDescription extends DomainObject
+{
+    private readonly _description: string;
+
+    @serialize
+    public get description(): string { return this._description; }
+
+    public constructor(data: { description: string; })
+    {
+        super(data);
+        const { description } = data;
+        given(description, "description").ensureHasValue().ensureIsString();
+        this._description = description;
+    }
+}
+```
+
+### Multi-tenancy (`Org*` types)
+
+For organization-scoped domains, use the `Org*` variants. They mirror the core types and additionally thread an `organizationId` through the context, state, events, and aggregate:
+
+- `OrgDomainContext` — `DomainContext` plus `organizationId: string`
+- `OrgConfigurableDomainContext` — `ConfigurableDomainContext` plus a settable `organizationId`; constructed with `(userId, organizationId)`
+- `OrgAggregateState` — `AggregateState` plus `organizationId: string`
+- `OrgAggregateStateFactory` — constructed with an `OrgDomainContext`; `createDefaultAggregateState()` stamps `organizationId` into the state
+- `OrgDomainEvent` / `OrgDomainEventData` — events carry `$organizationId`; on apply, the event's `organizationId` is validated against the state's and an exception is thrown on mismatch
+- `OrgAggregateRoot` — exposes `organizationId` and requires an `OrgDomainContext`; `applyEvent` only accepts `OrgDomainEvent`s
+
 ## API Reference
 
 ### AggregateRoot
 
-Base class for aggregate roots in your domain model.
+Abstract base class for aggregate roots. Generic over `<T extends AggregateState, TDomainEvent extends DomainEvent<T>>`.
+
+Constructor: `(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>, stateFactory: AggregateStateFactory<T>, currentState?: T)` — pass events **or** a snapshot state, never both. Prefer instantiating through `AggregateFactory`.
 
 Properties:
-- `context`: DomainContext - The domain context
-- `id`: string - Unique identifier for the aggregate
-- `retroEvents`: ReadonlyArray<DomainEvent<T>> - Historical events
-- `retroVersion`: number - Version of historical events
-- `currentEvents`: ReadonlyArray<DomainEvent<T>> - Current uncommitted events
-- `currentVersion`: number - Current version of the aggregate
-- `events`: ReadonlyArray<DomainEvent<T>> - All events (historical + current)
-- `version`: number - Current version of the aggregate
-- `createdAt`: number - Creation timestamp
-- `updatedAt`: number - Last update timestamp
-- `isNew`: boolean - Whether the aggregate is newly created
-- `hasChanges`: boolean - Whether there are uncommitted changes
-- `isReconstructed`: boolean - Whether the aggregate was reconstructed
-- `reconstructedFromVersion`: number - Version from which the aggregate was reconstructed
-- `isRebased`: boolean - Whether the aggregate was rebased
-- `rebasedFromVersion`: number - Version from which the aggregate was rebased
+- `context`: DomainContext — the domain context
+- `id`: string — unique identifier for the aggregate
+- `retroEvents`: ReadonlyArray<DomainEvent<T>> — historical (persisted) events, ordered by version
+- `retroVersion`: number — version as of the historical events
+- `currentEvents`: ReadonlyArray<DomainEvent<T>> — uncommitted events applied this session
+- `currentVersion`: number — current version (same as `version`)
+- `events`: ReadonlyArray<DomainEvent<T>> — all events (historical + current), ordered by version
+- `version`: number — current version of the aggregate
+- `createdAt`: number — creation timestamp (epoch ms)
+- `updatedAt`: number — last update timestamp (epoch ms)
+- `isNew`: boolean — true only for a freshly created aggregate (never for reconstructed ones)
+- `hasChanges`: boolean — whether there are uncommitted events
+- `isReconstructed`: boolean — whether this instance was produced by `constructVersion`/`constructBefore`
+- `reconstructedFromVersion`: number — version of the instance it was reconstructed from
+- `isRebased`: boolean — whether the stream contains a rebase
+- `rebasedFromVersion`: number — version the aggregate was rebased from
+- `state`: T *(protected)* — the current state; expose domain-specific getters off this
 
-Key Methods:
-- `deserializeFromEvents(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, eventData: ReadonlyArray<DomainEventData>)`: Static method to reconstruct an aggregate from events
-- `deserializeFromSnapshot(domainContext: DomainContext, aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, stateSnapshot: TAggregateState | object)`: Static method to reconstruct an aggregate from a snapshot
-- `snapshot(...cloneKeys: ReadonlyArray<string>)`: Create a snapshot of the current state
-- `constructVersion(version: number)`: Construct the aggregate at a specific version
-- `constructBefore(dateTime: number)`: Construct the aggregate before a specific timestamp
-- `hasEventOfType(eventType: new (...args: Array<any>) => TEventType)`: Check if any event of a specific type exists
-- `hasRetroEventOfType(eventType: new (...args: Array<any>) => TEventType)`: Check if any historical event of a specific type exists
-- `hasCurrentEventOfType(eventType: new (...args: Array<any>) => TEventType)`: Check if any current event of a specific type exists
-- `getEventsOfType(eventType: new (...args: Array<any>) => TEventType)`: Get all events of a specific type
-- `getRetroEventsOfType(eventType: new (...args: Array<any>) => TEventType)`: Get all historical events of a specific type
-- `getCurrentEventsOfType(eventType: new (...args: Array<any>) => TEventType)`: Get all current events of a specific type
-- `clone(domainContext: DomainContext, createdEvent: DomainEvent<T>, serializedEventMutatorAndFilter?: (event: { $name: string; }) => boolean)`: Create a clone of the aggregate
-- `rebase(version: number, rebasedEventFactoryFunc: (defaultState: object, rebaseState: object, rebaseVersion: number) => TDomainEvent)`: Rebase the aggregate to a specific version
-- `applyEvent(event: TDomainEvent)`: Apply a new event to the aggregate
+Static methods:
+- `deserializeFromEvents(domainContext, aggregateType, stateFactory, eventData: ReadonlyArray<DomainEventData>)`: reconstruct an aggregate from serialized events
+- `deserializeFromSnapshot(domainContext, aggregateType, stateFactory, stateSnapshot)`: reconstruct an aggregate from a snapshot
+
+Instance methods:
+- `serialize()`: AggregateRootData — serialize the aggregate (id, version, timestamps, and all events)
+- `snapshot(...cloneKeys: ReadonlyArray<string>)`: T | object — snapshot of current state; `cloneKeys` names state properties to deep-clone via JSON instead of `Serializable` serialization
+- `constructVersion(version: number)`: this — reconstruct the aggregate as of a specific version
+- `constructBefore(dateTime: number)`: this — reconstruct the aggregate as of just before a timestamp
+- `hasEventOfType(eventType)` / `hasRetroEventOfType(eventType)` / `hasCurrentEventOfType(eventType)`: boolean
+- `getEventsOfType(eventType)` / `getRetroEventsOfType(eventType)` / `getCurrentEventsOfType(eventType)`: Array<TEventType>
+- `clone(createdEvent: DomainEvent<T>, serializedEventMutatorAndFilter?: (event: { $name: string; }) => boolean)`: this — create a new aggregate seeded by `createdEvent`, replaying this aggregate's non-created events onto it; the optional callback can mutate each serialized event and return false to drop it
+- `test()`: void — self-check that serialization, event replay, and snapshot round-trips all reproduce identical state; useful in tests
+- `applyEvent(event: TDomainEvent)` *(protected)* — apply a new event; call from your aggregate's behavior methods
+- `rebase(version: number, rebasedEventFactoryFunc: (defaultState: object, rebaseState: object, rebaseVersion: number) => TDomainEvent)` *(protected)* — collapse history up to `version` into a single rebase event produced by the factory function; override with a public method that supplies your aggregate's rebased event type
+
+### AggregateFactory
+
+Instantiates aggregates without hand-writing constructor plumbing.
+
+- `constructor(aggregateType, domainContext, stateFactory)`
+- `createFromEvents(events: ReadonlyArray<TDomainEvent>)`: T
 
 ### DomainEvent
 
-Base class for domain events.
+Abstract base class for domain events. Generic over `<T extends AggregateState>`.
 
 Properties:
-- `aggregateId`: string - ID of the aggregate this event belongs to
-- `id`: string - Unique identifier for the event
-- `userId`: string - ID of the user who triggered the event
-- `name`: string - Name of the event type
-- `partitionKey`: string - Same as aggregateId (for n-eda compatibility)
-- `refId`: string - Same as aggregateId (for n-eda compatibility)
-- `refType`: string - Abstract property to be implemented (for n-eda compatibility)
-- `occurredAt`: number - Timestamp when the event occurred
-- `version`: number - Version number of the event
-- `isCreatedEvent`: boolean - Whether this is a creation event
+- `aggregateId`: string — ID of the aggregate this event belongs to *(throws if accessed before the event is applied)*
+- `id`: string — unique event identifier (`aggregateId-version`) *(throws if accessed before apply)*
+- `userId`: string — ID of the user who triggered the event *(throws if accessed before apply)*
+- `name`: string — event type name (derived from the class name; validated against `$name` on deserialization)
+- `partitionKey`: string — same as `aggregateId` (n-eda compatibility)
+- `refId`: string — same as `aggregateId` (n-eda compatibility)
+- `refType`: string — *abstract*; the aggregate's type name (n-eda compatibility). Implement with a string literal, not an import of the aggregate class
+- `occurredAt`: number — timestamp when the event occurred (epoch ms)
+- `version`: number — version number of the event
+- `isCreatedEvent`: boolean — whether this is the creation event
 
-Key Methods:
-- `apply(aggregate: AggregateRoot<T, DomainEvent<T>>, domainContext: DomainContext, state: T)`: Apply the event to an aggregate
-- `applyEvent(state: T)`: Abstract method to be implemented for applying event-specific changes to state
+Methods:
+- `apply(aggregate, domainContext, state)`: applies the event — stamps `userId`/`version`/`id`, overlays `$frozenDefaultState` for created events, invokes `applyEvent`, and updates `createdAt`/`updatedAt`. Called by the framework; you should not call this directly
+- `serialize()`: DomainEventData — created events additionally carry `$frozenDefaultState`
+- `applyEvent(state: T)` *(protected, abstract)* — implement your event-specific state mutation here. The created event must set `state.id`
+
+### DomainEventData
+
+Serialized event shape: `$aggregateId`, `$id`, `$userId`, `$name`, `$occurredAt`, `$version`, `$isCreatedEvent` (all optional/null on unapplied events), and `$frozenDefaultState` (created events only). Extend this interface with your event's own payload fields.
+
+### AggregateRootData
+
+Serialized aggregate shape: `$id`, `$version`, `$createdAt`, `$updatedAt`, `$events`.
 
 ### AggregateState
 
 Base interface for aggregate state.
 
 Properties:
-- `id`: string - Unique identifier for the aggregate
-- `version`: number - Current version of the aggregate
-- `createdAt`: number - Creation timestamp
-- `updatedAt`: number - Last update timestamp
-- `isDeleted`: boolean - Whether the aggregate is deleted
-- `isRebased`: boolean - Whether the aggregate was rebased
-- `rebasedFromVersion`: number - Version from which the aggregate was rebased
+- `typeVersion`: number *(readonly)* — version of the state *shape*; bump on breaking changes and migrate in the factory's `update()`
+- `id`: string — unique identifier for the aggregate
+- `version`: number — current version of the aggregate
+- `createdAt`: number — creation timestamp (epoch ms)
+- `updatedAt`: number — last update timestamp (epoch ms)
+- `isRebased`: boolean — whether the aggregate was rebased
+- `rebasedFromVersion`: number — version from which the aggregate was rebased
+
+### AggregateStateFactory
+
+Abstract base class for state factories. Generic over `<T extends AggregateState>`.
+
+- `create()`: T *(abstract)* — produce the default state; must be deterministic (the framework verifies repeated calls are identical)
+- `update(state: T)`: T — hook for migrating loaded state forward across `typeVersion`s; default is identity
+- `deserializeSnapshot(snapshot: T)`: T — revive serialized value objects inside a snapshot (uses `AggregateStateHelper.deserializeSnapshotIntoState`)
+- `createDefaultAggregateState()` *(protected)*: AggregateState — base-field defaults (`typeVersion: 1`, `isRebased: false`, etc.); spread this into your `create()` output
+
+### AggregateStateHelper
+
+Static utilities for working with state objects.
+
+- `serializeStateIntoSnapshot(state, ...cloneKeys)`: object — serialize state (including nested `Serializable`s) into a plain snapshot; throws if a non-`DomainObject` with private fields is encountered
+- `deserializeSnapshotIntoState(snapshot)`: object — revive registered `Serializable` types inside a snapshot
+- `rebaseState(state, defaultState, rebaseState, rebaseVersion)`: void — layer a rebase snapshot over current defaults onto the state; call from your rebased event's `applyEvent`
+- `fingerprintState(state)`: string — stable SHA-512 fingerprint of a state object with canonically sorted keys; intended for `create()` drift-guard tests
+
+### DomainObject
+
+Abstract base class for value objects (extends `Serializable`).
+
+- `equals(value)`: boolean — structural equality: same type name and identical serialized state
+
+### DomainEntity
+
+Abstract base class for entities (extends `DomainObject`). Constructed with `{ id: string }` in its data.
+
+- `id`: string — unique identifier
+- `equals(value)`: boolean — identity equality: same type name and same `id`, regardless of state
 
 ### DomainContext
 
 Interface for domain context.
 
-Properties:
-- `userId`: string - ID of the current user
+- `userId`: string *(readonly)* — ID of the current user
 
 ### ConfigurableDomainContext
 
-Class for configuring domain context.
+`DomainContext` implementation with a mutable `userId`.
 
-Properties:
-- `userId`: string - ID of the current user
+- `constructor(userId: string)`
+- `userId`: string — gettable and settable
 
-Methods:
-- `configure(userId: string)`: Configure the domain context with a user ID
+### DomainHelper
+
+Static utilities.
+
+- `now`: number — current epoch milliseconds
+- `generateId(prefix: string)`: string — generate a sortable id of the form `pfx_<date><ulid>`; prefix must be exactly 3 alphabetic characters
+- `aggregateTypeToSnakeCase(aggregateType)`: string — convert an aggregate class name to snake_case
+
+### Org* variants
+
+`OrgAggregateRoot`, `OrgAggregateState`, `OrgAggregateStateFactory`, `OrgDomainContext`, `OrgConfigurableDomainContext`, `OrgDomainEvent`, `OrgDomainEventData` — organization-scoped counterparts of the core types; see [Multi-tenancy](#multi-tenancy-org-types) above.
 
 ## Best Practices
 
 1. **Event Design**
-   - Keep events immutable
-   - Include only necessary data
-   - Use meaningful event names
-   - Use `@serialize` decorator for serialization
-   - Implement proper validation using `given`
+   - Keep events immutable; include only necessary data
+   - Define an abstract per-aggregate event base class that implements `refType` with a string literal (never an import of the aggregate — circular dependency)
+   - Use the `@serialize` decorator on the class (with your app's namespace) and on every payload getter
+   - Set `data.$isCreatedEvent = true` in the created event's constructor, before calling `super(data)`
+   - The created event's `applyEvent` must set `state.id`
 
 2. **Aggregate Design**
-   - Keep aggregates focused and cohesive
-   - Maintain consistency boundaries
-   - Use event sourcing for complex state management
-   - Implement proper validation in all public methods
-   - Use static factory methods for creation
+   - Keep aggregates focused and cohesive; maintain consistency boundaries
+   - Use a static `create(...)` factory method that builds the created event and instantiates via `AggregateFactory`
+   - Mutate state only through `applyEvent(...)` from behavior methods
+   - Validate all public method inputs using `given`
 
 3. **State Management**
-   - Use the built-in state management helpers
-   - Implement proper event handlers
-   - Consider performance implications of event history
-   - Use proper typing for state interfaces
+   - Keep `create()` deterministic — same output on every call
+   - Bump `typeVersion` on breaking state-shape changes and migrate in `update()`
+   - Add a drift-guard test on `create()`'s fingerprint (`AggregateStateHelper.fingerprintState`) so default changes are deliberate
+   - Use value objects (extending `DomainObject`) for structured state fields so snapshots serialize correctly
 
 4. **Domain Organization**
-   - Keep related files close together
-   - Use clear naming conventions
-   - Separate concerns into appropriate directories
-   - Maintain a flat structure for better discoverability
+   - Keep related files close together; use clear naming conventions
+   - Separate events and value objects into their own directories
+   - Call `aggregate.test()` in your test suite to verify serialization/replay/snapshot round-trips
 
 ## Contributing
 
