@@ -8,5 +8,10 @@ export declare abstract class DomainEntity<TData extends object = object> extend
      * @param value (the value to compare)
      */
     equals(value: DomainObject | null | undefined): boolean;
+    /**
+     * Entities are compared by state, including identity.
+     * @param value (the value to compare)
+     */
+    deepEquals(value: DomainObject | null | undefined): boolean;
 }
 //# sourceMappingURL=domain-entity.d.ts.map

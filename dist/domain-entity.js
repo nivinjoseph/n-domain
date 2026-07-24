@@ -35,6 +35,13 @@ let DomainEntity = (() => {
                 return false;
             return value.id === this._id;
         }
+        /**
+         * Entities are compared by state, including identity.
+         * @param value (the value to compare)
+         */
+        deepEquals(value) {
+            return super.equals(value);
+        }
     };
 })();
 export { DomainEntity };
