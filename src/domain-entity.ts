@@ -40,4 +40,13 @@ export abstract class DomainEntity<TData extends object = object> extends Domain
 
         return (value as DomainEntity).id === this._id;
     }
+
+    /**
+     * Entities are compared by state, including identity.
+     * @param value (the value to compare)
+     */
+    public deepEquals(value: DomainObject | null | undefined): boolean
+    {
+        return super.equals(value);
+    }
 }
