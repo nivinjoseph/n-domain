@@ -2,7 +2,6 @@ import { given } from "@nivinjoseph/n-defensive";
 import { ApplicationException } from "@nivinjoseph/n-exception";
 import { Serializable, serialize } from "@nivinjoseph/n-util";
 import { AggregateState } from "./aggregate-state.js";
-import { AggregateStateHelper } from "./aggregate-state-helper.js";
 import { DomainEventData } from "./domain-event-data.js";
 import { DomainHelper } from "./domain-helper.js";
 import { AggregateRoot } from "./aggregate-root.js";
@@ -19,9 +18,15 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     private readonly _occurredAt: number; // when
     private _version: number;
     private readonly _isCreatedEvent: boolean;
-    // serialized create() defaults (base fields stripped); created events only. set on deserialize via the
-    // constructor, and on the new-aggregate path by the AggregateRoot constructor through an `any` cast (the
-    // same idiom used for _aggregateId), so this stamping stays off DomainEvent's public surface — hence not readonly.
+    // the aggregate's state-schema version when this event was written; stamped on new events by
+    // AggregateRoot through an `any` cast (the same idiom used for _aggregateId). legacy stored
+    // events lack the stamp and are never retro-stamped — hence not readonly.
+    // eslint-disable-next-line @typescript-eslint/prefer-readonly
+    private _schemaVersion: number | null;
+    // serialized create() defaults (base fields stripped, embedded $schemaVersion stamp); created events
+    // only. set on deserialize via the constructor, and on the new-aggregate path by the AggregateRoot
+    // constructor through an `any` cast (the same idiom used for _aggregateId), so this stamping stays
+    // off DomainEvent's public surface — hence not readonly.
     // eslint-disable-next-line @typescript-eslint/prefer-readonly
     private _frozenDefaultState: object | null;
 
@@ -81,6 +86,7 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
             $occurredAt,
             $version,
             $isCreatedEvent,
+            $schemaVersion,
             $frozenDefaultState
         } = data;
 
@@ -106,6 +112,9 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
         given($isCreatedEvent as boolean, "$isCreatedEvent").ensureIsBoolean();
         this._isCreatedEvent = !!$isCreatedEvent;
 
+        given($schemaVersion as number, "$schemaVersion").ensureIsNumber();
+        this._schemaVersion = $schemaVersion ?? null;
+
         given($frozenDefaultState as object, "$frozenDefaultState").ensureIsObject();
         this._frozenDefaultState = $frozenDefaultState ?? null;
     }
@@ -122,12 +131,9 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
 
         const version = this._version || (state.version + 1) || 1;
 
-        // a created event carrying frozen default state overlays the historical create() defaults
-        // (base fields stripped) onto the current-code base before its own applyEvent sets real values.
-        // this isolates replay from future create() default changes for fields no event writes.
-        if (this._isCreatedEvent && this._frozenDefaultState != null)
-            Object.assign(state, AggregateStateHelper.deserializeSnapshotIntoState(this._frozenDefaultState));
-
+        // NOTE: the frozen-default overlay for created events is applied by the AggregateRoot
+        // replay seam (which owns the state factory and can upcast the payload) BEFORE apply()
+        // is invoked — it deliberately does not happen here.
         this.applyEvent(state);
 
         if (this._isCreatedEvent)
@@ -154,6 +160,10 @@ export abstract class DomainEvent<T extends AggregateState> extends Serializable
     public override serialize(): DomainEventData
     {
         const data = super.serialize();
+
+        // stamped on new events only; legacy stored events lack it and keep their serialized shape unchanged
+        if (this._schemaVersion != null)
+            data.$schemaVersion = this._schemaVersion;
 
         // only created events carry frozen default state; keep every other event's serialized shape unchanged
         if (this._isCreatedEvent && this._frozenDefaultState != null)

@@ -88,12 +88,11 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
     public override rebase(version: number): void
     {
         super.rebase(version,
-            (defaultState: object, rebaseState: object, rebaseVersion: number) =>
+            (baseline: object, rebaseVersion: number) =>
             {
                 return new TodoRebased({
-                    defaultState,
-                    rebaseState,
-                    rebaseVersion
+                    $baseline: baseline,
+                    $rebaseVersion: rebaseVersion
                 });
             });
     }

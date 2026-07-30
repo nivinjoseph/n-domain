@@ -24,7 +24,7 @@ await describe("Untouched-field default drift on replay", async () =>
             const serialized = original.serialize();
 
             // simulate a future code version whose create() changes an existing untouched-field default.
-            // (typeVersion is intentionally NOT bumped, so the typeVersion migration check is not involved.)
+            // (the shape is unchanged, so no migration step is involved — this is pure value drift.)
             class DriftedTodoStateFactory extends TodoStateFactory
             {
                 public override create(): TodoState
@@ -128,7 +128,9 @@ await describe("Untouched-field default drift on replay", async () =>
 
             const frozen = (created as { $frozenDefaultState: Record<string, unknown>; }).$frozenDefaultState;
             assert.strictEqual(frozen["isCompleted"], false);     // untouched domain default is captured
-            assert.ok(!("typeVersion" in frozen), "typeVersion (base field) must be stripped from frozen default");
+            assert.strictEqual(frozen["$schemaVersion"], 1,
+                "frozen default must carry its write-time $schemaVersion stamp");
+            assert.ok(!("typeVersion" in frozen), "legacy typeVersion must never appear in frozen default");
             assert.ok(!("id" in frozen), "id (base field) must be stripped from frozen default");
             assert.ok(!("version" in frozen), "version (base field) must be stripped from frozen default");
         });

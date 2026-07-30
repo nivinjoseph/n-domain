@@ -1,13 +1,15 @@
 import "@nivinjoseph/n-ext";
-import { Delay, Schema } from "@nivinjoseph/n-util";
+import { Delay, Schema, serialize } from "@nivinjoseph/n-util";
 import assert from "node:assert";
 import { describe, test } from "node:test";
-import { AggregateRoot, DomainContext, DomainHelper } from "../src/index.js";
+import { AggregateRoot, DomainContext, DomainHelper, StateMigration } from "../src/index.js";
 import { TodoCreated } from "./domain/events/todo-created.js";
 import { TodoDescriptionUpdated } from "./domain/events/todo-description-updated.js";
+import { TodoRebased } from "./domain/events/todo-rebased.js";
 import { Todo } from "./domain/todo.js";
 import { TodoDescription } from "./domain/value-objects/todo-description.js";
-import { MigratedTodoStateFactory, TodoState, TodoStateFactory, UnmigratedTodoStateFactory } from "./domain/todo-state.js";
+import { LegacyTodoRebased } from "./domain/events/legacy-todo-rebased.js";
+import { MigratedTodoStateFactory, TodoState, TodoStateFactory } from "./domain/todo-state.js";
 
 
 await describe("Domain tests", async () =>
@@ -328,46 +330,460 @@ await describe("Domain tests", async () =>
     });
 
 
-    await describe("Type version", async () =>
+    await describe("Schema migration", async () =>
     {
+        // MigratedTodoStateFactory simulates current code at schema version 2, where version 1's
+        // `legacyTitle` was renamed to `title`. Old-shape artifacts are crafted by hand.
+        const reshapeToV1 = (payload: Record<string, any>): Record<string, any> =>
+        {
+            payload["legacyTitle"] = payload["title"];
+            delete payload["title"];
+            return payload;
+        };
+
         await test(`
-            Given a snapshot persisted at typeVersion 1,
-            When it is deserialized through a factory whose create() is at typeVersion 2
-                but whose update() does not migrate the state,
-            Then deserialization should throw
+            Given a snapshot written at schema version 1 (stamped $schemaVersion 1, old shape),
+            When it is deserialized through a factory at schema version 2 whose migration chain
+                renames the field forward,
+            Then deserialization should succeed and the renamed field's value should be recovered
         `,
             () =>
             {
                 const original = Todo.create(domainContext, "title", null);
-                const snapshot = original.snapshot() as { typeVersion: number; };
-                assert.strictEqual(snapshot.typeVersion, 1);
-
-                assert.throws(
-                    () => AggregateRoot.deserializeFromSnapshot(
-                        domainContext, Todo, new UnmigratedTodoStateFactory(), snapshot as TodoState),
-                    /typeVersion/);
-            });
-
-        await test(`
-            Given a snapshot persisted at typeVersion 1,
-            When it is deserialized through a factory whose create() is at typeVersion 2
-                and whose update() migrates the state from 1 to 2,
-            Then deserialization should succeed,
-                and the resulting id should equal the original id,
-                and the resulting title should equal the original title,
-                and the resulting state typeVersion should be 2
-        `,
-            () =>
-            {
-                const original = Todo.create(domainContext, "title", null);
-                const snapshot = original.snapshot() as TodoState;
+                const snapshot = original.snapshot() as Record<string, any>;
+                assert.strictEqual(snapshot["$schemaVersion"], 1);
+                reshapeToV1(snapshot);
 
                 const migrated = AggregateRoot.deserializeFromSnapshot(
-                    domainContext, Todo, new MigratedTodoStateFactory(), snapshot);
+                    domainContext, Todo, new MigratedTodoStateFactory(), snapshot as unknown as TodoState);
 
                 assert.strictEqual(migrated.id, original.id);
                 assert.strictEqual(migrated.title, "title");
-                assert.strictEqual((migrated as unknown as { state: TodoState; }).state.typeVersion, 2);
+            });
+
+        await test(`
+            Given a legacy snapshot carrying the pre-4.0 in-band typeVersion stamp (no $schemaVersion),
+            When it is deserialized through a factory at schema version 2,
+            Then the in-band stamp should drive the migration chain,
+                and typeVersion should never reach live state
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", null);
+                const snapshot = original.snapshot() as Record<string, any>;
+                delete snapshot["$schemaVersion"];
+                reshapeToV1(snapshot);
+                snapshot["typeVersion"] = 1;
+
+                const migrated = AggregateRoot.deserializeFromSnapshot(
+                    domainContext, Todo, new MigratedTodoStateFactory(), snapshot as unknown as TodoState);
+
+                assert.strictEqual(migrated.title, "title");
+                assert.ok(!("typeVersion" in (migrated as unknown as { state: object; }).state));
+            });
+
+        await test(`
+            Given a snapshot containing keys that do not exist on the current state shape,
+            When it is deserialized through a factory with no migration step for them,
+            Then deserialization should throw loudly (zombie/rename ingress guard)
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", null);
+                const snapshot = reshapeToV1(original.snapshot() as Record<string, any>);
+
+                assert.throws(
+                    () => AggregateRoot.deserializeFromSnapshot(
+                        domainContext, Todo, new TodoStateFactory(), snapshot as unknown as TodoState),
+                    /legacyTitle/);
+            });
+
+        await test(`
+            Given a snapshot stamped with a schema version newer than the current code's,
+            When it is deserialized,
+            Then deserialization should throw (artifact written by newer code)
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", null);
+                const snapshot = original.snapshot() as Record<string, any>;
+                snapshot["$schemaVersion"] = 5;
+
+                assert.throws(
+                    () => AggregateRoot.deserializeFromSnapshot(
+                        domainContext, Todo, new TodoStateFactory(), snapshot as unknown as TodoState),
+                    /newer code/);
+            });
+
+        await test(`
+            Given a legacy snapshot whose in-band typeVersion exceeds the migration chain,
+            When it is deserialized,
+            Then deserialization should throw the dedicated under-ported-chain error
+                (not the misleading "newer code" one)
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", null);
+                const snapshot = original.snapshot() as Record<string, any>;
+                delete snapshot["$schemaVersion"];
+                snapshot["typeVersion"] = 3;
+
+                assert.throws(
+                    () => AggregateRoot.deserializeFromSnapshot(
+                        domainContext, Todo, new TodoStateFactory(), snapshot as unknown as TodoState),
+                    /port the pre-4\.0 update\(\) chain/);
+            });
+
+        await test(`
+            Given a snapshot missing a field that exists on the current state shape,
+            When it is deserialized,
+            Then the missing field should fall through to the current create() default
+                (additive evolution stays free)
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", null);
+                const snapshot = original.snapshot() as Record<string, any>;
+                delete snapshot["isCompleted"];
+
+                const loaded = AggregateRoot.deserializeFromSnapshot(
+                    domainContext, Todo, new TodoStateFactory(), snapshot as unknown as TodoState);
+
+                assert.strictEqual(loaded.isCompleted, false);
+            });
+
+        await test(`
+            Given a stream whose created event carries an old-shape frozen default state,
+            When it is replayed through a factory at schema version 2,
+            Then the frozen default should be upcast at ingress and replay should succeed,
+                and replaying through a factory WITHOUT the migration step should throw
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", null);
+                original.updateTitle("updated");
+                const serialized = original.serialize();
+
+                const created = serialized.$events.find(e => e.$isCreatedEvent === true) as Record<string, any>;
+                created["$frozenDefaultState"] = {
+                    legacyTitle: null,
+                    description: null,
+                    isCompleted: false,
+                    $schemaVersion: 1
+                };
+
+                const replayed = Todo.deserializeFromEvents(
+                    domainContext, Todo, new MigratedTodoStateFactory(), serialized.$events);
+                assert.strictEqual(replayed.title, "updated");
+                assert.strictEqual(replayed.isCompleted, false);
+
+                assert.throws(
+                    () => Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events),
+                    /legacyTitle/);
+            });
+
+        await test(`
+            Given a rebased stream whose rebase baseline was written at schema version 1 (old shape),
+            When it is replayed through a factory at schema version 2,
+            Then the baseline should be upcast at ingress and the renamed field's value recovered
+                (a value stranded in an old-shape key is rescued, not lost),
+                and the full round-trip self-check should pass
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", "description");
+                original.updateTitle("title update 1");
+                original.updateTitle("title update 2");
+                original.rebase(2);
+                const serialized = original.serialize();
+
+                const rebaseEventData = serialized.$events
+                    .find(e => (e as Record<string, any>)["$baseline"] != null) as Record<string, any> | undefined;
+                assert.ok(rebaseEventData != null, "expected a rebase event in the stream");
+                reshapeToV1(rebaseEventData["$baseline"] as Record<string, any>);
+
+                const replayed = Todo.deserializeFromEvents(
+                    domainContext, Todo, new MigratedTodoStateFactory(), serialized.$events);
+
+                assert.strictEqual(replayed.title, "title update 1");
+                assert.strictEqual(replayed.isRebased, true);
+                assert.strictEqual(replayed.rebasedFromVersion, 2);
+                replayed.test();
+
+                assert.throws(
+                    () => Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), serialized.$events),
+                    /legacyTitle/);
+            });
+
+        await test(`
+            Given a live state carrying a key that does not exist on the current state shape,
+            When snapshot() is invoked,
+            Then it should throw (egress guard severing the residue-laundering loop),
+                and a subsequent rebase should RESET the state so snapshot() succeeds again
+        `,
+            () =>
+            {
+                const todo = Todo.create(domainContext, "title", "description");
+                todo.updateTitle("title update 1");
+
+                (todo as unknown as { _state: Record<string, any>; })._state["zombie"] = "residue";
+                assert.throws(() => todo.snapshot(), /zombie/);
+
+                todo.rebase(2);
+                const snapshot = todo.snapshot() as Record<string, any>;
+                assert.ok(!("zombie" in snapshot), "RESET rebase must clear residue");
+                assert.strictEqual(todo.title, "title update 1");
+            });
+
+        await test(`
+            Given a stream persisted with a pre-4.0 user-defined rebase event (defaultState + rebaseState pair),
+            When it is replayed under current code,
+            Then the deprecated legacy apply path should preserve historical behavior unchanged
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", "description");
+                original.updateTitle("title update 1");
+                original.updateTitle("title update 2");
+                const serialized = original.serialize();
+
+                const v2Snapshot = original.constructVersion(2).snapshot() as Record<string, any>;
+                delete v2Snapshot["$schemaVersion"];
+                ["id", "version", "createdAt", "updatedAt", "isRebased", "rebasedFromVersion"]
+                    .forEach(key => { delete v2Snapshot[key]; });
+
+                const legacyRebase = new LegacyTodoRebased({
+                    $aggregateId: original.id,
+                    $id: `${original.id}-4`,
+                    $userId: "dev",
+                    $occurredAt: original.updatedAt,
+                    $version: 4,
+                    defaultState: { title: null, description: null, isCompleted: false },
+                    rebaseState: v2Snapshot,
+                    rebaseVersion: 2
+                });
+
+                const events = [...serialized.$events, legacyRebase.serialize()];
+                const replayed = Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), events);
+
+                assert.strictEqual(replayed.title, "title update 1");
+                assert.strictEqual(replayed.isRebased, true);
+                assert.strictEqual(replayed.rebasedFromVersion, 2);
+                assert.strictEqual(replayed.version, 4);
+            });
+
+        await test(`
+            Given a newly created aggregate,
+            When it is serialized,
+            Then every event should carry the write-time $schemaVersion stamp,
+                and the snapshot should carry it as envelope metadata
+        `,
+            () =>
+            {
+                const todo = Todo.create(domainContext, "title", "description");
+                todo.updateTitle("updated");
+
+                const serialized = todo.serialize();
+                serialized.$events.forEach(e =>
+                    assert.strictEqual((e as Record<string, any>)["$schemaVersion"], 1));
+
+                const snapshot = todo.snapshot() as Record<string, any>;
+                assert.strictEqual(snapshot["$schemaVersion"], 1);
+            });
+
+        await test(`
+            Given a rebased stream with an old-shape baseline AND events applied after the rebase,
+            When it is replayed through a migrated factory,
+            Then RESET-then-apply ordering must hold: post-rebase events win over the upcast baseline,
+                and the full round-trip self-check passes,
+                and a second rebase over the migrated replay is stable
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", "description");
+                original.updateTitle("title update 1");
+                original.rebase(2);
+                original.updateTitle("post-rebase title");
+                const serialized = original.serialize();
+
+                const rebaseEventData = serialized.$events
+                    .find(e => (e as Record<string, any>)["$baseline"] != null) as Record<string, any> | undefined;
+                assert.ok(rebaseEventData != null, "expected a rebase event in the stream");
+                reshapeToV1(rebaseEventData["$baseline"] as Record<string, any>);
+
+                const replayed = Todo.deserializeFromEvents(
+                    domainContext, Todo, new MigratedTodoStateFactory(), serialized.$events);
+
+                assert.strictEqual(replayed.title, "post-rebase title");
+                assert.strictEqual(replayed.isCompleted, false);
+                replayed.test();
+
+                replayed.rebase(2);
+                assert.strictEqual(replayed.title, "title update 1");
+                assert.strictEqual(replayed.rebasedFromVersion, 2);
+
+                const reserialized = replayed.serialize();
+                const replayedAgain = Todo.deserializeFromEvents(
+                    domainContext, Todo, new MigratedTodoStateFactory(), reserialized.$events);
+                assert.strictEqual(replayedAgain.title, "title update 1");
+                replayedAgain.test();
+            });
+
+        await test(`
+            Given a migration step that mutates a NESTED object of the payload in place,
+            When a rebased stream is replayed through it (twice),
+            Then the stored rebase event's baseline artifact must remain untouched (deep-clone seam),
+                and re-replay must not double-apply the step
+        `,
+            () =>
+            {
+                class NestedMutatingTodoStateFactory extends TodoStateFactory
+                {
+                    protected override defineMigrations(): ReadonlyArray<StateMigration>
+                    {
+                        return [
+                            {
+                                migrate: (payload: Record<string, any>): Record<string, any> =>
+                                {
+                                    const description = payload["description"] as Record<string, any> | null;
+                                    if (description != null)
+                                        description["description"] = `${description["description"]}!`;
+                                    return payload;
+                                }
+                            }
+                        ];
+                    }
+                }
+
+                const original = Todo.create(domainContext, "title", "description");
+                original.updateTitle("title update 1");
+                original.rebase(2);
+                const serialized = original.serialize();
+
+                const rebaseEventData = serialized.$events
+                    .find(e => (e as Record<string, any>)["$baseline"] != null) as Record<string, any> | undefined;
+                assert.ok(rebaseEventData != null, "expected a rebase event in the stream");
+
+                const replayed1 = Todo.deserializeFromEvents(
+                    domainContext, Todo, new NestedMutatingTodoStateFactory(), serialized.$events);
+                assert.strictEqual(replayed1.description, "description!");
+
+                const baseline = rebaseEventData["$baseline"] as Record<string, any>;
+                assert.strictEqual((baseline["description"] as Record<string, any>)["description"], "description",
+                    "the stored artifact must not be mutated by the migration step");
+
+                const replayed2 = Todo.deserializeFromEvents(
+                    domainContext, Todo, new NestedMutatingTodoStateFactory(), serialized.$events);
+                assert.strictEqual(replayed2.description, "description!",
+                    "re-replay must not double-apply the migration step");
+            });
+
+        await test(`
+            Given a pre-4.0 stream (no $schemaVersion on any event, no $frozenDefaultState),
+            When it is replayed and re-serialized,
+            Then the output must be byte-identical (legacy events are never retro-stamped)
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", "description");
+                original.updateTitle("updated");
+                const serialized = original.serialize();
+
+                const legacyEvents = serialized.$events.map(e =>
+                {
+                    const copy = { ...e } as Record<string, any>;
+                    delete copy["$schemaVersion"];
+                    delete copy["$frozenDefaultState"];
+                    return copy;
+                });
+                const legacyBytes = legacyEvents.map(e => JSON.stringify(e));
+
+                const replayed = Todo.deserializeFromEvents(
+                    domainContext, Todo, new TodoStateFactory(), legacyEvents);
+                const reserializedBytes = replayed.serialize().$events.map(e => JSON.stringify(e));
+
+                assert.deepStrictEqual(reserializedBytes, legacyBytes);
+                assert.ok(reserializedBytes.every(t => !t.contains("$schemaVersion")),
+                    "legacy events must never gain a $schemaVersion stamp");
+            });
+
+        await test(`
+            Given a pre-4.0 rebase event whose payload is in an OLD shape,
+            When the stream is replayed through a factory with a migration chain,
+            Then replay must fail loudly at load (end-of-replay conformance guard),
+                instead of silently reading stale values
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", "description");
+                original.updateTitle("title update 1");
+                original.updateTitle("title update 2");
+                const serialized = original.serialize();
+
+                const legacyRebase = new LegacyTodoRebased({
+                    $aggregateId: original.id,
+                    $id: `${original.id}-4`,
+                    $userId: "dev",
+                    $occurredAt: original.updatedAt,
+                    $version: 4,
+                    defaultState: { legacyTitle: null, description: null, isCompleted: false },
+                    rebaseState: { legacyTitle: "title update 1", description: null, isCompleted: false },
+                    rebaseVersion: 2
+                });
+
+                const events = [...serialized.$events, legacyRebase.serialize()];
+
+                assert.throws(
+                    () => Todo.deserializeFromEvents(domainContext, Todo, new MigratedTodoStateFactory(), events),
+                    /legacyTitle/);
+            });
+
+        await test(`
+            Given a RebaseEvent subclass that overrides applyEvent,
+            When it is constructed,
+            Then construction must throw (the no-op contract is constructor-enforced)
+        `,
+            () =>
+            {
+                @serialize("Test")
+                class BadTodoRebased extends TodoRebased
+                {
+                    protected override applyEvent(_state: TodoState): void
+                    {
+                        // deliberate violation of the RebaseEvent contract
+                    }
+                }
+
+                assert.throws(
+                    () => new BadTodoRebased({ $baseline: { title: null }, $rebaseVersion: 1 }),
+                    /must not override applyEvent/);
+            });
+
+        await test(`
+            Given a mix of stored (deserialized) events and unapplied (new) events,
+            When an aggregate is constructed from them,
+            Then construction must throw (mixed streams would retro-stamp legacy events)
+        `,
+            () =>
+            {
+                const original = Todo.create(domainContext, "title", "description");
+                original.updateTitle("updated");
+                const serialized = original.serialize();
+
+                const events = serialized.$events.map((e, index) =>
+                {
+                    if (index === 0)
+                        return e;
+                    const copy = { ...e } as Record<string, any>;
+                    copy["$aggregateId"] = null;
+                    copy["$id"] = null;
+                    copy["$version"] = null;
+                    return copy;
+                });
+
+                assert.throws(
+                    () => Todo.deserializeFromEvents(domainContext, Todo, new TodoStateFactory(), events),
+                    /mixed streams/);
             });
     });
 

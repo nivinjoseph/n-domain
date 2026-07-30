@@ -1,13 +1,14 @@
 import { given } from "@nivinjoseph/n-defensive";
+import { ApplicationException } from "@nivinjoseph/n-exception";
 import { Deserializer, Serializable, serialize } from "@nivinjoseph/n-util";
 import { createHash } from "node:crypto";
 import { AggregateRootData } from "./aggregate-root-data.js";
 import { AggregateStateFactory } from "./aggregate-state-factory.js";
-import { AggregateState, clearBaseState } from "./aggregate-state.js";
+import { AggregateState, BASE_STATE_KEYS, clearBaseState } from "./aggregate-state.js";
 import { DomainContext } from "./domain-context.js";
 import { DomainEventData } from "./domain-event-data.js";
 import { DomainEvent } from "./domain-event.js";
-// import { AggregateRebased } from "./aggregate-rebased";
+import { isRebaseEvent } from "./rebase-event.js";
 import { AggregateStateHelper } from "./aggregate-state-helper.js";
 import { AggregateFactory } from "./aggregate-factory.js";
 
@@ -75,9 +76,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         this._stateFactory = stateFactory;
 
         given(currentState as object, "currentState").ensureIsObject();
-        const defaultState = this._stateFactory.create();
-        const currentTypeVersion = defaultState.typeVersion;
-        this._state = Object.assign(defaultState, currentState);
+        this._state = Object.assign(this._stateFactory.create(), currentState);
 
         if (this._state.version)
         {
@@ -92,16 +91,22 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
                 .ensure(t => t.some(u => u.isCreatedEvent), "no created event passed")
                 .ensure(t => t.count(u => u.isCreatedEvent) === 1, "more than one created event passed");
             this._retroEvents = [...events];
-            if (this._retroEvents.some(t => (<any>t)._aggregateId == null)) // Deliberate workaround to access aggregateId
+            const unappliedCount = this._retroEvents.count(t => (<any>t)._aggregateId == null); // Deliberate workaround to access aggregateId
+            given(events, "events").ensure(
+                _ => unappliedCount === 0 || unappliedCount === this._retroEvents.length,
+                "events must be all stored (deserialized) or all new; mixed streams are not supported");
+            if (unappliedCount > 0)
                 this._isNew = true;
             if (this._isNew)
             {
                 // freeze the pristine default state (current create() output, captured here before any event
-                // mutates this._state) into the created event, with base fields stripped. on every future
-                // replay this is overlaid as the base layer so fields no event writes are sourced from the
-                // stream rather than from a (possibly changed) future create().
+                // mutates this._state) into the created event, with base fields stripped and the current
+                // schema version stamped as $schemaVersion metadata. on every future replay this is upcast
+                // and overlaid as the base layer so fields no event writes are sourced from the stream
+                // rather than from a (possibly changed) future create().
                 const frozenDefaultState = AggregateStateHelper.serializeStateIntoSnapshot(this._state);
                 clearBaseState(frozenDefaultState);
+                (frozenDefaultState as Record<string, any>)["$schemaVersion"] = this._stateFactory.schemaVersion;
                 const createdEvent = this._retroEvents.find(t => t.isCreatedEvent)!;
                 // stamp the frozen defaults onto the created event's internal field via cast (same workaround as
                 // _aggregateId above), keeping this framework detail off DomainEvent's public surface.
@@ -109,17 +114,32 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
                     .ensure(t => (<any>t)._frozenDefaultState == null, "created event already has frozen default state");
                 (<any>createdEvent)._frozenDefaultState = frozenDefaultState;
 
-                this._retroEvents.forEach(t => t.apply(this, this._domainContext, this._state));
+                // brand-new events get the write-time schema version stamp (legacy stored events are never retro-stamped)
+                this._retroEvents.forEach(t =>
+                {
+                    if ((<any>t)._schemaVersion == null)
+                        (<any>t)._schemaVersion = this._stateFactory.schemaVersion;
+                });
+
+                this._retroEvents.forEach(t => this._applyEventToState(t));
             }
             else
-                this._retroEvents.orderBy(t => t.version).forEach(t => t.apply(this, this._domainContext, this._state));
-        }
-        this._state = this._stateFactory.update(this._state);
+            {
+                this._retroEvents.orderBy(t => t.version).forEach(t => this._applyEventToState(t));
 
-        given(this._state, "state").ensure(
-            t => t.typeVersion === currentTypeVersion,
-            `loaded state has typeVersion ${this._state.typeVersion} but the current type version is ${currentTypeVersion}; `
-            + "migrate it forward in the state factory's update() method (and bump state.typeVersion)");
+                // end-of-replay conformance guard: every sanctioned ingress upcasts to the current
+                // shape, so extra keys here mean the stream carries old-shape residue that bypassed
+                // the migration chain — in practice a pre-4.0 rebase event whose payload predates
+                // the chain. failing loudly now beats silently-stale reads and a snapshot() failure later.
+                const extraKeys = this._findNonConformingKeys();
+                if (extraKeys.length > 0)
+                    throw new ApplicationException(
+                        `replayed state of '${(<Object>this).getTypeName()}' has keys [${extraKeys.join(", ")}] that do not exist `
+                        + `on the current state shape; the stream likely contains a pre-4.0 rebase event written before the `
+                        + `migration chain existed — re-rebase this stream (loading it under the pre-migration factory) `
+                        + `before shipping migration steps`);
+            }
+        }
 
         this._retroVersion = this.currentVersion;
     }
@@ -203,14 +223,25 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
                 updatedAt: "number"
             });
 
-        const deserializedSnapshot = stateFactory.deserializeSnapshot(stateSnapshot);
+        const deserializedSnapshot = stateFactory.ingestSnapshot(stateSnapshot);
 
         return new aggregateType(domainContext, [], stateFactory, deserializedSnapshot);
     }
 
     public snapshot(...cloneKeys: ReadonlyArray<string>): T | object
     {
-        return AggregateStateHelper.serializeStateIntoSnapshot(this.state, ...cloneKeys);
+        // egress conformance guard: a state carrying keys that do not exist on the current create()
+        // output can never be photographed into a snapshot — this severs the loop where residue
+        // from old-shape artifacts would otherwise be laundered under the current schema version.
+        const extraKeys = this._findNonConformingKeys();
+        if (extraKeys.length > 0)
+            throw new ApplicationException(
+                `state of '${(<Object>this).getTypeName()}' has keys [${extraKeys.join(", ")}] that do not exist `
+                + `on the current state shape; refusing to snapshot nonconforming state`);
+
+        const snapshot = AggregateStateHelper.serializeStateIntoSnapshot(this.state, ...cloneKeys) as Record<string, any>;
+        snapshot["$schemaVersion"] = this._stateFactory.schemaVersion;
+        return snapshot;
     }
 
     public constructVersion(version: number): this
@@ -414,7 +445,7 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
     }
 
-    protected rebase(version: number, rebasedEventFactoryFunc: (defaultState: object, rebaseState: object, rebaseVersion: number) => TDomainEvent): void
+    protected rebase(version: number, rebasedEventFactoryFunc: (baseline: object, rebaseVersion: number) => TDomainEvent): void
     {
         given(version, "version").ensureHasValue().ensureIsNumber()
             .ensure(t => t > 0 && t <= this.version, `version must be > 0 and <= ${this.version} (current version)`);
@@ -425,28 +456,17 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         given(rebaseVersionInstance, "rebaseVersionInstance")
             .ensure(t => t.version === version, "could not reconstruct rebase version");
         const rebaseVersion = rebaseVersionInstance.version;
-        const rebaseState = AggregateStateHelper.serializeStateIntoSnapshot(rebaseVersionInstance.state);
-        clearBaseState(rebaseState);
+        // the baseline is the COMPLETE state at the rebase version (base fields stripped), so it is
+        // current-shape by construction and stamped with the schema version that shaped it.
+        const baseline = AggregateStateHelper.serializeStateIntoSnapshot(rebaseVersionInstance.state);
+        clearBaseState(baseline);
+        (baseline as Record<string, any>)["$schemaVersion"] = this._stateFactory.schemaVersion;
 
-        const defaultState = AggregateStateHelper.serializeStateIntoSnapshot(this._stateFactory.create());
-        clearBaseState(defaultState);
-
-        // const rebaseEvent = rebasedEventFactoryFunc != null
-        //     ? rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion)
-        //     : new AggregateRebased({ defaultState, rebaseState, rebaseVersion });
-
-        const rebaseEvent = rebasedEventFactoryFunc(defaultState, rebaseState, rebaseVersion);
+        const rebaseEvent = rebasedEventFactoryFunc(baseline, rebaseVersion);
+        given(rebaseEvent as object, "rebaseEvent").ensureHasValue().ensureIsObject()
+            .ensure(t => isRebaseEvent(t), "rebase event must extend RebaseEvent (or OrgRebaseEvent for org aggregates)");
 
         this.applyEvent(rebaseEvent);
-
-        // console.log("rebaseEvent");
-        // console.dir(rebaseEvent);
-
-        // console.log("rebaseEvent serialized");
-        // console.dir(rebaseEvent.serialize());
-
-        // console.log("rebaseEvent deserialized");
-        // console.dir(Deserializer.deserialize(rebaseEvent.serialize()));
     }
 
     protected applyEvent(event: TDomainEvent): void
@@ -455,7 +475,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
             .ensure(t => t.isCreatedEvent ? this._retroEvents.isEmpty && this._currentEvents.isEmpty : true,
                 "'isCreatedEvent = true' cannot be the case for multiple events");
 
-        event.apply(this, this._domainContext, this._state);
+        // stamp the write-time schema version onto new events (never retro-stamp legacy stored events)
+        if ((<any>event)._schemaVersion == null)
+            (<any>event)._schemaVersion = this._stateFactory.schemaVersion;
+
+        this._applyEventToState(event);
 
         this._currentEvents.push(event);
 
@@ -473,6 +497,72 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         //     this._retroEvents = trimmed;
         // }
     }
+
+    /**
+     * The single seam through which every event (retro replay and new application) reaches the
+     * state. It owns the two stored-state-artifact overlays — both upcast their payload through
+     * the factory's migration chain at ingress, BEFORE the data merges into live state:
+     * - created events carrying frozen default state overlay the historical create() defaults
+     *   onto the current-code base before the event's own applyEvent sets real values, isolating
+     *   replay from future create() default changes for fields no event writes;
+     * - framework-owned rebase events RESET the state to their baseline: every domain key is
+     *   cleared (so no residue from earlier overlays or old shapes survives), current create()
+     *   defaults fill fields added after the rebase was written, and the upcasted baseline lays
+     *   down the authoritative values.
+     */
+    private _applyEventToState(event: DomainEvent<T>): void
+    {
+        // deliberate framework access to the event's internal field via cast (same idiom as _aggregateId)
+        const frozenDefaultState = (<any>event)._frozenDefaultState as object | null;
+        if (event.isCreatedEvent && frozenDefaultState != null)
+        {
+            const upcasted = this._upcastArtifact(frozenDefaultState, "frozen-default");
+            Object.assign(this._state, AggregateStateHelper.deserializeSnapshotIntoState(upcasted));
+        }
+
+        if (isRebaseEvent(event))
+        {
+            const upcasted = this._upcastArtifact(event.baseline, "rebase-baseline");
+
+            Object.keys(this._state)
+                .where(t => !BASE_STATE_KEYS.contains(t))
+                .forEach(key =>
+                {
+                    delete (this._state as Record<string, unknown>)[key];
+                });
+
+            const domainDefaults = this._stateFactory.create() as Record<string, any>;
+            clearBaseState(domainDefaults);
+            Object.assign(this._state, domainDefaults);
+
+            Object.assign(this._state, AggregateStateHelper.deserializeSnapshotIntoState(upcasted));
+
+            this._state.isRebased = true;
+            this._state.rebasedFromVersion = event.rebaseVersion;
+        }
+
+        event.apply(this, this._domainContext, this._state);
+    }
+
+    private _upcastArtifact(artifact: object, kind: "frozen-default" | "rebase-baseline"): Record<string, any>
+    {
+        const payload = Object.assign({}, artifact) as Record<string, any>;
+        // artifacts persisted before schema versioning existed carry no stamp; the factory's
+        // preVersioningSchemaVersion (default 1) declares which chain position they were written at.
+        const declaredVersion = (payload["$schemaVersion"] ?? this._stateFactory.preVersioningSchemaVersion) as number;
+        delete payload["$schemaVersion"];
+        return this._stateFactory.upcastStateDocument(payload, declaredVersion, kind);
+    }
+
+    // keys on live state that exist neither in BASE_STATE_KEYS nor on the current create() output —
+    // i.e. old-shape residue that no sanctioned (upcasting) ingress could have produced.
+    private _findNonConformingKeys(): Array<string>
+    {
+        const domainKeys = Object.keys(this._stateFactory.create());
+        return Object.keys(this._state)
+            .where(t => !BASE_STATE_KEYS.contains(t) && !domainKeys.contains(t));
+    }
+
     // /**
     //  *
     //  * @deprecated DO NOT USE

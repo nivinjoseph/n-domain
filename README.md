@@ -8,8 +8,8 @@ n-domain is a TypeScript framework that provides a robust foundation for impleme
 
 - **Domain-Driven Design Support**: Built-in abstractions for DDD concepts like Aggregates, Entities, Value Objects, and Domain Events
 - **Event Sourcing**: Native support for event-sourced aggregates, snapshots, rebasing, and point-in-time reconstruction
-- **Replay Safety**: Created events freeze the aggregate's initial defaults so replays are isolated from future code changes; a fingerprint helper supports drift-guard tests
-- **State Versioning**: `typeVersion`-based state migration with a built-in guard against loading unmigrated state
+- **Replay Safety**: Created events freeze the aggregate's initial defaults so replays are isolated from future code changes; a shape-manifest helper supports drift-guard tests
+- **Schema Migration**: version-stamped stored artifacts (snapshots, frozen defaults, rebase baselines) upcast through the factory's migration chain at ingress, with loud shape-conformance guards
 - **Multi-Tenancy**: `Org*` variants of the core types that scope aggregates to an organization
 - **Type Safety**: Written in TypeScript with strong typing support
 
@@ -106,11 +106,11 @@ export class Todo extends AggregateRoot<TodoState, TodoDomainEvent>
         this.applyEvent(new TodoTitleUpdated({ title }));
     }
 
-    // rebase() is protected on AggregateRoot; expose it by overriding with your rebased event
+    // rebase() is protected on AggregateRoot; expose it by overriding with your rebase event
     public override rebase(version: number): void
     {
-        super.rebase(version, (defaultState, rebaseState, rebaseVersion) =>
-            new TodoRebased({ defaultState, rebaseState, rebaseVersion }));
+        super.rebase(version, (baseline, rebaseVersion) =>
+            new TodoRebased({ $baseline: baseline, $rebaseVersion: rebaseVersion }));
     }
 }
 ```
@@ -223,14 +223,14 @@ export class TodoStateFactory extends AggregateStateFactory<TodoState>
 }
 ```
 
-#### State migrations (`typeVersion`)
+#### Schema migrations
 
-`createDefaultAggregateState()` initializes `typeVersion` to `1`. When you make a breaking change to the state shape:
+Live state is never migrated — it is *computed* by current code (base = `create()`, then current-code `applyEvent` over the stream), so it has no single "from version". What DOES get migrated are the **stored state artifacts**: snapshots, the frozen default state on created events, and rebase baselines. Each one is stamped with `$schemaVersion` metadata at write time and upcast through the factory's migration chain at its ingress point, *before* the data merges into live state.
 
-1. Bump `typeVersion` in your factory's `create()`.
-2. Override `update(state)` to migrate older state forward (and set its `typeVersion` accordingly).
+The schema version is derived, never declared: `schemaVersion === defineMigrations().length + 1`. A version bump without a migration step (or a step without a bump) is unrepresentable.
 
-The `AggregateRoot` constructor runs every loaded state through `update()` and **throws** if the resulting `typeVersion` doesn't match the current `create()` output — so an unmigrated snapshot or stream fails fast instead of loading silently corrupted state.
+- **Additive changes are free.** Adding a field with a default needs no step — artifacts missing the key fall through to the current `create()` default.
+- **Renames, removals, and retypes need a migration step.** Without one, an old-shape artifact fails LOUDLY at load (keys that don't exist on the current shape throw), instead of loading silently corrupted state. The state also refuses to `snapshot()` while carrying unknown keys, so old-shape residue can never be laundered into a new snapshot.
 
 ```typescript
 export class TodoStateFactory extends AggregateStateFactory<TodoState>
@@ -239,44 +239,57 @@ export class TodoStateFactory extends AggregateStateFactory<TodoState>
     {
         return {
             ...this.createDefaultAggregateState(),
-            typeVersion: 2, // bumped due to shape change
-            title: null as any,
+            title: null as any, // schema version 2: renamed from `legacyTitle`
             description: null,
             isCompleted: false
-        } as TodoState;
+        };
     }
 
-    public override update(state: TodoState): TodoState
+    protected override defineMigrations(): ReadonlyArray<StateMigration>
     {
-        if (state.typeVersion === 1)
-        {
-            // migrate v1 -> v2 here
-            (state as { typeVersion: number; }).typeVersion = 2;
-        }
-        return state;
+        return [
+            {
+                // v1 -> v2: legacyTitle renamed to title. Steps are pure transforms on the
+                // SERIALIZED domain-key payload and must tolerate absent source keys.
+                migrate: (payload) =>
+                {
+                    if ("legacyTitle" in payload)
+                    {
+                        payload["title"] = payload["legacyTitle"];
+                        delete payload["legacyTitle"];
+                    }
+                    return payload;
+                }
+            }
+        ];
     }
 }
 ```
 
+Artifacts persisted before schema versioning existed carry no stamp and are treated as schema version 1 (legacy snapshots' in-band `typeVersion` is honored as the stamp). Migration steps are applied at read time only — the store is never rewritten. To stop paying the upcast chain on a hot stream (or to physically shed an old shape), rebase it: the new baseline is written at the current schema version.
+
+Note on event payloads: they are stamped with `$schemaVersion` too, but their evolution remains **tolerant-reader** — event constructors read old payload shapes forever (optional fields, read-both-keys on renames). The stamp preserves the option of versioned event upcasting later.
+
 ### Replay safety: frozen created-event defaults
 
-When a new aggregate is created, the pristine output of the state factory's `create()` (with base fields stripped) is frozen into the created event and serialized as `$frozenDefaultState`. On every future replay, this frozen snapshot is overlaid as the base layer before events apply.
+When a new aggregate is created, the pristine output of the state factory's `create()` (base fields stripped, stamped with `$schemaVersion`) is frozen into the created event and serialized as `$frozenDefaultState`. On every future replay, this frozen payload is upcast through the migration chain and overlaid as the base layer before events apply.
 
-This means fields that no event ever writes are sourced from the **stream** rather than from a possibly-changed future `create()` — changing a default in `create()` no longer silently rewrites historical aggregates on replay. Brand-new fields added to `create()` later still fall through to the current default (additive evolution is preserved). Only created events carry this payload; other events' serialized shape is unchanged.
+This means fields that no event ever writes are sourced from the **stream** rather than from a possibly-changed future `create()` — changing a default in `create()` no longer silently rewrites historical aggregates on replay. Brand-new fields added to `create()` later still fall through to the current default (additive evolution is preserved). Only created events carry this payload; other events' serialized shape gains only the `$schemaVersion` stamp.
 
 #### Drift guard
 
-Because changing an *existing* default in `create()` is a meaningful (and easy-to-miss) act, `AggregateStateHelper.fingerprintState()` produces a stable, canonically-sorted SHA-512 fingerprint of a state object. The intended pattern is a drift-guard test: persist the fingerprint of `create()` in source control and fail the test when it changes unexpectedly.
+Because changing an *existing* default in `create()` is a meaningful (and easy-to-miss) act, `AggregateStateHelper.describeShape()` produces a canonical description of a state's shape: the sorted key list plus a stable SHA-512 value fingerprint. The intended pattern is a shape-manifest drift-guard test: persist the manifest of `create()` in source control and fail the test when it changes unexpectedly — with a key removal/rename failing specifically with the migration-step obligation, and a value-only change failing the fingerprint (acknowledged by regenerating).
 
 ```typescript
 import { AggregateStateHelper } from "@nivinjoseph/n-domain";
 
-const EXPECTED_FINGERPRINT = "..."; // checked into source control
+const EXPECTED = { keys: ["..."], fingerprint: "..." }; // checked into source control
 
-test("TodoStateFactory.create() output has not drifted", () =>
+test("TodoStateFactory.create() shape has not drifted", () =>
 {
-    const fingerprint = AggregateStateHelper.fingerprintState(new TodoStateFactory().create());
-    assert.strictEqual(fingerprint, EXPECTED_FINGERPRINT);
+    const shape = AggregateStateHelper.describeShape(new TodoStateFactory().create());
+    assert.deepStrictEqual(shape.keys, EXPECTED.keys);       // removal/rename => write a migration step
+    assert.strictEqual(shape.fingerprint, EXPECTED.fingerprint); // value change => acknowledge deliberately
 });
 ```
 
@@ -361,7 +374,7 @@ Instance methods:
 - `clone(createdEvent: DomainEvent<T>, serializedEventMutatorAndFilter?: (event: { $name: string; }) => boolean)`: this — create a new aggregate seeded by `createdEvent`, replaying this aggregate's non-created events onto it; the optional callback can mutate each serialized event and return false to drop it
 - `test()`: void — self-check that serialization, event replay, and snapshot round-trips all reproduce identical state; useful in tests
 - `applyEvent(event: TDomainEvent)` *(protected)* — apply a new event; call from your aggregate's behavior methods
-- `rebase(version: number, rebasedEventFactoryFunc: (defaultState: object, rebaseState: object, rebaseVersion: number) => TDomainEvent)` *(protected)* — collapse history up to `version` into a single rebase event produced by the factory function; override with a public method that supplies your aggregate's rebased event type
+- `rebase(version: number, rebasedEventFactoryFunc: (baseline: object, rebaseVersion: number) => TDomainEvent)` *(protected)* — collapse history up to `version` into a single rebase event; the framework produces the stamped baseline (the complete state at `version`) and the factory function supplies your aggregate's `RebaseEvent` subclass. On replay the baseline RESETS the state (all domain keys cleared, then current defaults, then the upcast baseline), so no residue from earlier overlays survives. Also serves as the re-baseline for breaking shape changes: the new baseline is written at the current schema version, so the rebased stream stops paying the upcast chain
 
 ### AggregateFactory
 
@@ -387,13 +400,22 @@ Properties:
 - `isCreatedEvent`: boolean — whether this is the creation event
 
 Methods:
-- `apply(aggregate, domainContext, state)`: applies the event — stamps `userId`/`version`/`id`, overlays `$frozenDefaultState` for created events, invokes `applyEvent`, and updates `createdAt`/`updatedAt`. Called by the framework; you should not call this directly
-- `serialize()`: DomainEventData — created events additionally carry `$frozenDefaultState`
+- `apply(aggregate, domainContext, state)`: applies the event — stamps `userId`/`version`/`id`, invokes `applyEvent`, and updates `createdAt`/`updatedAt`. The `$frozenDefaultState` overlay for created events is performed by the `AggregateRoot` replay seam (which owns the state factory and upcasts the payload) before `apply` runs. Called by the framework; you should not call this directly
+- `serialize()`: DomainEventData — new events carry `$schemaVersion`; created events additionally carry `$frozenDefaultState`
 - `applyEvent(state: T)` *(protected, abstract)* — implement your event-specific state mutation here. The created event must set `state.id`
+
+### RebaseEvent
+
+Abstract framework-owned rebase event (extends `DomainEvent`). Subclasses contribute ONLY class identity (the `@serialize` name binding) and `refType` — `applyEvent` is a sealed no-op because the baseline is framework-applied with RESET semantics at the replay seam.
+
+- `baseline`: object — complete base-stripped state at the rebase version, stamped with `$schemaVersion` (serialized as `$baseline`)
+- `rebaseVersion`: number — the version history was collapsed to (serialized as `$rebaseVersion`)
+
+For organization-scoped aggregates use `OrgRebaseEvent` (extends `OrgDomainEvent`, same contract) — it carries `$organizationId` and passes `OrgAggregateRoot`'s event guard; the framework recognizes both classes at the rebase seams.
 
 ### DomainEventData
 
-Serialized event shape: `$aggregateId`, `$id`, `$userId`, `$name`, `$occurredAt`, `$version`, `$isCreatedEvent` (all optional/null on unapplied events), and `$frozenDefaultState` (created events only). Extend this interface with your event's own payload fields.
+Serialized event shape: `$aggregateId`, `$id`, `$userId`, `$name`, `$occurredAt`, `$version`, `$isCreatedEvent` (all optional/null on unapplied events), `$schemaVersion` (stamped on new events; legacy stored events lack it and are never retro-stamped), and `$frozenDefaultState` (created events only). Extend this interface with your event's own payload fields.
 
 ### AggregateRootData
 
@@ -401,10 +423,9 @@ Serialized aggregate shape: `$id`, `$version`, `$createdAt`, `$updatedAt`, `$eve
 
 ### AggregateState
 
-Base interface for aggregate state.
+Base interface for aggregate state. The schema version is NOT part of the state — it lives on the factory (derived from the migration chain) and travels as `$schemaVersion` metadata on stored artifacts.
 
 Properties:
-- `typeVersion`: number *(readonly)* — version of the state *shape*; bump on breaking changes and migrate in the factory's `update()`
 - `id`: string — unique identifier for the aggregate
 - `version`: number — current version of the aggregate
 - `createdAt`: number — creation timestamp (epoch ms)
@@ -412,14 +433,22 @@ Properties:
 - `isRebased`: boolean — whether the aggregate was rebased
 - `rebasedFromVersion`: number — version from which the aggregate was rebased
 
+`BASE_STATE_KEYS` exports this key list; everything else on a state is a domain key.
+
+### StateMigration
+
+One step in the migration chain: `migrate(payload: Record<string, any>): Record<string, any>` — a pure transform on the serialized domain-key payload of a stored artifact, moving it one schema version forward. Must tolerate absent source keys.
+
 ### AggregateStateFactory
 
 Abstract base class for state factories. Generic over `<T extends AggregateState>`.
 
 - `create()`: T *(abstract)* — produce the default state; must be deterministic (the framework verifies repeated calls are identical)
-- `update(state: T)`: T — hook for migrating loaded state forward across `typeVersion`s; default is identity
-- `deserializeSnapshot(snapshot: T)`: T — revive serialized value objects inside a snapshot (uses `AggregateStateHelper.deserializeSnapshotIntoState`)
-- `createDefaultAggregateState()` *(protected)*: AggregateState — base-field defaults (`typeVersion: 1`, `isRebased: false`, etc.); spread this into your `create()` output
+- `schemaVersion`: number — derived: `defineMigrations().length + 1`
+- `defineMigrations()` *(protected)*: ReadonlyArray<StateMigration> — append-only ordered migration chain; entry `[i]` migrates version `i + 1` to `i + 2`. Default `[]`
+- `preVersioningSchemaVersion`: number — schema version assumed for stored artifacts with no version stamp (default 1); override only if your pre-4.0 estate shipped `typeVersion > 1`
+- `createDefaultAggregateState()` *(protected)*: AggregateState — base-field defaults (`isRebased: false`, etc.); spread this into your `create()` output
+- `upcastStateDocument(payload, declaredVersion, kind)` / `ingestSnapshot(raw)` — framework drivers (internal); enforce the ingress guards: an artifact declaring a version newer than the code throws, and post-upcast keys that don't exist on the current shape throw
 
 ### AggregateStateHelper
 
@@ -427,8 +456,9 @@ Static utilities for working with state objects.
 
 - `serializeStateIntoSnapshot(state, ...cloneKeys)`: object — serialize state (including nested `Serializable`s) into a plain snapshot; throws if a non-`DomainObject` with private fields is encountered
 - `deserializeSnapshotIntoState(snapshot)`: object — revive registered `Serializable` types inside a snapshot
-- `rebaseState(state, defaultState, rebaseState, rebaseVersion)`: void — layer a rebase snapshot over current defaults onto the state; call from your rebased event's `applyEvent`
-- `fingerprintState(state)`: string — stable SHA-512 fingerprint of a state object with canonically sorted keys; intended for `create()` drift-guard tests
+- `rebaseState(state, defaultState, rebaseState, rebaseVersion)`: void — **deprecated**; legacy MERGE apply path kept only so pre-4.0 user-defined rebase events already persisted in streams keep replaying unchanged
+- `describeShape(state)`: { keys, fingerprint } — canonical shape description (sorted key list + SHA-512 value fingerprint); feeds the shape-manifest drift guard
+- `fingerprintState(state)`: string — stable SHA-512 fingerprint of a state object with canonically sorted keys
 
 ### DomainObject
 
@@ -466,7 +496,7 @@ Static utilities.
 
 ### Org* variants
 
-`OrgAggregateRoot`, `OrgAggregateState`, `OrgAggregateStateFactory`, `OrgDomainContext`, `OrgConfigurableDomainContext`, `OrgDomainEvent`, `OrgDomainEventData` — organization-scoped counterparts of the core types; see [Multi-tenancy](#multi-tenancy-org-types) above.
+`OrgAggregateRoot`, `OrgAggregateState`, `OrgAggregateStateFactory`, `OrgDomainContext`, `OrgConfigurableDomainContext`, `OrgDomainEvent`, `OrgDomainEventData`, `OrgRebaseEvent` — organization-scoped counterparts of the core types; see [Multi-tenancy](#multi-tenancy-org-types) above.
 
 ## Best Practices
 
@@ -485,14 +515,32 @@ Static utilities.
 
 3. **State Management**
    - Keep `create()` deterministic — same output on every call
-   - Bump `typeVersion` on breaking state-shape changes and migrate in `update()`
-   - Add a drift-guard test on `create()`'s fingerprint (`AggregateStateHelper.fingerprintState`) so default changes are deliberate
+   - Adding fields (with defaults) is free; renaming/removing/retyping a field REQUIRES a migration step in `defineMigrations()` — old-shape artifacts fail loudly at load without one
+   - Add a shape-manifest drift-guard test on `create()` (`AggregateStateHelper.describeShape`) so shape and default changes are deliberate
    - Use value objects (extending `DomainObject`) for structured state fields so snapshots serialize correctly
+   - Rebase hot streams after shape changes so they stop paying the upcast chain (the new baseline is written at the current schema version)
 
 4. **Domain Organization**
    - Keep related files close together; use clear naming conventions
    - Separate events and value objects into their own directories
    - Call `aggregate.test()` in your test suite to verify serialization/replay/snapshot round-trips
+
+## Upgrading from 3.x
+
+Version 4 is a breaking redesign of schema migration. API changes:
+
+- `AggregateState.typeVersion` is **deleted** (schema version now lives on the factory, derived from the migration chain, and travels as `$schemaVersion` artifact metadata — never in live state).
+- `AggregateStateFactory.update()` and the constructor typeVersion guard are **deleted** — end-of-load state migration was sound only for snapshots and silently no-oped on replayed streams; migration now happens per stored artifact at its ingress. Port any `update()` logic into `defineMigrations()` steps (note the altitude change: steps see serialized payloads, not live state).
+- `AggregateStateFactory.deserializeSnapshot()` is **deleted** (absorbed into the framework snapshot ingress).
+- `rebase()`'s factory function signature changed to `(baseline, rebaseVersion) => TDomainEvent`, and rebase events must now extend the framework-owned `RebaseEvent` (RESET semantics; the old defaultState/rebaseState merge overlay is gone for new rebases).
+
+Persisted data needs **no rewrite** — all migration is read-time:
+
+- Old snapshots keep loading: their in-band `typeVersion` is honored as the version stamp and dropped before state assembly. Stored `typeVersion` values are interpreted as positions in the migration chain, so `defineMigrations()` must cover the historical numbering — a snapshot whose `typeVersion` exceeds the chain fails with a dedicated "port the pre-4.0 update() chain" error.
+- Old created events (with or without `$frozenDefaultState`) and old event payloads replay unchanged; unstamped artifacts are treated as schema version 1 by default. If your 3.x estate ever shipped `typeVersion > 1`, unstamped frozen defaults were written at that later shape — declare it by overriding the factory's `preVersioningSchemaVersion` so they enter the chain at the right position (snapshots need no declaration; they are self-describing).
+- Old user-defined rebase events keep replaying through the deprecated `AggregateStateHelper.rebaseState` merge path — keep the legacy event class around (its `applyEvent` calling the deprecated helper) until those streams are re-rebased. **Re-rebase legacy-rebased streams BEFORE shipping any rename/removal migration step**: their payloads bypass the migration chain, and once a step ships, loading such a stream fails loudly at replay (end-of-replay conformance guard) until it is re-rebased under the pre-migration factory.
+
+Rollback caveat: artifacts written by v4 (stamped snapshots, `RebaseEvent` baselines) are not readable by 3.x — treat the upgrade as one-way per aggregate type, or hold off snapshotting/rebasing during a soak window.
 
 ## Contributing
 

@@ -74,6 +74,13 @@ export class AggregateStateHelper
         return deserialized;
     }
 
+    /**
+     * @deprecated Legacy apply path for rebase events persisted before the framework-owned
+     * `RebaseEvent` existed (user-defined rebase events carrying a defaultState + rebaseState pair).
+     * Kept ONLY so those already-persisted events keep applying with their historical MERGE
+     * semantics; new rebases go through `AggregateRoot.rebase()` + `RebaseEvent`, which RESET the
+     * state to a single upcast baseline instead. Do not call from new code.
+     */
     public static rebaseState<T extends AggregateState>(state: T, defaultState: object, rebaseState: object, rebaseVersion: number): void
     {
         given(state, "state").ensureHasValue().ensureIsObject();
@@ -88,16 +95,26 @@ export class AggregateStateHelper
         defaultState = AggregateStateHelper.deserializeSnapshotIntoState(defaultState);
         rebaseState = AggregateStateHelper.deserializeSnapshotIntoState(rebaseState);
 
-        // console.dir(state);
-        // console.dir(defaultState);
-        // console.dir(rebaseState);
-
         Object.assign(state, defaultState, rebaseState);
 
         state.isRebased = true;
         state.rebasedFromVersion = rebaseVersion;
+    }
 
-        // console.dir(state);
+    /**
+     * Canonical description of a state's shape: the sorted top-level key list plus the SHA-512
+     * value fingerprint. Feeds the shape-manifest drift guard: a key removal/rename against the
+     * committed manifest means old artifacts exist in that shape and a migration step is required;
+     * a value-only fingerprint change means a default changed (acknowledged by regenerating).
+     */
+    public static describeShape(state: object): { keys: Array<string>; fingerprint: string; }
+    {
+        given(state, "state").ensureHasValue().ensureIsObject();
+
+        return {
+            keys: Object.keys(state).sort(),
+            fingerprint: AggregateStateHelper.fingerprintState(state)
+        };
     }
 
     /**

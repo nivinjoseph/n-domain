@@ -1,5 +1,6 @@
 import { AggregateState } from "../../src/aggregate-state.js";
 import { AggregateStateFactory } from "../../src/aggregate-state-factory.js";
+import { StateMigration } from "../../src/state-migration.js";
 import { TodoDescription } from "./value-objects/todo-description.js";
 
 
@@ -21,59 +22,34 @@ export class TodoStateFactory extends AggregateStateFactory<TodoState>
             description: null,
             isCompleted: false
         };
-    }   
-    
-    // public update(state: TodoState): TodoState
-    // {
-    //     given(state, "state").ensureHasValue().ensureIsObject();
-        
-    //     return state;
-    // }
-    
-    // public deserializeSnapshot(snapshot: TodoState): TodoState
-    // {
-    //     given(snapshot, "snapshot").ensureHasValue().ensureIsObject();
-
-    //     return snapshot;
-    // }
-}
-
-
-/**
- * Simulates a breaking shape change: create() is now at typeVersion 2, but no
- * migration is provided in update(). Loading a typeVersion 1 snapshot through
- * this factory should make the AggregateRoot constructor throw.
- */
-export class UnmigratedTodoStateFactory extends TodoStateFactory
-{
-    public override create(): TodoState
-    {
-        const state = super.create();
-        // typeVersion is readonly by design; bumping it is the deliberate signal of a shape change
-        (state as { typeVersion: number; }).typeVersion = 2;
-        return state;
     }
 }
 
 
 /**
- * Simulates the same breaking shape change as UnmigratedTodoStateFactory, but with
- * a migration in update() that brings a typeVersion 1 snapshot forward to 2.
+ * Simulates the CURRENT code after a breaking shape change: schema version 1 had the field
+ * `legacyTitle`; version 2 renamed it to `title`. The migration step upcasts any stored
+ * state artifact (snapshot, frozen default, rebase baseline) written at version 1.
+ * schemaVersion is derived: defineMigrations().length + 1 === 2.
  */
 export class MigratedTodoStateFactory extends TodoStateFactory
 {
-    public override create(): TodoState
+    protected override defineMigrations(): ReadonlyArray<StateMigration>
     {
-        const state = super.create();
-        (state as { typeVersion: number; }).typeVersion = 2;
-        return state;
-    }
-
-    public override update(state: TodoState): TodoState
-    {
-        if (state.typeVersion === 1)
-            (state as { typeVersion: number; }).typeVersion = 2;
-
-        return state;
+        return [
+            {
+                // v1 -> v2: legacyTitle renamed to title. shape-tolerant: no-ops when the
+                // source key is absent (e.g. an artifact that never carried the field).
+                migrate: (payload) =>
+                {
+                    if ("legacyTitle" in payload)
+                    {
+                        payload["title"] = payload["legacyTitle"];
+                        delete payload["legacyTitle"];
+                    }
+                    return payload;
+                }
+            }
+        ];
     }
 }

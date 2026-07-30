@@ -1,9 +1,11 @@
 import "@nivinjoseph/n-ext";
 export { AggregateRoot } from "./aggregate-root.js";
 export { AggregateRootData } from "./aggregate-root-data.js";
-export { AggregateState } from "./aggregate-state.js";
-export { AggregateStateFactory } from "./aggregate-state-factory.js";
+export { AggregateState, BASE_STATE_KEYS } from "./aggregate-state.js";
+export { AggregateStateFactory, StateArtifactKind } from "./aggregate-state-factory.js";
 export { AggregateStateHelper } from "./aggregate-state-helper.js";
+export { RebaseEvent, RebaseEventData } from "./rebase-event.js";
+export { StateMigration } from "./state-migration.js";
 export { ConfigurableDomainContext } from "./configurable-domain-context.js";
 export { DomainContext } from "./domain-context.js";
 export { DomainEntity } from "./domain-entity.js";
@@ -18,5 +20,5 @@ export { OrgConfigurableDomainContext } from "./org-configurable-domain-context.
 export { OrgDomainContext } from "./org-domain-context.js";
 export { OrgDomainEvent } from "./org-domain-event.js";
 export { OrgDomainEventData } from "./org-domain-event-data.js";
+export { OrgRebaseEvent, OrgRebaseEventData } from "./org-rebase-event.js";
 export { AggregateFactory } from "./aggregate-factory.js";
-// export { AggregateRebased, AggregateRebasedEventData } from "./aggregate-rebased";

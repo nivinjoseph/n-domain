@@ -1,0 +1,16 @@
+{
+    "TodoStateFactory": {
+        "keys": [
+            "createdAt",
+            "description",
+            "id",
+            "isCompleted",
+            "isRebased",
+            "rebasedFromVersion",
+            "title",
+            "updatedAt",
+            "version"
+        ],
+        "fingerprint": "E73CC0CD6ABD9511F9F13EEADCEC76585B44C0C1F9CFA8593E181794CE33E7C84EEC2FA930F2A53C575CD5B4F5F6AB935BCD1E7251361570540DEAC5CF49295C"
+    }
+}

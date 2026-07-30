@@ -3,33 +3,36 @@ import { given } from "@nivinjoseph/n-defensive";
 // public
 export interface AggregateState
 {
-    readonly typeVersion: number;
     id: string;
     version: number;
     createdAt: number;
     updatedAt: number;
     isRebased: boolean;
     rebasedFromVersion: number;
-    
-    // ^^^^^ any change to this should also affect the clearBaseState function below
+
+    // ^^^^^ any change to this should also affect BASE_STATE_KEYS below
 }
+
+// public
+// single source of truth for the framework-owned base fields; everything else on a state is a domain key
+export const BASE_STATE_KEYS: ReadonlyArray<string> = [
+    "id",
+    "version",
+    "createdAt",
+    "updatedAt",
+    "isRebased",
+    "rebasedFromVersion"
+];
 
 export function clearBaseState(state: object): void
 {
     given(state, "state").ensureHasValue().ensureIsObject();
-    
-    // @ts-expect-error: deliberate
-    delete state.typeVersion;
-    // @ts-expect-error: deliberate
-    delete state.id;
-    // @ts-expect-error: deliberate
-    delete state.version;
-    // @ts-expect-error: deliberate
-    delete state.createdAt;
-    // @ts-expect-error: deliberate
-    delete state.updatedAt;
-    // @ts-expect-error: deliberate
-    delete state.isRebased;
-    // @ts-expect-error: deliberate
-    delete state.rebasedFromVersion;
+
+    BASE_STATE_KEYS.forEach(key =>
+    {
+        delete (state as Record<string, unknown>)[key];
+    });
+
+    // legacy hygiene: artifacts persisted before schema versioning carried typeVersion in-band
+    delete (state as Record<string, unknown>)["typeVersion"];
 }
