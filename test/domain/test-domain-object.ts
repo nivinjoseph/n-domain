@@ -1,10 +1,10 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { serialize } from "@nivinjoseph/n-util";
-import { DomainObject } from "../../src/index.js";
+import { DomainObject, DomainObjectData } from "../../src/index.js";
 
 
 @serialize("Test")
-export class TestDomainObject extends DomainObject
+export class TestDomainObject extends DomainObject<TestDomainObject, "id" | "name">
 {
     private readonly _id: string;
     private readonly _name: string;
@@ -17,7 +17,7 @@ export class TestDomainObject extends DomainObject
     public get name(): string { return this._name; }
     
     
-    public constructor(data: Data)
+    public constructor(data: DomainObjectData<TestDomainObject>)
     {
         super(data);
         
@@ -51,11 +51,4 @@ export class TestDomainObject extends DomainObject
         
         return new TestDomainObject({id: this._id, name});
     }
-}
-
-
-interface Data
-{
-    id: string;
-    name: string;
 }

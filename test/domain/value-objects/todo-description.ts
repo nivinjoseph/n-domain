@@ -1,10 +1,10 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { serialize } from "@nivinjoseph/n-util";
-import { DomainObject } from "../../../src/index.js";
+import { DomainObject, DomainObjectData } from "../../../src/index.js";
 
 
 @serialize("Test")
-export class TodoDescription extends DomainObject
+export class TodoDescription extends DomainObject<TodoDescription, "description" | "descriptionSummary">
 {
     private readonly _description: string;
     private readonly _descriptionSummary: string;
@@ -17,7 +17,7 @@ export class TodoDescription extends DomainObject
     public get descriptionSummary(): string { return this._descriptionSummary; }
 
 
-    public constructor(data: Pick<TodoDescription, "description" | "descriptionSummary">)
+    public constructor(data: DomainObjectData<TodoDescription>)
     {
         super(data);
 
