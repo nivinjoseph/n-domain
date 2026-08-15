@@ -6,6 +6,22 @@ import { AggregateStateHelper } from "./aggregate-state-helper.js";
 import { DomainHelper } from "./domain-helper.js";
 import { AggregateRoot } from "./aggregate-root.js";
 // public
+/**
+ * Base class for domain events — the only mechanism through which aggregate state changes.
+ *
+ * Contracts the type system cannot express:
+ * - Decorate every concrete event class with `@serialize("YourNamespace")` (and each payload
+ *   getter with `@serialize`), or replay/deserialization fails at runtime.
+ * - The event **class name is the persisted identity** (`$name`); renaming an event class breaks
+ *   deserialization of already-stored streams.
+ * - A created event's constructor must set `data.$isCreatedEvent = true` **before** calling
+ *   `super(data)`, and its `applyEvent` must set `state.id`.
+ * - Implement `refType` with a string literal of the aggregate's type name; importing the
+ *   aggregate class to call `Aggregate.getTypeName()` creates a fatal circular dependency.
+ * - `aggregateId`, `id`, and `userId` are populated by `apply()`; accessing them earlier throws.
+ *
+ * @typeParam T - the aggregate state this event mutates
+ */
 let DomainEvent = (() => {
     let _classSuper = Serializable;
     let _instanceExtraInitializers = [];
@@ -47,14 +63,20 @@ let DomainEvent = (() => {
         // same idiom used for _aggregateId), so this stamping stays off DomainEvent's public surface — hence not readonly.
         // eslint-disable-next-line @typescript-eslint/prefer-readonly
         _frozenDefaultState;
+        /** @throws "accessing property before apply" until the event has been applied to an aggregate. */
         get aggregateId() {
             given(this, "this").ensure(t => t._aggregateId != null, "accessing property before apply");
             return this._aggregateId;
         }
+        /**
+         * Unique event identifier of the form `aggregateId-version`.
+         * @throws "accessing property before apply" until the event has been applied to an aggregate.
+         */
         get id() {
             given(this, "this").ensure(t => t._id != null, "accessing property before apply");
             return this._id;
         }
+        /** @throws "accessing property before apply" until the event has been applied to an aggregate. */
         get userId() {
             given(this, "this").ensure(t => t._userId != null, "accessing property before apply");
             return this._userId;
@@ -87,6 +109,13 @@ let DomainEvent = (() => {
             given($frozenDefaultState, "$frozenDefaultState").ensureIsObject();
             this._frozenDefaultState = $frozenDefaultState ?? null;
         }
+        /**
+         * Framework-internal, called by `AggregateRoot` — do not call directly. Stamps
+         * `userId`/`version`/`id`, overlays a created event's `$frozenDefaultState`, invokes
+         * `applyEvent`, and updates `createdAt`/`updatedAt`.
+         * @throws ApplicationException if the created event did not set the aggregate's id, or if the
+         * event's `aggregateId`/`id` do not match the aggregate it is being applied to.
+         */
         apply(aggregate, domainContext, state) {
             given(aggregate, "aggregate").ensureHasValue().ensureIsObject().ensure(t => t instanceof AggregateRoot);
             given(domainContext, "domainContext").ensureHasValue().ensureHasStructure({ userId: "string" });

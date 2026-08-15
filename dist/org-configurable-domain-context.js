@@ -1,5 +1,6 @@
 import { given } from "@nivinjoseph/n-defensive";
 import { ConfigurableDomainContext } from "./configurable-domain-context.js";
+/** `OrgDomainContext` implementation with mutable `userId` and `organizationId`. */
 export class OrgConfigurableDomainContext extends ConfigurableDomainContext {
     _organizationId = null;
     get organizationId() { return this._organizationId; }

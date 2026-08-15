@@ -3,6 +3,17 @@ import { given } from "@nivinjoseph/n-defensive";
 import { serialize } from "@nivinjoseph/n-util";
 import { DomainObject } from "./domain-object.js";
 // public
+/**
+ * Base class for entities — domain objects with identity, compared by `id` rather than state
+ * (use `deepEquals` for state comparison).
+ *
+ * Follows the same self-referential generic idiom as {@link DomainObject}: pass the class itself
+ * as `TThis` and its `@serialize` decorated getter names as `TDataKeys`. `"id"` is added to the
+ * data keys automatically, so subclass constructors always receive an `id: string` in their data.
+ *
+ * @typeParam TThis - the concrete subclass itself (must have an `id: string`)
+ * @typeParam TDataKeys - union of the subclass's `@serialize` decorated getter names, excluding `id`
+ */
 let DomainEntity = (() => {
     let _classSuper = DomainObject;
     let _instanceExtraInitializers = [];
@@ -18,6 +29,7 @@ let DomainEntity = (() => {
         get id() { return this._id; }
         constructor(data) {
             super(data);
+            // the mapped type is opaque while TThis is unresolved, but "id" is guaranteed in it
             const { id } = data;
             given(id, "id").ensureHasValue().ensureIsString();
             this._id = id;

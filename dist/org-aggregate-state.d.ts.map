@@ -1,1 +1,1 @@
-{"version":3,"file":"org-aggregate-state.d.ts","sourceRoot":"","sources":["../src/org-aggregate-state.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,cAAc,EAAE,MAAM,sBAAsB,CAAC;AAEtD,MAAM,WAAW,iBAAkB,SAAQ,cAAc;IAErD,cAAc,EAAE,MAAM,CAAC;CAC1B"}
+{"version":3,"file":"org-aggregate-state.d.ts","sourceRoot":"","sources":["../src/org-aggregate-state.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,cAAc,EAAE,MAAM,sBAAsB,CAAC;AAEtD,iDAAiD;AACjD,MAAM,WAAW,iBAAkB,SAAQ,cAAc;IAErD,cAAc,EAAE,MAAM,CAAC;CAC1B"}

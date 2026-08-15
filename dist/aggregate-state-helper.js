@@ -3,6 +3,12 @@ import { ApplicationException } from "@nivinjoseph/n-exception";
 import { Deserializer, Serializable } from "@nivinjoseph/n-util";
 import { createHash } from "node:crypto";
 export class AggregateStateHelper {
+    /**
+     * Serializes a state object into a plain snapshot: nested `Serializable`s (DomainObjects) are
+     * serialized, while keys named in `cloneKeys` are deep-cloned via JSON instead. State values
+     * must be primitives, arrays, plain JSON objects, or `Serializable`s — a non-`Serializable`
+     * object with private (`_`-prefixed) fields throws.
+     */
     static serializeStateIntoSnapshot(state, ...cloneKeys) {
         const snapshot = Object.assign({}, state);
         Object.keys(snapshot).forEach(key => {
@@ -25,6 +31,10 @@ export class AggregateStateHelper {
         });
         return snapshot;
     }
+    /**
+     * Revives a snapshot back into state: any object carrying a registered `$typename` is
+     * deserialized into its `Serializable` class; everything else passes through unchanged.
+     */
     static deserializeSnapshotIntoState(snapshot) {
         given(snapshot, "snapshot").ensureHasValue().ensureIsObject();
         const deserialized = {};
@@ -49,6 +59,12 @@ export class AggregateStateHelper {
         });
         return deserialized;
     }
+    /**
+     * Layers a rebase snapshot over the current factory defaults onto `state` and stamps
+     * `isRebased`/`rebasedFromVersion`. Call this from your rebased event's `applyEvent`,
+     * forwarding the three values `AggregateRoot.rebase` hands to its event factory function —
+     * without this call a rebase event has no effect on state.
+     */
     static rebaseState(state, defaultState, rebaseState, rebaseVersion) {
         given(state, "state").ensureHasValue().ensureIsObject();
         given(defaultState, "defaultState").ensureHasValue().ensureIsObject();

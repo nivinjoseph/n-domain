@@ -4,6 +4,10 @@ import { ApplicationException } from "@nivinjoseph/n-exception";
 import { serialize } from "@nivinjoseph/n-util";
 import { DomainEvent } from "./domain-event.js";
 import { OrgAggregateRoot } from "./org-aggregate-root.js";
+/**
+ * Organization-scoped domain event: serializes `$organizationId` and, on apply, throws
+ * `ApplicationException` if the event's `organizationId` does not match the state's.
+ */
 let OrgDomainEvent = (() => {
     let _classSuper = DomainEvent;
     let _instanceExtraInitializers = [];
