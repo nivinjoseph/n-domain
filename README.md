@@ -23,6 +23,22 @@ npm install @nivinjoseph/n-domain
 yarn add @nivinjoseph/n-domain
 ```
 
+### Requirements & setup
+
+- **Node.js >= 24.10** (see `engines` in package.json).
+- **ESM only** — the package is published with `"type": "module"`; there is no CommonJS build.
+- **Standard (ES2023+) decorators** — serialization is driven by the `@serialize` decorator from `@nivinjoseph/n-util`, which registers getters under `Symbol.metadata` (polyfilled by n-util at load). Compile with TypeScript 5+ standard decorators; do **not** enable `experimentalDecorators`.
+- **Side effect on import** — importing this package also loads `@nivinjoseph/n-ext`, which installs string/array prototype extensions (`orderBy`, `take`, `isEmptyOrWhiteSpace`, ...) that the library and its examples use freely.
+
+### Ecosystem
+
+n-domain builds on a small family of sibling packages you will encounter while using it:
+
+- `@nivinjoseph/n-util` — `Serializable`, the `@serialize` decorator, and `Deserializer`; the entire serialization/replay mechanism lives here.
+- `@nivinjoseph/n-defensive` — the `given(...)` fluent assertions; every runtime contract in this library is expressed with it, and it is the recommended validation style for your domain code.
+- `@nivinjoseph/n-ext` — prototype extensions, loaded as a side effect (see above).
+- `@nivinjoseph/n-eda` — **not** a dependency, but `DomainEvent`'s `refType`, `refId`, and `partitionKey` exist for compatibility with it; you must implement `refType` even if you don't use n-eda.
+
 ## Domain Organization
 
 The framework encourages a clean and organized domain structure. Here's how to organize your domain:
@@ -283,23 +299,25 @@ test("TodoStateFactory.create() output has not drifted", () =>
 ### Domain Objects and Entities
 
 - **`DomainObject`** — base class for value objects. `equals()` is **structural**: two instances are equal if they have the same type and identical serialized state.
-- **`DomainEntity`** — base class for entities (has an `id`). `equals()` is **identity-based**: two instances are equal if they have the same type and the same `id`, regardless of state.
+- **`DomainEntity`** — base class for entities (has an `id`). `equals()` is **identity-based**: two instances are equal if they have the same type and the same `id`, regardless of state. `deepEquals()` compares full serialized state (like `DomainObject.equals`).
+
+Both are generic over `<TThis, TDataKeys>`: pass the class itself as `TThis` and the union of its `@serialize`d getter names as `TDataKeys`. Type the constructor's parameter as `DomainObjectData<TThis>` — the serialized shape derived from those getters. (`DomainEntity` adds `"id"` to the data keys automatically.)
 
 ```typescript
 import { given } from "@nivinjoseph/n-defensive";
 import { serialize } from "@nivinjoseph/n-util";
-import { DomainObject } from "@nivinjoseph/n-domain";
+import { DomainObject, DomainObjectData } from "@nivinjoseph/n-domain";
 
 
 @serialize("App")
-export class TodoDescription extends DomainObject
+export class TodoDescription extends DomainObject<TodoDescription, "description">
 {
     private readonly _description: string;
 
     @serialize
     public get description(): string { return this._description; }
 
-    public constructor(data: { description: string; })
+    public constructor(data: DomainObjectData<TodoDescription>)
     {
         super(data);
         const { description } = data;
@@ -308,6 +326,8 @@ export class TodoDescription extends DomainObject
     }
 }
 ```
+
+The `DomainObject` constructor enforces at runtime that every property in `data` corresponds to an `@serialize`d getter — fresh constructions throw otherwise. (Hydrating stored data that carries `$typename` tolerates unknown keys, since deprecated fields may linger in storage.)
 
 ### Multi-tenancy (`Org*` types)
 
@@ -319,6 +339,17 @@ For organization-scoped domains, use the `Org*` variants. They mirror the core t
 - `OrgAggregateStateFactory` — constructed with an `OrgDomainContext`; `createDefaultAggregateState()` stamps `organizationId` into the state
 - `OrgDomainEvent` / `OrgDomainEventData` — events carry `$organizationId`; on apply, the event's `organizationId` is validated against the state's and an exception is thrown on mismatch
 - `OrgAggregateRoot` — exposes `organizationId` and requires an `OrgDomainContext`; `applyEvent` only accepts `OrgDomainEvent`s
+
+## Examples
+
+The [`test/domain/`](test/domain/) directory is the canonical reference implementation — a complete `Todo` aggregate kept in sync with the current API:
+
+- [`test/domain/todo.ts`](test/domain/todo.ts) — aggregate root with a static `create`, behavior methods, and a `rebase` override
+- [`test/domain/todo-state.ts`](test/domain/todo-state.ts) — state interface and factory, including working `typeVersion` migration factories
+- [`test/domain/events/`](test/domain/events/) — the abstract event base (`refType`), created event, update events, and a rebased event
+- [`test/domain/value-objects/todo-description.ts`](test/domain/value-objects/todo-description.ts) — a value object using the current `DomainObject` generics
+
+[`test/domain.test.ts`](test/domain.test.ts) is an executable specification: Given/When/Then suites covering creation, mutation, serialization/replay, `typeVersion` migration, point-in-time reconstruction, cloning, and rebasing. When docs and code disagree, trust these files.
 
 ## API Reference
 
@@ -432,16 +463,22 @@ Static utilities for working with state objects.
 
 ### DomainObject
 
-Abstract base class for value objects (extends `Serializable`).
+Abstract base class for value objects (extends `Serializable`). Generic over `<TThis extends object, TDataKeys extends keyof TThis>` — `TThis` is the concrete subclass itself, `TDataKeys` the union of its `@serialize`d getter names.
 
+- `constructor(data)` *(protected)* — `data`'s shape is derived from `TThis`/`TDataKeys` (use `DomainObjectData<TThis>`); on fresh construction, throws if `data` contains keys with no matching `@serialize` getter
 - `equals(value)`: boolean — structural equality: same type name and identical serialized state
+
+### DomainObjectData
+
+`DomainObjectData<T> = ReturnType<T["serialize"]>` — the serialized data shape of a `DomainObject` subclass. Use it to type the subclass's constructor parameter: `constructor(data: DomainObjectData<TodoDescription>)`.
 
 ### DomainEntity
 
-Abstract base class for entities (extends `DomainObject`). Constructed with `{ id: string }` in its data.
+Abstract base class for entities (extends `DomainObject`). Generic over `<TThis extends { id: string }, TDataKeys extends keyof TThis>`; `"id"` is added to the data keys automatically, so the constructor data always includes `id: string`.
 
 - `id`: string — unique identifier
 - `equals(value)`: boolean — identity equality: same type name and same `id`, regardless of state
+- `deepEquals(value)`: boolean — structural equality (same semantics as `DomainObject.equals`): same type name and identical serialized state
 
 ### DomainContext
 

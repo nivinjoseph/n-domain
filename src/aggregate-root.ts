@@ -12,6 +12,27 @@ import { AggregateStateHelper } from "./aggregate-state-helper.js";
 import { AggregateFactory } from "./aggregate-factory.js";
 
 // public
+/**
+ * Base class for event-sourced aggregate roots.
+ *
+ * Lifecycle: an aggregate is born from exactly one "created event" (`$isCreatedEvent`), which gets
+ * the state factory's pristine `create()` defaults frozen into it so future replays are isolated
+ * from later default changes. Events already persisted are "retro" events; events applied in the
+ * current session are "current" events (the unit of work to persist). Rehydrate via
+ * `AggregateFactory` / `deserializeFromEvents` (full replay) or `deserializeFromSnapshot`.
+ *
+ * Subclasses must preserve the exact positional constructor signature
+ * `(domainContext, events, stateFactory, currentState?)` — `AggregateFactory`, `clone`,
+ * `constructVersion`, and `constructBefore` instantiate the subclass positionally with these
+ * arguments. Decorate the subclass with `@serialize("YourNamespace")`.
+ *
+ * Note: several methods (`clone`, `constructVersion`, `constructBefore`, `hasEventOfType`,
+ * `hasRetroEventOfType`, `getEventsOfType`, `getRetroEventsOfType`) require retro events and throw
+ * on a freshly created, not-yet-persisted aggregate; the `*CurrentEvent*` variants are always safe.
+ *
+ * @typeParam T - the aggregate's state interface
+ * @typeParam TDomainEvent - the aggregate's (abstract) domain event base type
+ */
 export abstract class AggregateRoot<T extends AggregateState, TDomainEvent extends DomainEvent<T>> extends Serializable<AggregateRootData>
 {
     private readonly _domainContext: DomainContext;
@@ -61,6 +82,16 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
     public get rebasedFromVersion(): number { return this._state.rebasedFromVersion; }
 
 
+    /**
+     * Prefer instantiating through `AggregateFactory` or the static deserialize methods.
+     *
+     * Pass either events (replay path) or a snapshot `currentState` — when the snapshot carries a
+     * version, `events` must be empty. The events must contain exactly one created event. Loaded
+     * state is run through the factory's `update()` and must come out at the current `typeVersion`.
+     *
+     * @throws if events are combined with a versioned snapshot, if the created-event count is not
+     * exactly one, or if `update()` leaves loaded state at a stale `typeVersion`.
+     */
     public constructor(domainContext: DomainContext, events: ReadonlyArray<DomainEvent<T>>,
         stateFactory: AggregateStateFactory<T>, currentState?: T)
     {
@@ -124,6 +155,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         this._retroVersion = this.currentVersion;
     }
 
+    /**
+     * Rehydrates an aggregate by deserializing stored event data (via the `@serialize` registry)
+     * and replaying the full stream. Every event type must be decorated with
+     * `@serialize("Namespace")` or deserialization fails.
+     */
     public static deserializeFromEvents<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>,
         TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext,
             aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>, eventData: ReadonlyArray<DomainEventData>): TAggregate
@@ -187,6 +223,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
     //     return super.serialize() as AggregateRootData;
     // }
 
+    /**
+     * Rehydrates an aggregate from a state snapshot (produced by `snapshot()`) without replaying
+     * events; `retroEvents` will be empty, so the event-inspection and reconstruction methods that
+     * require retro events are unavailable on the result.
+     */
     public static deserializeFromSnapshot<TAggregate extends AggregateRoot<TAggregateState, TAggregateDomainEvent>,
         TAggregateState extends AggregateState, TAggregateDomainEvent extends DomainEvent<TAggregateState>>(domainContext: DomainContext,
             aggregateType: new (...args: Array<any>) => TAggregate, stateFactory: AggregateStateFactory<TAggregateState>,
@@ -208,11 +249,22 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         return new aggregateType(domainContext, [], stateFactory, deserializedSnapshot);
     }
 
+    /**
+     * Serializes current state into a plain snapshot object; nested `Serializable`s (DomainObjects)
+     * are serialized, while keys named in `cloneKeys` are deep-cloned via JSON instead. State
+     * fields must be primitives, arrays, plain JSON objects, or `Serializable`/`DomainObject`
+     * instances — any other object with private (`_`-prefixed) fields throws at snapshot time.
+     */
     public snapshot(...cloneKeys: ReadonlyArray<string>): T | object
     {
         return AggregateStateHelper.serializeStateIntoSnapshot(this.state, ...cloneKeys);
     }
 
+    /**
+     * Reconstructs the aggregate as of `version` by replaying only the events up to it.
+     * @throws if `version` is out of range, or when called on an aggregate without retro events
+     * (freshly created or snapshot-loaded).
+     */
     public constructVersion(version: number): this
     {
         given(version, "version").ensureHasValue().ensureIsNumber()
@@ -230,6 +282,12 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         return result as this;
     }
 
+    /**
+     * Reconstructs the aggregate as of just before `dateTime` (epoch ms) by replaying only the
+     * events that occurred earlier.
+     * @throws if `dateTime` is not after `createdAt`, or when called on an aggregate without retro
+     * events (freshly created or snapshot-loaded).
+     */
     public constructBefore(dateTime: number): this
     {
         given(dateTime, "dateTime").ensureHasValue().ensureIsNumber()
@@ -247,6 +305,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         return result as this;
     }
 
+    /**
+     * Checks all events (retro + current) for an event of the given type.
+     * @throws when called on an aggregate without retro events (freshly created or
+     * snapshot-loaded); use `hasCurrentEventOfType` there instead.
+     */
     public hasEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
@@ -257,6 +320,10 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         return this.events.some(t => t.name === eventTypeName);
     }
 
+    /**
+     * Checks the persisted (retro) events for an event of the given type.
+     * @throws when called on an aggregate without retro events (freshly created or snapshot-loaded).
+     */
     public hasRetroEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
@@ -267,6 +334,10 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         return this._retroEvents.some(t => t.name === eventTypeName);
     }
 
+    /**
+     * Checks the uncommitted (current) events for an event of the given type. Safe on any
+     * aggregate, including freshly created ones.
+     */
     public hasCurrentEventOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): boolean
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
@@ -275,7 +346,12 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         return this._currentEvents.some(t => t.name === eventTypeName);
     }
 
-    public getEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType> 
+    /**
+     * Returns all events (retro + current) of the given type.
+     * @throws when called on an aggregate without retro events (freshly created or
+     * snapshot-loaded); use `getCurrentEventsOfType` there instead.
+     */
+    public getEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType>
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
 
@@ -285,7 +361,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         return this.events.filter(t => t.name === eventTypeName) as Array<TEventType>;
     }
 
-    public getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType> 
+    /**
+     * Returns the persisted (retro) events of the given type.
+     * @throws when called on an aggregate without retro events (freshly created or snapshot-loaded).
+     */
+    public getRetroEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType>
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
 
@@ -295,7 +375,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         return this._retroEvents.filter(t => t.name === eventTypeName) as Array<TEventType>;
     }
 
-    public getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType> 
+    /**
+     * Returns the uncommitted (current) events of the given type. Safe on any aggregate,
+     * including freshly created ones.
+     */
+    public getCurrentEventsOfType<TEventType extends DomainEvent<T>>(eventType: new (...args: Array<any>) => TEventType): Array<TEventType>
     {
         given(eventType, "eventType").ensureHasValue().ensureIsFunction();
 
@@ -304,10 +388,13 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
     }
 
     /**
-     * 
+     * Creates a new aggregate seeded by `createdEvent`, then replays this aggregate's non-created
+     * events onto it (with their identity fields cleared so they re-apply as fresh events).
+     *
      * @param createdEvent - provide a new created event to be used by the clone
      * @param serializedEventMutatorAndFilter - provide a function that can mutate the serialized event if required and returns a boolean indicating whether to include the event or not.
      * @returns - cloned Aggregate
+     * @throws when called on an aggregate without retro events (freshly created or snapshot-loaded).
      */
     public clone(createdEvent: DomainEvent<T>,
         serializedEventMutatorAndFilter?: (event: { $name: string; }) => boolean): this
@@ -353,6 +440,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         return clone as this;
     }
 
+    /**
+     * Self-check that serialization, event replay, and snapshot round-trips all reproduce
+     * identical state, and that the state factory's `create()` is deterministic. Intended to be
+     * called from your test suite.
+     */
     public test(): void
     {
         const type = (<Object>this).constructor as new (...params: Array<any>) => this;
@@ -414,6 +506,15 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
             .ensure(t => JSON.stringify(t) === JSON.stringify(this.state), "state is not consistent with original state");
     }
 
+    /**
+     * Collapses history up to `version` into a single rebase event produced by
+     * `rebasedEventFactoryFunc`. Protected — override with a public method on your aggregate that
+     * supplies your own rebased event type.
+     *
+     * The produced event's `applyEvent` must forward its three payload values to
+     * `AggregateStateHelper.rebaseState(state, defaultState, rebaseState, rebaseVersion)`;
+     * without that call the rebase event has no effect on state.
+     */
     protected rebase(version: number, rebasedEventFactoryFunc: (defaultState: object, rebaseState: object, rebaseVersion: number) => TDomainEvent): void
     {
         given(version, "version").ensureHasValue().ensureIsNumber()
@@ -449,6 +550,11 @@ export abstract class AggregateRoot<T extends AggregateState, TDomainEvent exten
         // console.dir(Deserializer.deserialize(rebaseEvent.serialize()));
     }
 
+    /**
+     * Applies a new (current/uncommitted) event to the aggregate; call this from your aggregate's
+     * behavior methods.
+     * @throws if the event is a created event and the aggregate already has events.
+     */
     protected applyEvent(event: TDomainEvent): void
     {
         given(event, "event").ensureHasValue().ensureIsObject().ensureIsInstanceOf(DomainEvent)
