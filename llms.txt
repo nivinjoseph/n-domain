@@ -15,7 +15,7 @@ Sibling packages you will touch: `@nivinjoseph/n-util` (Serializable, `@serializ
 - `AggregateStateHelper` — static utils: `serializeStateIntoSnapshot`, `deserializeSnapshotIntoState`, `rebaseState`, `fingerprintState` (drift-guard SHA-512)
 - `AggregateRootData` — serialized aggregate shape (`$id`, `$version`, `$createdAt`, `$updatedAt`, `$events`)
 - `DomainEvent<TState>` — abstract event base; `DomainEventData` — its serialized shape (`$`-prefixed keys)
-- `DomainObject<TThis, TDataKeys>` — value object base (structural `equals`); `DomainObjectData<T>` — its constructor data type
+- `DomainObject<TThis, TDataKeys>` — value object base (structural `equals`); `DomainObjectData<T>` — constructor-input type (nested domain objects are live instances); `DomainObjectSerialized<TThis, TDataKeys>`/`SerializedValue<V>` — `serialize()`'s deep plain-data return type (nested domain objects serialized recursively, `$typename` at every level; not interchangeable with the input type). RULE: anything extending DomainObject (value objects AND entities) serializes correctly only when held directly or in a single-level array — inside `Array<Array<...>>` or plain-object properties they get JSON-mangled at runtime, so those positions type as `never` by design, in BOTH the constructor input (violating classes are unconstructible — `new` does not compile) and the serialized output
 - `DomainEntity<TThis, TDataKeys>` — entity base (identity `equals`, structural `deepEquals`)
 - `DomainContext` (`{ userId }`), `ConfigurableDomainContext` — context implementations
 - `DomainHelper` — `now`, `generateId("abc")` (3-letter prefix, sortable ulid-based), `aggregateTypeToSnakeCase`
