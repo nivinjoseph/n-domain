@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import { describe, test } from "node:test";
 import { Deserializer, serialize } from "@nivinjoseph/n-util";
-import { DomainObject, DomainObjectData } from "../src/index.js";
+import { DomainEntity, DomainObject, DomainObjectData } from "../src/index.js";
 
 
 @serialize("Test")
@@ -96,6 +96,52 @@ class Route extends DomainObject<Route, "name" | "stops">
 }
 
 
+@serialize("Test")
+class Driver extends DomainEntity<Driver, "name" | "home">
+{
+    private readonly _name: string;
+    private readonly _home: Address;
+
+
+    @serialize
+    public get name(): string { return this._name; }
+
+    @serialize
+    public get home(): Address { return this._home; }
+
+
+    public constructor(data: DomainObjectData<Driver>)
+    {
+        super(data);
+        this._name = data.name;
+        this._home = data.home;
+    }
+}
+
+
+@serialize("Test")
+class Fleet extends DomainObject<Fleet, "label" | "drivers">
+{
+    private readonly _label: string;
+    private readonly _drivers: ReadonlyArray<Driver>;
+
+
+    @serialize
+    public get label(): string { return this._label; }
+
+    @serialize
+    public get drivers(): ReadonlyArray<Driver> { return this._drivers; }
+
+
+    public constructor(data: DomainObjectData<Fleet>)
+    {
+        super(data);
+        this._label = data.label;
+        this._drivers = data.drivers;
+    }
+}
+
+
 await describe("Nested DomainObject tests", async () =>
 {
     const createWorkplace = (): Workplace => new Workplace({
@@ -186,6 +232,87 @@ await describe("Nested DomainObject tests", async () =>
         assert.ok(rehydrated.stops[1].coordinate instanceof GeoCoordinate);
         assert.strictEqual(rehydrated.stops[1].coordinate.lat, 3);
         assert.ok(original.equals(rehydrated));
+    });
+
+    await test("entities nested as values follow the same rules as value objects", () =>
+    {
+        const original = new Fleet({
+            label: "east",
+            drivers: [new Driver({
+                id: "d1",
+                name: "Sam",
+                home: new Address({ street: "9 Ninth St", coordinate: new GeoCoordinate({ lat: 5, lng: 6 }) })
+            })]
+        });
+
+        const serialized = original.serialize();
+
+        // entity elements are typed as serialized data — id, deep keys, and $typename resolve
+        const id: string = serialized.drivers[0].id;
+        const street: string = serialized.drivers[0].home.street;
+        const typename: string = serialized.drivers[0].$typename;
+        assert.strictEqual(id, "d1");
+        assert.strictEqual(street, "9 Ninth St");
+        assert.strictEqual(typename, "Test.Driver");
+
+        // @ts-expect-error serialized entities have no instance methods either
+        assert.strictEqual(serialized.drivers[0].deepEquals, undefined);
+
+        const rehydrated = Deserializer.deserialize<Fleet>(JSON.parse(JSON.stringify(serialized)));
+        assert.ok(rehydrated.drivers[0] instanceof Driver);
+        assert.ok(rehydrated.drivers[0].home.coordinate instanceof GeoCoordinate);
+        assert.ok(original.drivers[0].equals(rehydrated.drivers[0])); // entity identity equality
+        assert.ok(original.equals(rehydrated));
+    });
+
+    await test("convention-violating shapes are unconstructible at compile time", () =>
+    {
+        // Each class below buries a domain object beyond the runtime's serialization reach.
+        // Their data keys are poisoned to `never`, so construction cannot compile — the
+        // expect-error directives below fail the build if this enforcement ever regresses.
+
+        class BadGrid extends DomainObject<BadGrid, "grid">
+        {
+            public get grid(): Array<Array<GeoCoordinate>> { return []; }
+            public constructor(data: DomainObjectData<BadGrid>) { super(data); }
+        }
+
+        class BadWrapped extends DomainObject<BadWrapped, "wrapper">
+        {
+            public get wrapper(): { geo: GeoCoordinate; } { return { geo: new GeoCoordinate({ lat: 1, lng: 2 }) }; }
+            public constructor(data: DomainObjectData<BadWrapped>) { super(data); }
+        }
+
+        class BadLookup extends DomainObject<BadLookup, "lookup">
+        {
+            public get lookup(): Map<string, number> { return new Map(); }
+            public constructor(data: DomainObjectData<BadLookup>) { super(data); }
+        }
+
+        class BadEntity extends DomainEntity<BadEntity, "grid">
+        {
+            public get grid(): Array<Array<GeoCoordinate>> { return []; }
+            public constructor(data: DomainObjectData<BadEntity>) { super(data); }
+        }
+
+        // compile-time assertions only — the lambdas are never invoked
+        const check1 = (): BadGrid =>
+            // @ts-expect-error domain objects inside Array<Array<...>> are not serializable
+            new BadGrid({ grid: [[new GeoCoordinate({ lat: 1, lng: 2 })]] });
+        const check2 = (): BadWrapped =>
+            // @ts-expect-error domain objects inside plain-object properties are not serializable
+            new BadWrapped({ wrapper: { geo: new GeoCoordinate({ lat: 1, lng: 2 }) } });
+        const check3 = (): BadLookup =>
+            // @ts-expect-error Map is not serializable
+            new BadLookup({ lookup: new Map() });
+        const check4 = (): BadEntity =>
+            // @ts-expect-error the same enforcement applies through DomainEntity
+            new BadEntity({ id: "e1", grid: [[new GeoCoordinate({ lat: 1, lng: 2 })]] });
+
+        assert.strictEqual(typeof check1, "function");
+        assert.strictEqual(typeof check2, "function");
+        assert.strictEqual(typeof check3, "function");
+        assert.strictEqual(typeof check4, "function");
     });
 
     await test("deprecated keys inside nested levels are tolerated on hydration", () =>

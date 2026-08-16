@@ -53,6 +53,51 @@ type JsonClonedValue<V> =
     V extends object ? { -readonly [K in keyof V]: JsonClonedValue<V[K]>; } :
     V;
 
+// input-side legality — mirrors the three output tiers above; `true` means the runtime can
+// faithfully serialize a value of this shape from this position
+type LegalDataValue<V> =
+    V extends null | undefined ? true :
+    V extends DomainObject<object, never> ? true :
+    V extends Date ? true :
+    V extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> | ((...args: Array<any>) => unknown) ? false :
+    V extends ReadonlyArray<infer E> ? LegalArrayElement<E> :
+    V extends object ? LegalJsonClonedValue<V> :
+    true;
+
+type LegalArrayElement<E> =
+    E extends null | undefined ? true :
+    E extends DomainObject<object, never> ? true :
+    E extends Date ? true :
+    E extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> | ((...args: Array<any>) => unknown) ? false :
+    E extends ReadonlyArray<infer E2> ? LegalJsonClonedValue<E2> :
+    E extends object ? LegalJsonClonedValue<E> :
+    E;
+
+type LegalJsonClonedValue<V> =
+    V extends null | undefined ? true :
+    V extends DomainObject<object, never> ? false :
+    V extends Date ? true :
+    V extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> | ((...args: Array<any>) => unknown) ? false :
+    V extends ReadonlyArray<infer E> ? LegalJsonClonedValue<E> :
+    V extends object ? (Exclude<{ [K in keyof V]: LegalJsonClonedValue<V[K]>; }[keyof V], true> extends never ? true : false) :
+    true;
+
+/**
+ * Data keys whose shapes the runtime cannot faithfully serialize become required `never`
+ * properties, making a violating class unconstructible — the convention "a domain object is
+ * held directly or in a single-level array" is enforced at construction time.
+ */
+type IllegalDataKeys<TThis extends object, TDataKeys extends keyof TThis> =
+    { [P in TDataKeys as LegalDataValue<TThis[P]> extends true ? never : P]: never; };
+
+// public
+/**
+ * The constructor-input shape of a DomainObject: the `@serialize`d getter types as-is
+ * (nested domain objects are live instances), with unserializable keys poisoned to `never`.
+ */
+export type DomainObjectDataShape<TThis extends object, TDataKeys extends keyof TThis> =
+    Schema<TThis, TDataKeys> & IllegalDataKeys<TThis, TDataKeys>;
+
 // public
 /**
  * The serialized (wire/storage) shape of a DomainObject: its data keys mapped through
@@ -103,12 +148,12 @@ export abstract class DomainObject<TThis extends object, TDataKeys extends keyof
     private static readonly _serializableKeysCache = new Map<object, ReadonlySet<string>>();
 
     /**
-     * Type-only brand carrying the constructor-input data shape (`Schema<TThis, TDataKeys>`,
+     * Type-only brand carrying the constructor-input data shape ({@link DomainObjectDataShape},
      * where nested domain objects are live instances). Never assigned at runtime — it exists
      * so {@link DomainObjectData} can recover the input shape now that `serialize()` returns
      * the serialized shape instead. Do not read or list it in `TDataKeys`.
      */
-    public declare readonly $data?: Schema<TThis, TDataKeys>;
+    public declare readonly $data?: DomainObjectDataShape<TThis, TDataKeys>;
 
 
     /**
@@ -116,7 +161,7 @@ export abstract class DomainObject<TThis extends object, TDataKeys extends keyof
      * `@serialize` decorated getters. Hydrations of stored artifacts (`data` carrying `$typename`)
      * skip this check, since deprecated fields may linger in storage.
      */
-    protected constructor(data: Schema<TThis, TDataKeys>)
+    protected constructor(data: DomainObjectDataShape<TThis, TDataKeys>)
     {
         // the input shape (instances) and the serialized shape (plain data) intentionally differ;
         // the base class only sees the latter, so this is the one place the two meet

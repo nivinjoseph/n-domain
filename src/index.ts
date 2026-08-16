@@ -10,7 +10,7 @@ export { DomainEntity } from "./domain-entity.js";
 export { DomainEvent } from "./domain-event.js";
 export { DomainEventData } from "./domain-event-data.js";
 export { DomainHelper } from "./domain-helper.js";
-export { DomainObject, DomainObjectData, DomainObjectSerialized, SerializedValue } from "./domain-object.js";
+export { DomainObject, DomainObjectData, DomainObjectDataShape, DomainObjectSerialized, SerializedValue } from "./domain-object.js";
 export { OrgAggregateRoot } from "./org-aggregate-root.js";
 export { OrgAggregateState } from "./org-aggregate-state.js";
 export { OrgAggregateStateFactory } from "./org-aggregate-state-factory.js";

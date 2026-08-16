@@ -28,6 +28,10 @@ history in August 2026; entries before 3.1.0 are summarized best-effort.
   exactly: domain objects held directly or in a single-level array serialize properly; positions
   the runtime would JSON-mangle (`Map`/`Set`/`Promise`, domain objects inside `Array<Array<...>>`
   or inside plain-object properties) type as `never`, surfacing them as compile errors.
+- `DomainObjectDataShape<TThis, TDataKeys>` exported from the package barrel — the
+  constructor-input shape. Data keys with unserializable shapes are poisoned to `never` here
+  too, making convention-violating classes unconstructible at compile time (enforced through
+  both `DomainObject` and `DomainEntity`).
 - Documentation overhaul: TSDoc across the public API, `llms.txt`, `CLAUDE.md`, this changelog,
   and refreshed README examples.
 

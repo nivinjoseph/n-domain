@@ -480,7 +480,7 @@ Abstract base class for value objects (extends `Serializable`). Generic over `<T
 
 `DomainObjectSerialized<TThis, TDataKeys>` — what `serialize()` returns: the data keys mapped through `SerializedValue` plus `$typename`. `SerializedValue<V>` maps a value type to its wire/storage shape, mirroring exactly what the runtime does: nested domain objects → their serialized shapes (including as elements of a directly-held array), `Date` → ISO string, plain objects/arrays JSON-cloned property-wise.
 
-Shapes the runtime cannot faithfully serialize surface as `never`, making them compile errors instead of silent data mangling: `Map`/`Set`/`Promise` (JSON-clone to `{}`), and domain objects buried beyond the runtime's reach — inside doubly-nested arrays (`Array<Array<DomainObject>>`) or inside plain-object properties (`{ foo: DomainObject }`). If you need those shapes, hold the domain object directly or in a single-level array.
+**Design rule: a domain object — value object or entity, anything extending `DomainObject` — is always held directly or in a single-level array.** The type system enforces this in both directions. On the input side, a data key whose shape the runtime cannot faithfully serialize is poisoned to `never` in the constructor's parameter type, so a violating class is **unconstructible** — `new` simply doesn't compile. On the output side, the same positions are `never` in the serialized type. Violating shapes are: `Map`/`Set`/`Promise` (JSON-clone to `{}`), functions, and domain objects buried beyond the runtime's reach, i.e. inside doubly-nested arrays (`Array<Array<DomainObject>>`) or inside plain-object properties (`{ foo: DomainObject }`). To model those, wrap the inner structure in a domain object of its own.
 
 ### DomainEntity
 
