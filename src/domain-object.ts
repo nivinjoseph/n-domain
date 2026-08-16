@@ -8,19 +8,49 @@ const serializableFieldsKey = Symbol.for("@nivinjoseph/n-util/serializable/field
 
 // public
 /**
- * Maps a value type to its serialized (wire/storage) shape, mirroring what serialization
- * actually does at runtime: nested domain objects become their own serialized shapes,
- * `Date` becomes an ISO string (JSON round-trip), arrays map element-wise, and plain
- * objects map property-wise. `Map`/`Set`/`Promise` become `never` since JSON-cloning
- * them yields `{}` — surfacing that as a compile error instead of a silent `{}`.
+ * Maps a data property's type to its serialized (wire/storage) shape, mirroring exactly what
+ * n-util's serialization does at runtime: a domain object becomes its own serialized shape, an
+ * array is handled element-wise (one level — elements may be domain objects), and anything else
+ * is JSON-cloned (`Date` → ISO string).
+ *
+ * Shapes the runtime cannot faithfully serialize surface as `never`, turning silent data
+ * mangling into a compile error: `Map`/`Set`/`Promise` (JSON-clone to `{}`), and domain objects
+ * buried beyond the runtime's reach — inside nested arrays (`Array<Array<DomainObject>>`) or
+ * inside plain-object properties — which get JSON-cloned into unrevivable private-field data.
  */
 export type SerializedValue<V> =
     V extends null | undefined ? null :
     V extends DomainObject<object, never> ? ReturnType<V["serialize"]> :
     V extends Date ? string :
     V extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> ? never :
-    V extends ReadonlyArray<infer E> ? Array<SerializedValue<E>> :
-    V extends object ? { -readonly [K in keyof V]: SerializedValue<V[K]>; } :
+    V extends ReadonlyArray<infer E> ? Array<SerializedArrayElement<E>> :
+    V extends object ? JsonClonedValue<V> :
+    V;
+
+/**
+ * One array level below a data property: elements that are domain objects still serialize
+ * properly; anything nested deeper (including further arrays) is JSON-cloned by the runtime.
+ */
+type SerializedArrayElement<E> =
+    E extends null | undefined ? null :
+    E extends DomainObject<object, never> ? ReturnType<E["serialize"]> :
+    E extends Date ? string :
+    E extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> ? never :
+    E extends ReadonlyArray<infer E2> ? Array<JsonClonedValue<E2>> :
+    E extends object ? JsonClonedValue<E> :
+    E;
+
+/**
+ * JSON-clone territory: the runtime does `JSON.parse(JSON.stringify(value))` here, so domain
+ * objects would be mangled into unrevivable private-field data — surfaced as `never`.
+ */
+type JsonClonedValue<V> =
+    V extends null | undefined ? null :
+    V extends DomainObject<object, never> ? never :
+    V extends Date ? string :
+    V extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> ? never :
+    V extends ReadonlyArray<infer E> ? Array<JsonClonedValue<E>> :
+    V extends object ? { -readonly [K in keyof V]: JsonClonedValue<V[K]>; } :
     V;
 
 // public

@@ -24,7 +24,10 @@ history in August 2026; entries before 3.1.0 are summarized best-effort.
 ### Added
 - `DomainObjectData<T>` exported from the package barrel.
 - `DomainObjectSerialized<TThis, TDataKeys>` and `SerializedValue<V>` exported from the package
-  barrel — the serialized-output types described above.
+  barrel — the serialized-output types described above. `SerializedValue` mirrors the runtime
+  exactly: domain objects held directly or in a single-level array serialize properly; positions
+  the runtime would JSON-mangle (`Map`/`Set`/`Promise`, domain objects inside `Array<Array<...>>`
+  or inside plain-object properties) type as `never`, surfacing them as compile errors.
 - Documentation overhaul: TSDoc across the public API, `llms.txt`, `CLAUDE.md`, this changelog,
   and refreshed README examples.
 

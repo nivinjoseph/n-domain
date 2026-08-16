@@ -478,7 +478,9 @@ Abstract base class for value objects (extends `Serializable`). Generic over `<T
 
 ### DomainObjectSerialized / SerializedValue
 
-`DomainObjectSerialized<TThis, TDataKeys>` — what `serialize()` returns: the data keys mapped through `SerializedValue` plus `$typename`. `SerializedValue<V>` maps a value type to its wire/storage shape: nested domain objects → their serialized shapes (recursive), `Date` → ISO string, arrays element-wise, plain objects property-wise, `Map`/`Set`/`Promise` → `never` (JSON-cloning them yields `{}`).
+`DomainObjectSerialized<TThis, TDataKeys>` — what `serialize()` returns: the data keys mapped through `SerializedValue` plus `$typename`. `SerializedValue<V>` maps a value type to its wire/storage shape, mirroring exactly what the runtime does: nested domain objects → their serialized shapes (including as elements of a directly-held array), `Date` → ISO string, plain objects/arrays JSON-cloned property-wise.
+
+Shapes the runtime cannot faithfully serialize surface as `never`, making them compile errors instead of silent data mangling: `Map`/`Set`/`Promise` (JSON-clone to `{}`), and domain objects buried beyond the runtime's reach — inside doubly-nested arrays (`Array<Array<DomainObject>>`) or inside plain-object properties (`{ foo: DomainObject }`). If you need those shapes, hold the domain object directly or in a single-level array.
 
 ### DomainEntity
 

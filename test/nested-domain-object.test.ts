@@ -73,6 +73,29 @@ class Workplace extends DomainObject<Workplace, "name" | "address">
 }
 
 
+@serialize("Test")
+class Route extends DomainObject<Route, "name" | "stops">
+{
+    private readonly _name: string;
+    private readonly _stops: ReadonlyArray<Address>;
+
+
+    @serialize
+    public get name(): string { return this._name; }
+
+    @serialize
+    public get stops(): ReadonlyArray<Address> { return this._stops; }
+
+
+    public constructor(data: DomainObjectData<Route>)
+    {
+        super(data);
+        this._name = data.name;
+        this._stops = data.stops; // array of instances — no cast required
+    }
+}
+
+
 await describe("Nested DomainObject tests", async () =>
 {
     const createWorkplace = (): Workplace => new Workplace({
@@ -130,6 +153,39 @@ await describe("Nested DomainObject tests", async () =>
         // @ts-expect-error serialized (plain) data is rejected where instances are expected
         const typeCheckOnly = (): Workplace => new Workplace(workplace.serialize());
         assert.strictEqual(typeof typeCheckOnly, "function");
+    });
+
+    await test("arrays of nested DomainObjects round-trip and are honestly typed", () =>
+    {
+        const original = new Route({
+            name: "commute",
+            stops: [
+                new Address({ street: "1 First St", coordinate: new GeoCoordinate({ lat: 1, lng: 2 }) }),
+                new Address({ street: "2 Second St", coordinate: new GeoCoordinate({ lat: 3, lng: 4 }) })
+            ]
+        });
+
+        const serialized = original.serialize();
+
+        // array elements are typed as serialized data — deep keys and $typename resolve
+        const street: string = serialized.stops[1].street;
+        const lat: number = serialized.stops[1].coordinate.lat;
+        const typename: string = serialized.stops[1].$typename;
+        assert.strictEqual(street, "2 Second St");
+        assert.strictEqual(lat, 3);
+        assert.strictEqual(typename, "Test.Address");
+
+        // @ts-expect-error serialized array elements have no instance methods
+        assert.strictEqual(serialized.stops[0].equals, undefined);
+
+        // and the full array round-trips through the deserializer
+        const rehydrated = Deserializer.deserialize<Route>(JSON.parse(JSON.stringify(serialized)));
+        assert.ok(rehydrated instanceof Route);
+        assert.strictEqual(rehydrated.stops.length, 2);
+        assert.ok(rehydrated.stops[0] instanceof Address);
+        assert.ok(rehydrated.stops[1].coordinate instanceof GeoCoordinate);
+        assert.strictEqual(rehydrated.stops[1].coordinate.lat, 3);
+        assert.ok(original.equals(rehydrated));
     });
 
     await test("deprecated keys inside nested levels are tolerated on hydration", () =>
