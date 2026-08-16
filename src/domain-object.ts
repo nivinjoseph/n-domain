@@ -71,7 +71,7 @@ type LegalArrayElement<E> =
     E extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> | ((...args: Array<any>) => unknown) ? false :
     E extends ReadonlyArray<infer E2> ? LegalJsonClonedValue<E2> :
     E extends object ? LegalJsonClonedValue<E> :
-    E;
+    true;
 
 type LegalJsonClonedValue<V> =
     V extends null | undefined ? true :

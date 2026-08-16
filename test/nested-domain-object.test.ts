@@ -142,6 +142,64 @@ class Fleet extends DomainObject<Fleet, "label" | "drivers">
 }
 
 
+enum Priority { Low = 0, Medium = 1, High = 2 }
+enum Status { Open = "open", Closed = "closed" }
+type Rating = 1 | 2 | 3 | 4 | 5;
+
+
+@serialize("Test")
+class Ticket extends DomainObject<Ticket,
+    "title" | "count" | "active" | "priority" | "status" | "rating" | "maybeStatus"
+    | "tags" | "scores" | "priorities" | "statuses" | "roTags">
+{
+    private readonly _data2: DomainObjectData<Ticket>;
+
+
+    @serialize
+    public get title(): string { return this._data2.title; }
+
+    @serialize
+    public get count(): number { return this._data2.count; }
+
+    @serialize
+    public get active(): boolean { return this._data2.active; }
+
+    @serialize
+    public get priority(): Priority { return this._data2.priority; }
+
+    @serialize
+    public get status(): Status { return this._data2.status; }
+
+    @serialize
+    public get rating(): Rating { return this._data2.rating; }
+
+    @serialize
+    public get maybeStatus(): Status | null { return this._data2.maybeStatus; }
+
+    @serialize
+    public get tags(): Array<string> { return this._data2.tags; }
+
+    @serialize
+    public get scores(): Array<number> { return this._data2.scores; }
+
+    @serialize
+    public get priorities(): Array<Priority> { return this._data2.priorities; }
+
+    @serialize
+    public get statuses(): Array<Status> { return this._data2.statuses; }
+
+    @serialize
+    public get roTags(): ReadonlyArray<string> { return this._data2.roTags; }
+
+
+    public constructor(data: DomainObjectData<Ticket>)
+    {
+        super(data);
+        this._data2 = data;
+    }
+}
+
+
 await describe("Nested DomainObject tests", async () =>
 {
     const createWorkplace = (): Workplace => new Workplace({
@@ -313,6 +371,47 @@ await describe("Nested DomainObject tests", async () =>
         assert.strictEqual(typeof check2, "function");
         assert.strictEqual(typeof check3, "function");
         assert.strictEqual(typeof check4, "function");
+    });
+
+    await test("scalars, enums, and arrays of both remain fully legal data shapes", () =>
+    {
+        const original = new Ticket({
+            title: "t",
+            count: 2,
+            active: true,
+            priority: Priority.High,
+            status: Status.Open,
+            rating: 4,
+            maybeStatus: null,
+            tags: ["a", "b"],
+            scores: [1, 2, 3],
+            priorities: [Priority.Low, Priority.Medium],
+            statuses: [Status.Closed],
+            roTags: ["ro"]
+        });
+
+        // serialized output preserves scalar/enum types (identity mapping)
+        const serialized = original.serialize();
+        const priority: Priority = serialized.priority;
+        const status: Status = serialized.status;
+        const rating: Rating = serialized.rating;
+        const tag: string = serialized.tags[0];
+        const prio: Priority = serialized.priorities[1];
+        const roTag: string = serialized.roTags[0];
+        assert.strictEqual(priority, Priority.High);
+        assert.strictEqual(status, Status.Open);
+        assert.strictEqual(rating, 4);
+        assert.strictEqual(tag, "a");
+        assert.strictEqual(prio, Priority.Medium);
+        assert.strictEqual(roTag, "ro");
+
+        // and everything round-trips
+        const rehydrated = Deserializer.deserialize<Ticket>(JSON.parse(JSON.stringify(serialized)));
+        assert.ok(rehydrated instanceof Ticket);
+        assert.deepStrictEqual(rehydrated.scores, [1, 2, 3]);
+        assert.deepStrictEqual(rehydrated.priorities, [Priority.Low, Priority.Medium]);
+        assert.strictEqual(rehydrated.maybeStatus, null);
+        assert.ok(original.equals(rehydrated));
     });
 
     await test("deprecated keys inside nested levels are tolerated on hydration", () =>
