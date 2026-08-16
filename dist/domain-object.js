@@ -47,6 +47,8 @@ export class DomainObject extends Serializable {
      * skip this check, since deprecated fields may linger in storage.
      */
     constructor(data) {
+        // the input shape (instances) and the serialized shape (plain data) intentionally differ;
+        // the base class only sees the latter, so this is the one place the two meet
         super(data);
         // data carrying $typename is a hydration of a stored artifact (Deserializer path);
         // unknown keys there are tolerated since they may be deprecated fields that still
