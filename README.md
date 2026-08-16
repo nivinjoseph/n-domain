@@ -301,7 +301,9 @@ test("TodoStateFactory.create() output has not drifted", () =>
 - **`DomainObject`** — base class for value objects. `equals()` is **structural**: two instances are equal if they have the same type and identical serialized state.
 - **`DomainEntity`** — base class for entities (has an `id`). `equals()` is **identity-based**: two instances are equal if they have the same type and the same `id`, regardless of state. `deepEquals()` compares full serialized state (like `DomainObject.equals`).
 
-Both are generic over `<TThis, TDataKeys>`: pass the class itself as `TThis` and the union of its `@serialize`d getter names as `TDataKeys`. Type the constructor's parameter as `DomainObjectData<TThis>` — the serialized shape derived from those getters. (`DomainEntity` adds `"id"` to the data keys automatically.)
+Both are generic over `<TThis, TDataKeys>`: pass the class itself as `TThis` and the union of its `@serialize`d getter names as `TDataKeys`. Type the constructor's parameter as `DomainObjectData<TThis>` — the constructor-input shape derived from those getters, in which nested domain objects are **live instances**. (`DomainEntity` adds `"id"` to the data keys automatically.)
+
+`serialize()` returns a different type — `DomainObjectSerialized<TThis, TDataKeys>` — the plain deep data shape: nested domain objects appear as their own serialized shapes (recursively, with `$typename` at every level), `Date`s as ISO strings. So instance methods don't exist on serialized output at the type level, and serialized output isn't assignable where a live instance is expected — both directions are compile errors.
 
 ```typescript
 import { given } from "@nivinjoseph/n-defensive";
@@ -466,11 +468,17 @@ Static utilities for working with state objects.
 Abstract base class for value objects (extends `Serializable`). Generic over `<TThis extends object, TDataKeys extends keyof TThis>` — `TThis` is the concrete subclass itself, `TDataKeys` the union of its `@serialize`d getter names.
 
 - `constructor(data)` *(protected)* — `data`'s shape is derived from `TThis`/`TDataKeys` (use `DomainObjectData<TThis>`); on fresh construction, throws if `data` contains keys with no matching `@serialize` getter
+- `serialize()`: `DomainObjectSerialized<TThis, TDataKeys>` — the plain deep serialized shape (nested domain objects as serialized data, `$typename` at every level), distinct from the instance-typed constructor input
 - `equals(value)`: boolean — structural equality: same type name and identical serialized state
+- `$data` *(type-only, always `undefined`)* — brand carrying the constructor-input shape for `DomainObjectData<T>`; never read it or list it in `TDataKeys`
 
 ### DomainObjectData
 
-`DomainObjectData<T> = ReturnType<T["serialize"]>` — the serialized data shape of a `DomainObject` subclass. Use it to type the subclass's constructor parameter: `constructor(data: DomainObjectData<TodoDescription>)`.
+`DomainObjectData<T>` — the constructor-input data shape of a `DomainObject` subclass: its `@serialize`d getter types as-is, so nested domain objects are live instances. Use it to type the subclass's constructor parameter: `constructor(data: DomainObjectData<TodoDescription>)`.
+
+### DomainObjectSerialized / SerializedValue
+
+`DomainObjectSerialized<TThis, TDataKeys>` — what `serialize()` returns: the data keys mapped through `SerializedValue` plus `$typename`. `SerializedValue<V>` maps a value type to its wire/storage shape: nested domain objects → their serialized shapes (recursive), `Date` → ISO string, arrays element-wise, plain objects property-wise, `Map`/`Set`/`Promise` → `never` (JSON-cloning them yields `{}`).
 
 ### DomainEntity
 

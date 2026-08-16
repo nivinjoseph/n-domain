@@ -8,6 +8,33 @@ const serializableFieldsKey = Symbol.for("@nivinjoseph/n-util/serializable/field
 
 // public
 /**
+ * Maps a value type to its serialized (wire/storage) shape, mirroring what serialization
+ * actually does at runtime: nested domain objects become their own serialized shapes,
+ * `Date` becomes an ISO string (JSON round-trip), arrays map element-wise, and plain
+ * objects map property-wise. `Map`/`Set`/`Promise` become `never` since JSON-cloning
+ * them yields `{}` — surfacing that as a compile error instead of a silent `{}`.
+ */
+export type SerializedValue<V> =
+    V extends null | undefined ? null :
+    V extends DomainObject<object, never> ? ReturnType<V["serialize"]> :
+    V extends Date ? string :
+    V extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> ? never :
+    V extends ReadonlyArray<infer E> ? Array<SerializedValue<E>> :
+    V extends object ? { -readonly [K in keyof V]: SerializedValue<V[K]>; } :
+    V;
+
+// public
+/**
+ * The serialized (wire/storage) shape of a DomainObject: its data keys mapped through
+ * {@link SerializedValue} — so nested domain objects appear as plain serialized data,
+ * not instances — plus the `$typename` discriminator stamped at every level.
+ * This is what `serialize()` returns.
+ */
+export type DomainObjectSerialized<TThis extends object, TDataKeys extends keyof TThis> =
+    { [P in TDataKeys]: SerializedValue<TThis[P]>; } & { $typename: string; };
+
+// public
+/**
  * Base class for value objects — immutable, identity-free domain values compared by state.
  *
  * Subclasses follow a self-referential generic idiom: pass the class itself as `TThis` and the
@@ -41,9 +68,17 @@ const serializableFieldsKey = Symbol.for("@nivinjoseph/n-util/serializable/field
  * }
  * ```
  */
-export abstract class DomainObject<TThis extends object, TDataKeys extends keyof TThis> extends Serializable<Schema<TThis, TDataKeys>>
+export abstract class DomainObject<TThis extends object, TDataKeys extends keyof TThis> extends Serializable<DomainObjectSerialized<TThis, TDataKeys>>
 {
     private static readonly _serializableKeysCache = new Map<object, ReadonlySet<string>>();
+
+    /**
+     * Type-only brand carrying the constructor-input data shape (`Schema<TThis, TDataKeys>`,
+     * where nested domain objects are live instances). Never assigned at runtime — it exists
+     * so {@link DomainObjectData} can recover the input shape now that `serialize()` returns
+     * the serialized shape instead. Do not read or list it in `TDataKeys`.
+     */
+    public declare readonly $data?: Schema<TThis, TDataKeys>;
 
 
     /**
@@ -53,7 +88,9 @@ export abstract class DomainObject<TThis extends object, TDataKeys extends keyof
      */
     protected constructor(data: Schema<TThis, TDataKeys>)
     {
-        super(data);
+        // the input shape (instances) and the serialized shape (plain data) intentionally differ;
+        // the base class only sees the latter, so this is the one place the two meet
+        super(data as unknown as DomainObjectSerialized<TThis, TDataKeys>);
 
         // data carrying $typename is a hydration of a stored artifact (Deserializer path);
         // unknown keys there are tolerated since they may be deprecated fields that still
@@ -123,8 +160,11 @@ interface SerializableFieldInfo
 
 // public
 /**
- * The serialized data shape of a DomainObject subclass, derived from its `@serialize` decorated
- * getters. Use it to type the subclass constructor's parameter:
- * `constructor(data: DomainObjectData<Money>)`.
+ * The constructor-input data shape of a DomainObject subclass: its `@serialize` decorated getter
+ * types as-is, so nested domain objects are live instances. Use it to type the subclass
+ * constructor's parameter: `constructor(data: DomainObjectData<Money>)`.
+ *
+ * Distinct from the serialized output shape — `serialize()` returns
+ * {@link DomainObjectSerialized}, where nested domain objects are plain serialized data.
  */
-export type DomainObjectData<T extends DomainObject<object, never>> = ReturnType<T["serialize"]>;
+export type DomainObjectData<T extends DomainObject<object, never>> = NonNullable<T["$data"]>;

@@ -13,9 +13,18 @@ history in August 2026; entries before 3.1.0 are summarized best-effort.
   `extends DomainEntity` declarations must add the type arguments.
 - `DomainObject`'s constructor now validates at runtime (fresh constructions only) that every
   property in `data` corresponds to an `@serialize` decorated getter.
+- **Breaking (types only):** `DomainObject.serialize()` now returns
+  `DomainObjectSerialized<TThis, TDataKeys>` — the honest deep serialized shape (nested domain
+  objects as plain serialized data with `$typename` at every level, `Date` as ISO string) —
+  instead of claiming instance types for nested domain objects. Constructor input stays
+  instance-typed via `DomainObjectData<T>` (now recovered from the type-only `$data` brand).
+  Code that called instance methods on serialized output no longer compiles (it crashed at
+  runtime before). Zero runtime change.
 
 ### Added
 - `DomainObjectData<T>` exported from the package barrel.
+- `DomainObjectSerialized<TThis, TDataKeys>` and `SerializedValue<V>` exported from the package
+  barrel — the serialized-output types described above.
 - Documentation overhaul: TSDoc across the public API, `llms.txt`, `CLAUDE.md`, this changelog,
   and refreshed README examples.
 
