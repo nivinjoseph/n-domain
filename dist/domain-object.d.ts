@@ -24,7 +24,7 @@ type JsonClonedValue<V> = V extends null | undefined ? null : V extends DomainOb
     -readonly [K in keyof V]: JsonClonedValue<V[K]>;
 } : V;
 type LegalDataValue<V> = V extends null | undefined ? true : V extends DomainObject<object, never> ? true : V extends Date ? true : V extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> | ((...args: Array<any>) => unknown) ? false : V extends ReadonlyArray<infer E> ? LegalArrayElement<E> : V extends object ? LegalJsonClonedValue<V> : true;
-type LegalArrayElement<E> = E extends null | undefined ? true : E extends DomainObject<object, never> ? true : E extends Date ? true : E extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> | ((...args: Array<any>) => unknown) ? false : E extends ReadonlyArray<infer E2> ? LegalJsonClonedValue<E2> : E extends object ? LegalJsonClonedValue<E> : E;
+type LegalArrayElement<E> = E extends null | undefined ? true : E extends DomainObject<object, never> ? true : E extends Date ? true : E extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> | ((...args: Array<any>) => unknown) ? false : E extends ReadonlyArray<infer E2> ? LegalJsonClonedValue<E2> : E extends object ? LegalJsonClonedValue<E> : true;
 type LegalJsonClonedValue<V> = V extends null | undefined ? true : V extends DomainObject<object, never> ? false : V extends Date ? true : V extends Map<unknown, unknown> | Set<unknown> | Promise<unknown> | ((...args: Array<any>) => unknown) ? false : V extends ReadonlyArray<infer E> ? LegalJsonClonedValue<E> : V extends object ? (Exclude<{
     [K in keyof V]: LegalJsonClonedValue<V[K]>;
 }[keyof V], true> extends never ? true : false) : true;
